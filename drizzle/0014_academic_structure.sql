@@ -1,0 +1,10 @@
+CREATE TABLE `academic_terms` (`id` text PRIMARY KEY NOT NULL,`organization_id` text NOT NULL REFERENCES organizations(id) ON DELETE cascade,`academic_year_id` text NOT NULL REFERENCES academic_years(id) ON DELETE cascade,`name` text NOT NULL,`code` text NOT NULL,`starts_on` text NOT NULL,`ends_on` text NOT NULL,`sort_order` integer DEFAULT 0 NOT NULL,`status` text DEFAULT 'active' NOT NULL,`created_at` integer DEFAULT (unixepoch()*1000) NOT NULL,`updated_at` integer DEFAULT (unixepoch()*1000) NOT NULL);
+CREATE UNIQUE INDEX `academic_terms_year_code_uq` ON `academic_terms` (`organization_id`,`academic_year_id`,`code`);
+CREATE INDEX `academic_terms_year_dates_idx` ON `academic_terms` (`organization_id`,`academic_year_id`,`starts_on`,`ends_on`);
+CREATE TABLE `grade_levels` (`id` text PRIMARY KEY NOT NULL,`organization_id` text NOT NULL REFERENCES organizations(id) ON DELETE cascade,`name` text NOT NULL,`code` text NOT NULL,`stage` text DEFAULT 'primary' NOT NULL,`sort_order` integer DEFAULT 0 NOT NULL,`promotion_to_grade_id` text REFERENCES grade_levels(id) ON DELETE set null,`status` text DEFAULT 'active' NOT NULL,`created_at` integer DEFAULT (unixepoch()*1000) NOT NULL,`updated_at` integer DEFAULT (unixepoch()*1000) NOT NULL);
+CREATE UNIQUE INDEX `grade_levels_org_code_uq` ON `grade_levels` (`organization_id`,`code`);
+CREATE INDEX `grade_levels_org_order_idx` ON `grade_levels` (`organization_id`,`sort_order`);
+ALTER TABLE `classes` ADD COLUMN `academic_year_id` text REFERENCES academic_years(id) ON DELETE restrict;
+ALTER TABLE `classes` ADD COLUMN `grade_level_id` text REFERENCES grade_levels(id) ON DELETE restrict;
+ALTER TABLE `classes` ADD COLUMN `capacity` integer;
+CREATE INDEX `classes_year_grade_idx` ON `classes` (`organization_id`,`academic_year_id`,`grade_level_id`);

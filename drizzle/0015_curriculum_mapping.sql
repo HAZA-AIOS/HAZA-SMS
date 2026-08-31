@@ -1,0 +1,7 @@
+ALTER TABLE `subjects` ADD COLUMN `description` text;
+ALTER TABLE `subjects` ADD COLUMN `department` text;
+ALTER TABLE `subjects` ADD COLUMN `default_weekly_periods` integer DEFAULT 5 NOT NULL;
+CREATE TABLE `curriculum_mappings` (`id` text PRIMARY KEY NOT NULL,`organization_id` text NOT NULL REFERENCES organizations(id) ON DELETE cascade,`academic_year_id` text NOT NULL REFERENCES academic_years(id) ON DELETE restrict,`campus_id` text REFERENCES campuses(id) ON DELETE cascade,`grade_level_id` text NOT NULL REFERENCES grade_levels(id) ON DELETE cascade,`class_id` text REFERENCES classes(id) ON DELETE cascade,`subject_id` text NOT NULL REFERENCES subjects(id) ON DELETE restrict,`curriculum_source` text,`curriculum_reference` text,`weekly_periods` integer DEFAULT 5 NOT NULL,`is_compulsory` integer DEFAULT true NOT NULL,`status` text DEFAULT 'active' NOT NULL,`created_by` text NOT NULL REFERENCES users(id),`created_at` integer DEFAULT (unixepoch()*1000) NOT NULL,`updated_at` integer DEFAULT (unixepoch()*1000) NOT NULL);
+CREATE UNIQUE INDEX `curriculum_mapping_scope_uq` ON `curriculum_mappings` (`organization_id`,`academic_year_id`,`grade_level_id`,`subject_id`,`campus_id`,`class_id`);
+CREATE INDEX `curriculum_mapping_year_grade_idx` ON `curriculum_mappings` (`organization_id`,`academic_year_id`,`grade_level_id`,`status`);
+CREATE INDEX `curriculum_mapping_subject_idx` ON `curriculum_mappings` (`organization_id`,`subject_id`,`academic_year_id`);
