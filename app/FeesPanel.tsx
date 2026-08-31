@@ -1,5 +1,5 @@
 "use client";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 type Row = Record<string, unknown> & { id: string; name?: string };
 type Data = {
   campusId: string;
@@ -10,8 +10,12 @@ type Data = {
   students: Row[];
   academicYears: Row[];
   classes: Row[];
+  invoices: Row[];
+  payments: Row[];
   canManage: boolean;
   canAssign: boolean;
+  canInvoice: boolean;
+  canCollect: boolean;
   canViewFinancial: boolean;
 };
 const empty: Data = {
@@ -23,14 +27,18 @@ const empty: Data = {
   students: [],
   academicYears: [],
   classes: [],
+  invoices: [],
+  payments: [],
   canManage: false,
   canAssign: false,
+  canInvoice: false,
+  canCollect: false,
   canViewFinancial: false,
 };
 const money = (v: unknown) => `PKR ${Number(v || 0).toLocaleString()}`;
 export default function FeesPanel() {
   const [data, setData] = useState<Data>(empty),
-    [tab, setTab] = useState("structures"),
+    [tab, setTab] = useState("invoices"),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState("");
   const load = async () => {
@@ -71,15 +79,7 @@ export default function FeesPanel() {
   const currentYear =
       data.academicYears.find((v) => v.is_current) || data.academicYears[0],
     assignedStudents = new Set(data.assignments.map((v) => v.student_id)),
-    unassigned = data.students.filter((v) => !assignedStudents.has(v.id)),
-    annualValue = useMemo(
-      () =>
-        data.assignments.reduce(
-          (sum, v) => sum + Number(v.gross_amount || 0),
-          0,
-        ),
-      [data.assignments],
-    );
+    unassigned = data.students.filter((v) => !assignedStudents.has(v.id));
   if (busy)
     return (
       <div className="foundation-page">
@@ -91,12 +91,12 @@ export default function FeesPanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 7A · FEE STRUCTURES & ASSIGNMENTS
+            PHASE 7B · INVOICES, PAYMENTS & RECEIPTS
           </span>
-          <h1>Fee structures and student assignments</h1>
+          <h1>Invoices, payments and printable receipts</h1>
           <p>
-            Define school fees once, apply them by campus and class, and assign
-            them securely to enrolled students.
+            Generate monthly invoices, collect payments, track balances and
+            print school-branded receipts.
           </p>
         </div>
         <span className="phase-badge complete">
@@ -106,29 +106,48 @@ export default function FeesPanel() {
       <section className="fee-summary">
         <article>
           <span>🧩</span>
-          <b>{data.categories.length}</b>
-          <small>Fee categories</small>
+          <b>{data.invoices.length}</b>
+          <small>Total invoices</small>
         </article>
         <article>
           <span>📋</span>
-          <b>{data.structures.length}</b>
-          <small>Active structures</small>
+          <b>{data.invoices.filter((v) => v.status === "paid").length}</b>
+          <small>Paid invoices</small>
         </article>
         <article>
           <span>🎓</span>
-          <b>{data.assignments.length}</b>
-          <small>Students assigned</small>
+          <b>
+            {
+              data.invoices.filter(
+                (v) => v.status === "unpaid" || v.status === "partial",
+              ).length
+            }
+          </b>
+          <small>Outstanding invoices</small>
         </article>
         <article>
           <span>💰</span>
-          <b>{data.canViewFinancial ? money(annualValue) : "Protected"}</b>
-          <small>Assigned base value</small>
+          <b>
+            {data.canViewFinancial
+              ? money(
+                  data.invoices.reduce(
+                    (n, v) => n + Number(v.balance_amount || 0),
+                    0,
+                  ),
+                )
+              : "Protected"}
+          </b>
+          <small>Outstanding balance</small>
         </article>
       </section>
       {message && <p className="timetable-message">{message}</p>}
       <section className="fee-workspace">
         <nav>
           {[
+            ["invoices", "Monthly invoices"],
+            ["payments", "Payments & receipts"],
+            ["generate", "Generate invoices"],
+            ["collect", "Collect payment"],
             ["structures", "Fee structures"],
             ["categories", "Categories"],
             ["assignments", "Student assignments"],
@@ -144,6 +163,197 @@ export default function FeesPanel() {
             </button>
           ))}
         </nav>
+        {tab === "invoices" &&
+          (data.invoices.length ? (
+            <div className="invoice-table">
+              <div className="head">
+                <span>Invoice</span>
+                <span>Student</span>
+                <span>Month / due</span>
+                <span>Total</span>
+                <span>Paid</span>
+                <span>Balance</span>
+                <span>Status</span>
+              </div>
+              {data.invoices.map((v) => (
+                <div key={v.id}>
+                  <span>
+                    <b>{v.invoice_number as string}</b>
+                    <small>{v.class_name as string}</small>
+                  </span>
+                  <span>
+                    <b>{v.student_name as string}</b>
+                    <small>{v.admission_number as string}</small>
+                  </span>
+                  <span>
+                    {v.billing_month as string}
+                    <small>Due {v.due_on as string}</small>
+                  </span>
+                  <span>
+                    {data.canViewFinancial
+                      ? money(v.total_amount)
+                      : "Protected"}
+                  </span>
+                  <span>
+                    {data.canViewFinancial ? money(v.paid_amount) : "—"}
+                  </span>
+                  <span>
+                    {data.canViewFinancial ? money(v.balance_amount) : "—"}
+                  </span>
+                  <span>
+                    <i className={String(v.status)}>{String(v.status)}</i>
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="academic-empty">
+              <span>🧾</span>
+              <h3>No monthly invoices yet</h3>
+              <p>Generate invoices from active student fee assignments.</p>
+              {data.canInvoice && (
+                <button onClick={() => setTab("generate")}>
+                  ＋ Generate invoices
+                </button>
+              )}
+            </div>
+          ))}
+        {tab === "payments" &&
+          (data.payments.length ? (
+            <div className="payment-grid">
+              {data.payments.map((v) => (
+                <article key={v.id}>
+                  <span>✅</span>
+                  <div>
+                    <small>{v.receipt_number as string}</small>
+                    <h3>{v.student_name as string}</h3>
+                    <p>
+                      {v.invoice_number as string} ·{" "}
+                      {String(v.payment_method).toUpperCase()} ·{" "}
+                      {v.payment_date as string}
+                    </p>
+                  </div>
+                  <b>{data.canViewFinancial ? money(v.amount) : "Protected"}</b>
+                  <a
+                    href={`/api/fees/receipts/${v.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    🖨 Print receipt
+                  </a>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="academic-empty">
+              <span>💳</span>
+              <h3>No payments collected</h3>
+              <p>
+                Collected payments and their printable receipts will appear
+                here.
+              </p>
+              {data.canCollect && (
+                <button onClick={() => setTab("collect")}>
+                  ＋ Collect payment
+                </button>
+              )}
+            </div>
+          ))}
+        {tab === "generate" && (
+          <div className="fee-forms">
+            <form onSubmit={(e) => send(e, "generate_invoices")}>
+              <header>
+                <span>🧾</span>
+                <div>
+                  <h2>Generate monthly invoices</h2>
+                  <p>
+                    Creates one invoice per active student assignment and skips
+                    duplicates.
+                  </p>
+                </div>
+              </header>
+              <label>
+                Billing month
+                <input type="month" name="billingMonth" required />
+              </label>
+              <div>
+                <label>
+                  Issue date
+                  <input type="date" name="issuedOn" required />
+                </label>
+                <label>
+                  Due date
+                  <input type="date" name="dueOn" required />
+                </label>
+              </div>
+              <button disabled={!data.canInvoice}>Generate invoices</button>
+            </form>
+          </div>
+        )}
+        {tab === "collect" && (
+          <div className="fee-forms">
+            <form onSubmit={(e) => send(e, "collect_payment")}>
+              <header>
+                <span>💳</span>
+                <div>
+                  <h2>Collect fee payment</h2>
+                  <p>
+                    Post a full or partial payment against an outstanding
+                    invoice.
+                  </p>
+                </div>
+              </header>
+              <label>
+                Outstanding invoice
+                <select name="invoiceId" required>
+                  <option value="">Select invoice</option>
+                  {data.invoices
+                    .filter((v) => Number(v.balance_amount) > 0)
+                    .map((v) => (
+                      <option value={v.id} key={v.id}>
+                        {v.invoice_number} · {v.student_name} · Balance{" "}
+                        {money(v.balance_amount)}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <div>
+                <label>
+                  Amount received
+                  <input type="number" min="1" name="amount" required />
+                </label>
+                <label>
+                  Payment date
+                  <input type="date" name="paymentDate" required />
+                </label>
+                <label>
+                  Payment method
+                  <select name="paymentMethod">
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank transfer</option>
+                    <option value="card">Card</option>
+                    <option value="online">Online</option>
+                    <option value="cheque">Cheque</option>
+                  </select>
+                </label>
+              </div>
+              <label>
+                Reference number
+                <input
+                  name="referenceNumber"
+                  placeholder="Bank, cheque or transaction reference"
+                />
+              </label>
+              <label>
+                Notes
+                <input name="notes" />
+              </label>
+              <button disabled={!data.canCollect}>
+                Post payment and create receipt
+              </button>
+            </form>
+          </div>
+        )}
         {tab === "structures" &&
           (data.structures.length ? (
             <div className="fee-structure-grid">

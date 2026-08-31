@@ -605,11 +605,36 @@ test("fee structures and student assignments are financial-permission and campus
     /The selected structure does not match this student's enrollment/,
   );
   assert.match(source, /student\.fee\.assign/);
-  assert.match(panel, /Fee structures and student assignments/);
+  assert.match(panel, /Fee structures/);
   assert.match(schema, /feeStructures\s*=\s*sqliteTable/);
   assert.match(schema, /studentFeeAssignments\s*=\s*sqliteTable/);
   assert.match(migration, /fee_structures_scope_idx/);
   assert.match(migration, /student_fee_assignment_year_uq/);
   assert.match(backup, /"student_fee_assignments"/);
   assert.match(auth, /"fees\.assign"/);
+});
+
+test("monthly invoices, payment collection and receipts are protected and tenant scoped", async () => {
+  const source = await read("app/api/fees/route.ts"),
+    receipt = await read("app/api/fees/receipts/[id]/route.ts"),
+    panel = await read("app/FeesPanel.tsx"),
+    schema = await read("db/schema.ts"),
+    migration = await read("drizzle/0023_invoices_payments_receipts.sql"),
+    backup = await read("app/api/security/backups/route.ts"),
+    auth = await read("lib/authorization.ts");
+  assert.match(source, /action === "generate_invoices"/);
+  assert.match(source, /fee\.invoice\.generate/);
+  assert.match(source, /Payment cannot exceed the outstanding balance/);
+  assert.match(source, /fee\.payment\.collect/);
+  assert.match(receipt, /authorize\("fees\.print"\)/);
+  assert.match(receipt, /p\.id=\?1 AND p\.organization_id=\?2/);
+  assert.match(receipt, /fee\.receipt\.print/);
+  assert.match(panel, /Monthly invoices/);
+  assert.match(panel, /Print receipt/);
+  assert.match(schema, /feeInvoices\s*=\s*sqliteTable/);
+  assert.match(schema, /feePayments\s*=\s*sqliteTable/);
+  assert.match(migration, /fee_invoice_student_month_uq/);
+  assert.match(migration, /fee_payment_org_receipt_uq/);
+  assert.match(backup, /"fee_payments"/);
+  assert.match(auth, /"fees\.collect"/);
 });

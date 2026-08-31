@@ -8971,3 +8971,103 @@ body {
     flex-wrap: wrap;
   }
 }
+
+/* Phase 7B — invoices, payments and receipts */
+.invoice-table {
+  padding: 16px;
+  overflow: auto;
+}
+.invoice-table > div {
+  display: grid;
+  grid-template-columns: 1.25fr 1.25fr 0.85fr 0.7fr 0.7fr 0.7fr 0.55fr;
+  gap: 12px;
+  align-items: center;
+  min-width: 900px;
+  padding: 12px;
+  border-bottom: 1px solid #eee5e0;
+}
+.invoice-table .head {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #756a65;
+  background: #f6f1ed;
+  border-radius: 11px;
+}
+.invoice-table span {
+  display: grid;
+  gap: 3px;
+}
+.invoice-table small {
+  color: #7d726d;
+}
+.invoice-table i {
+  justify-self: start;
+  border-radius: 20px;
+  padding: 5px 9px;
+  font-style: normal;
+  text-transform: capitalize;
+  font-size: 12px;
+  background: #fff1df;
+  color: #b56708;
+}
+.invoice-table i.paid {
+  background: #e4f8ee;
+  color: #137653;
+}
+.invoice-table i.partial {
+  background: #e7f0ff;
+  color: #285db2;
+}
+.payment-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+.payment-grid article {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  background: white;
+  border: 1px solid #eee3de;
+  border-radius: 17px;
+  padding: 16px;
+}
+.payment-grid article > span {
+  font-size: 26px;
+}
+.payment-grid h3 {
+  margin: 3px 0;
+}
+.payment-grid p {
+  margin: 0;
+  color: #746a65;
+}
+.payment-grid article > b {
+  color: #16805c;
+}
+.payment-grid a {
+  grid-column: 2/4;
+  justify-self: end;
+  color: #6546d9;
+  text-decoration: none;
+  font-weight: 700;
+  background: #f0eaff;
+  border-radius: 9px;
+  padding: 8px 11px;
+}
+@media (max-width: 700px) {
+  .payment-grid {
+    grid-template-columns: 1fr;
+  }
+  .payment-grid article {
+    grid-template-columns: auto 1fr;
+  }
+  .payment-grid article > b {
+    grid-column: 2;
+  }
+  .payment-grid a {
+    grid-column: 2;
+  }
+}

@@ -1603,6 +1603,128 @@ export const studentFeeAssignments = sqliteTable(
   ],
 );
 
+export const feeInvoices = sqliteTable(
+  "fee_invoices",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "restrict" }),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    feeAssignmentId: text("fee_assignment_id")
+      .notNull()
+      .references(() => studentFeeAssignments.id, { onDelete: "restrict" }),
+    invoiceNumber: text("invoice_number").notNull(),
+    billingMonth: text("billing_month").notNull(),
+    issuedOn: text("issued_on").notNull(),
+    dueOn: text("due_on").notNull(),
+    subtotal: integer("subtotal").notNull().default(0),
+    discountAmount: integer("discount_amount").notNull().default(0),
+    lateFee: integer("late_fee").notNull().default(0),
+    totalAmount: integer("total_amount").notNull().default(0),
+    paidAmount: integer("paid_amount").notNull().default(0),
+    balanceAmount: integer("balance_amount").notNull().default(0),
+    status: text("status").notNull().default("unpaid"),
+    notes: text("notes"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("fee_invoice_student_month_uq").on(
+      t.academicYearId,
+      t.studentId,
+      t.billingMonth,
+    ),
+    uniqueIndex("fee_invoice_org_number_uq").on(
+      t.organizationId,
+      t.invoiceNumber,
+    ),
+    index("fee_invoice_campus_status_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.billingMonth,
+      t.status,
+    ),
+  ],
+);
+
+export const feeInvoiceItems = sqliteTable(
+  "fee_invoice_items",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    invoiceId: text("invoice_id")
+      .notNull()
+      .references(() => feeInvoices.id, { onDelete: "cascade" }),
+    feeCategoryId: text("fee_category_id")
+      .notNull()
+      .references(() => feeCategories.id, { onDelete: "restrict" }),
+    description: text("description").notNull(),
+    amount: integer("amount").notNull().default(0),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    index("fee_invoice_items_invoice_idx").on(t.organizationId, t.invoiceId),
+  ],
+);
+
+export const feePayments = sqliteTable(
+  "fee_payments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    invoiceId: text("invoice_id")
+      .notNull()
+      .references(() => feeInvoices.id, { onDelete: "restrict" }),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "restrict" }),
+    receiptNumber: text("receipt_number").notNull(),
+    amount: integer("amount").notNull(),
+    paymentDate: text("payment_date").notNull(),
+    paymentMethod: text("payment_method").notNull().default("cash"),
+    referenceNumber: text("reference_number"),
+    notes: text("notes"),
+    receivedBy: text("received_by")
+      .notNull()
+      .references(() => users.id),
+    status: text("status").notNull().default("posted"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    uniqueIndex("fee_payment_org_receipt_uq").on(
+      t.organizationId,
+      t.receiptNumber,
+    ),
+    index("fee_payment_invoice_idx").on(
+      t.organizationId,
+      t.invoiceId,
+      t.paymentDate,
+    ),
+  ],
+);
+
 export const studentAttendanceCorrections = sqliteTable(
   "student_attendance_corrections",
   {

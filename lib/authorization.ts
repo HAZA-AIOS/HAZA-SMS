@@ -1047,6 +1047,9 @@ export async function ensureFeeAccess(organizationId: string) {
     ["permission:fees.view", "fees.view", "fees", "view", 0],
     ["permission:fees.manage", "fees.manage", "fees", "manage", 1],
     ["permission:fees.assign", "fees.assign", "fees", "assign", 1],
+    ["permission:fees.invoice", "fees.invoice", "fees", "create_invoice", 1],
+    ["permission:fees.collect", "fees.collect", "fees", "collect", 1],
+    ["permission:fees.print", "fees.print", "fees", "print", 1],
     [
       "permission:fees.financial",
       "fees.financial",
@@ -1068,7 +1071,14 @@ export async function ensureFeeAccess(organizationId: string) {
   const grants: Record<string, string[]> = {
     super_administrator: definitions.map((v) => v[1]),
     principal: definitions.map((v) => v[1]),
-    school_administrator: ["fees.view", "fees.manage", "fees.assign"],
+    school_administrator: [
+      "fees.view",
+      "fees.manage",
+      "fees.assign",
+      "fees.invoice",
+      "fees.collect",
+      "fees.print",
+    ],
     accountant: definitions.map((v) => v[1]),
     receptionist: ["fees.view"],
     read_only_auditor: ["fees.view", "fees.financial"],
