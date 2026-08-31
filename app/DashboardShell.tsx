@@ -23,6 +23,7 @@ import PromotionPanel from "./PromotionPanel";
 import StudentAttendancePanel from "./StudentAttendancePanel";
 import TimetablePanel from "./TimetablePanel";
 import ExaminationSchedulePanel from "./ExaminationSchedulePanel";
+import FeesPanel from "./FeesPanel";
 import type { CampusChoice } from "../lib/authorization";
 
 const navigation = [
@@ -60,6 +61,7 @@ export default function DashboardShell({
   canViewStudentAttendance,
   canViewTimetable,
   canViewExaminations,
+  canViewFees,
   accessData,
   configurationData,
   securityData,
@@ -80,6 +82,7 @@ export default function DashboardShell({
   canViewStudentAttendance: boolean;
   canViewTimetable: boolean;
   canViewExaminations: boolean;
+  canViewFees: boolean;
   accessData: AccessData | null;
   configurationData: ConfigurationData | null;
   securityData: SecurityData | null;
@@ -239,6 +242,7 @@ export default function DashboardShell({
                   (label === "Promotions" && canViewPromotions) ||
                   (label === "Timetable" && canViewTimetable) ||
                   (label === "Examinations" && canViewExaminations) ||
+                  (label === "Fees" && canViewFees) ||
                   label === "Configuration" ||
                   label === "Access Control" ||
                   label === "Security & Audit"
@@ -298,6 +302,8 @@ export default function DashboardShell({
           <TimetablePanel />
         ) : activeView === "Examinations" && canViewExaminations ? (
           <ExaminationSchedulePanel />
+        ) : activeView === "Fees" && canViewFees ? (
+          <FeesPanel />
         ) : activeView === "Configuration" && configurationData ? (
           <ConfigurationPanel data={configurationData} />
         ) : activeView === "Access Control" && accessData ? (

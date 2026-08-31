@@ -1040,3 +1040,51 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
     }
   await env.DB.batch(statements);
 }
+
+export async function ensureFeeAccess(organizationId: string) {
+  if (!env.DB) return;
+  const definitions = [
+    ["permission:fees.view", "fees.view", "fees", "view", 0],
+    ["permission:fees.manage", "fees.manage", "fees", "manage", 1],
+    ["permission:fees.assign", "fees.assign", "fees", "assign", 1],
+    [
+      "permission:fees.financial",
+      "fees.financial",
+      "fees",
+      "view_financial",
+      1,
+    ],
+  ] as const;
+  const statements = definitions.map((v) =>
+    env.DB.prepare(
+      "INSERT OR IGNORE INTO permissions (id,code,module,action,sensitive) VALUES (?1,?2,?3,?4,?5)",
+    ).bind(...v),
+  );
+  const superRole = await env.DB.prepare(
+    "SELECT id FROM roles WHERE organization_id=?1 AND key='super_administrator' LIMIT 1",
+  )
+    .bind(organizationId)
+    .first<{ id: string }>();
+  const grants: Record<string, string[]> = {
+    super_administrator: definitions.map((v) => v[1]),
+    principal: definitions.map((v) => v[1]),
+    school_administrator: ["fees.view", "fees.manage", "fees.assign"],
+    accountant: definitions.map((v) => v[1]),
+    receptionist: ["fees.view"],
+    read_only_auditor: ["fees.view", "fees.financial"],
+  };
+  for (const [key, codes] of Object.entries(grants))
+    for (const code of codes) {
+      const roleId =
+        key === "super_administrator"
+          ? superRole?.id
+          : `role:${organizationId}:${key}`;
+      if (roleId)
+        statements.push(
+          env.DB.prepare(
+            "INSERT OR IGNORE INTO role_permissions (role_id,permission_id) SELECT ?1,id FROM permissions WHERE code=?2",
+          ).bind(roleId, code),
+        );
+    }
+  await env.DB.batch(statements);
+}

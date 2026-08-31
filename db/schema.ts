@@ -1470,6 +1470,139 @@ export const schoolEvents = sqliteTable(
   ],
 );
 
+export const feeCategories = sqliteTable(
+  "fee_categories",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    frequency: text("frequency").notNull().default("monthly"),
+    refundable: integer("refundable", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("fee_categories_org_code_uq").on(t.organizationId, t.code),
+  ],
+);
+
+export const feeStructures = sqliteTable(
+  "fee_structures",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "cascade",
+    }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "restrict" }),
+    classId: text("class_id").references(() => classes.id, {
+      onDelete: "cascade",
+    }),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    effectiveFrom: text("effective_from").notNull(),
+    dueDay: integer("due_day").notNull().default(10),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("fee_structures_org_code_uq").on(t.organizationId, t.code),
+    index("fee_structures_scope_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.academicYearId,
+      t.classId,
+      t.status,
+    ),
+  ],
+);
+
+export const feeStructureItems = sqliteTable(
+  "fee_structure_items",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    feeStructureId: text("fee_structure_id")
+      .notNull()
+      .references(() => feeStructures.id, { onDelete: "cascade" }),
+    feeCategoryId: text("fee_category_id")
+      .notNull()
+      .references(() => feeCategories.id, { onDelete: "restrict" }),
+    amount: integer("amount").notNull().default(0),
+    mandatory: integer("mandatory", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("fee_structure_item_category_uq").on(
+      t.feeStructureId,
+      t.feeCategoryId,
+    ),
+  ],
+);
+
+export const studentFeeAssignments = sqliteTable(
+  "student_fee_assignments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "restrict" }),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    feeStructureId: text("fee_structure_id")
+      .notNull()
+      .references(() => feeStructures.id, { onDelete: "restrict" }),
+    discountType: text("discount_type").notNull().default("none"),
+    discountValue: integer("discount_value").notNull().default(0),
+    discountReason: text("discount_reason"),
+    startsOn: text("starts_on").notNull(),
+    endsOn: text("ends_on"),
+    status: text("status").notNull().default("active"),
+    assignedBy: text("assigned_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("student_fee_assignment_year_uq").on(
+      t.academicYearId,
+      t.studentId,
+    ),
+    index("student_fee_assignment_campus_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.academicYearId,
+      t.status,
+    ),
+  ],
+);
+
 export const studentAttendanceCorrections = sqliteTable(
   "student_attendance_corrections",
   {

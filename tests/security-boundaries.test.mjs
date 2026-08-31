@@ -589,3 +589,27 @@ test("examination timetables and events are permission protected, conflict check
   assert.match(backup, /"examination_timetable_entries"/);
   assert.match(auth, /"examinations\.manage"/);
 });
+
+test("fee structures and student assignments are financial-permission and campus scoped", async () => {
+  const source = await read("app/api/fees/route.ts"),
+    panel = await read("app/FeesPanel.tsx"),
+    schema = await read("db/schema.ts"),
+    migration = await read("drizzle/0022_fee_structures_assignments.sql"),
+    backup = await read("app/api/security/backups/route.ts"),
+    auth = await read("lib/authorization.ts");
+  assert.match(source, /authorize\("fees\.view"\)/);
+  assert.match(source, /requireCampusAccess\(auth,\s*campusId/);
+  assert.match(source, /fees\.financial/);
+  assert.match(
+    source,
+    /The selected structure does not match this student's enrollment/,
+  );
+  assert.match(source, /student\.fee\.assign/);
+  assert.match(panel, /Fee structures and student assignments/);
+  assert.match(schema, /feeStructures\s*=\s*sqliteTable/);
+  assert.match(schema, /studentFeeAssignments\s*=\s*sqliteTable/);
+  assert.match(migration, /fee_structures_scope_idx/);
+  assert.match(migration, /student_fee_assignment_year_uq/);
+  assert.match(backup, /"student_fee_assignments"/);
+  assert.match(auth, /"fees\.assign"/);
+});
