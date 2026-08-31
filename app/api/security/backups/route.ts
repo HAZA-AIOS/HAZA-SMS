@@ -19,6 +19,8 @@ const tenantTables = [
   "timetable_periods",
   "timetable_entries",
   "timetable_substitutions",
+  "examination_timetable_entries",
+  "school_events",
   "admission_enquiries",
   "admission_applications",
   "admission_documents",

@@ -24,6 +24,233 @@
   --shadow-tms-card: 0 8px 24px rgb(18 52 76 / 0.06);
   --shadow-tms-panel: 0 22px 55px rgb(23 54 75 / 0.11);
 }
+
+/* Phase 6C — examination timetable and events */
+.exam-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.exam-summary article {
+  background: #fffaf7;
+  border: 1px solid #eadfda;
+  border-radius: 20px;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  box-shadow: 0 10px 24px rgba(80, 55, 42, 0.06);
+}
+.exam-summary article > span {
+  grid-row: 1/3;
+  font-size: 28px;
+  background: #f1e9ff;
+  border-radius: 14px;
+  padding: 10px;
+}
+.exam-summary b {
+  font-size: 24px;
+  color: #211d1b;
+}
+.exam-summary small {
+  color: #766b66;
+}
+.exam-workspace {
+  background: #fffaf7;
+  border: 1px solid #eadfda;
+  border-radius: 22px;
+  overflow: hidden;
+}
+.exam-workspace > nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eadfda;
+  overflow: auto;
+}
+.exam-workspace > nav button {
+  border: 0;
+  background: transparent;
+  padding: 11px 15px;
+  border-radius: 12px;
+  color: #625852;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.exam-workspace > nav button.active {
+  background: #eee6ff;
+  color: #6543d9;
+}
+.exam-list {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+.exam-list article {
+  display: grid;
+  grid-template-columns: 62px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #eee3de;
+  border-radius: 16px;
+  background: white;
+}
+.exam-list time {
+  display: grid;
+  text-align: center;
+  background: #7150e8;
+  color: white;
+  border-radius: 14px;
+  padding: 8px;
+}
+.exam-list time b {
+  font-size: 23px;
+}
+.exam-list time small {
+  color: white;
+}
+.exam-list h3,
+.event-grid h3 {
+  margin: 4px 0;
+  font-size: 16px;
+}
+.exam-list p,
+.event-grid p {
+  margin: 0;
+  color: #776d67;
+}
+.exam-list aside {
+  display: grid;
+  gap: 8px;
+  text-align: right;
+}
+.exam-list button,
+.event-grid button {
+  border: 0;
+  background: #fff0ee;
+  color: #bd5148;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 16px;
+}
+.event-grid article {
+  background: white;
+  border: 1px solid #eee3de;
+  border-radius: 18px;
+  padding: 18px;
+}
+.event-grid article > span {
+  font-size: 28px;
+}
+.event-grid small {
+  display: block;
+  color: #765ae3;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.event-grid button {
+  margin-top: 14px;
+}
+.exam-form {
+  max-width: 940px;
+  margin: 20px auto;
+  padding: 22px;
+  background: white;
+  border: 1px solid #eee3de;
+  border-radius: 20px;
+  display: grid;
+  gap: 15px;
+}
+.exam-form header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.exam-form header > span {
+  font-size: 30px;
+}
+.exam-form h2 {
+  margin: 0;
+}
+.exam-form header p {
+  margin: 4px 0 0;
+  color: #766b66;
+}
+.exam-form > div:not(header) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+.exam-form label {
+  display: grid;
+  gap: 7px;
+  color: #4c433f;
+  font-weight: 600;
+  font-size: 14px;
+}
+.exam-form input,
+.exam-form select,
+.exam-form textarea {
+  width: 100%;
+  border: 1px solid #dcd1cc;
+  border-radius: 11px;
+  padding: 11px 12px;
+  background: #fffdfb;
+  color: #282220;
+  font: inherit;
+}
+.exam-form > button {
+  justify-self: start;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  background: #704ee8;
+  color: white;
+  font-weight: 700;
+}
+.exam-form > button:disabled {
+  opacity: 0.45;
+}
+.exam-workspace .academic-empty {
+  padding: 55px 20px;
+}
+@media (max-width: 900px) {
+  .exam-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .event-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .exam-list article {
+    grid-template-columns: 54px 1fr;
+  }
+  .exam-list aside {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+@media (max-width: 620px) {
+  .exam-summary,
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+  .exam-list article {
+    grid-template-columns: 1fr;
+  }
+  .exam-list time {
+    width: 58px;
+  }
+  .exam-list aside {
+    grid-column: 1;
+  }
+}
 :root {
   --nav-height: 58px;
   --sidebar-width: 208px;

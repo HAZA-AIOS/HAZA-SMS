@@ -563,3 +563,29 @@ test("teacher timetables, room conflicts and substitutions are protected and ten
   assert.match(migration, /timetable_substitution_entry_date_uq/);
   assert.match(backup, /"timetable_substitutions"/);
 });
+
+test("examination timetables and events are permission protected, conflict checked and campus scoped", async () => {
+  const source = await read("app/api/examination-schedule/route.ts");
+  const panel = await read("app/ExaminationSchedulePanel.tsx");
+  const schema = await read("db/schema.ts");
+  const migration = await read("drizzle/0021_examination_timetable_events.sql");
+  const backup = await read("app/api/security/backups/route.ts");
+  const auth = await read("lib/authorization.ts");
+  assert.match(source, /authorize\("examinations\.view"\)/);
+  assert.match(source, /requireCampusAccess\(auth,\s*campusId,\s*permission\)/);
+  assert.match(
+    source,
+    /This invigilator already has an examination during that time/,
+  );
+  assert.match(source, /This room is already assigned during that time/);
+  assert.match(source, /examination\.timetable\.create/);
+  assert.match(source, /school\.event\.create/);
+  assert.match(panel, /Examination timetable/);
+  assert.match(panel, /Events calendar/);
+  assert.match(schema, /examinationTimetableEntries\s*=\s*sqliteTable/);
+  assert.match(schema, /schoolEvents\s*=\s*sqliteTable/);
+  assert.match(migration, /exam_timetable_campus_date_idx/);
+  assert.match(migration, /school_events_scope_date_idx/);
+  assert.match(backup, /"examination_timetable_entries"/);
+  assert.match(auth, /"examinations\.manage"/);
+});

@@ -24,6 +24,7 @@ import {
   ensureStaffAccess,
   ensureStudentAccess,
   ensureTimetableAccess,
+  ensureExaminationScheduleAccess,
 } from "../lib/authorization";
 
 export const dynamic = "force-dynamic";
@@ -638,6 +639,7 @@ export default async function Home() {
   await ensureAdmissionAccess(access.organizationId);
   await ensureStaffAccess(access.organizationId);
   await ensureTimetableAccess(access.organizationId);
+  await ensureExaminationScheduleAccess(access.organizationId);
   const refreshedAccess = (await authorize())!;
   const canViewAccess =
     refreshedAccess.organizationWide &&
@@ -744,6 +746,7 @@ export default async function Home() {
         "student_attendance.view",
       )}
       canViewTimetable={refreshedAccess.permissions.has("timetable.view")}
+      canViewExaminations={refreshedAccess.permissions.has("examinations.view")}
       userName={user.displayName}
       accessData={accessData}
       configurationData={configurationData}

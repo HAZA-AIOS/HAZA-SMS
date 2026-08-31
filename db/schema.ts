@@ -1362,6 +1362,114 @@ export const timetableSubstitutions = sqliteTable(
   ],
 );
 
+export const examinationTimetableEntries = sqliteTable(
+  "examination_timetable_entries",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "restrict" }),
+    termId: text("term_id").references(() => academicTerms.id, {
+      onDelete: "set null",
+    }),
+    examName: text("exam_name").notNull(),
+    examType: text("exam_type").notNull().default("term"),
+    classId: text("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    sectionId: text("section_id").references(() => sections.id, {
+      onDelete: "cascade",
+    }),
+    subjectId: text("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "restrict" }),
+    examDate: text("exam_date").notNull(),
+    startsAt: text("starts_at").notNull(),
+    endsAt: text("ends_at").notNull(),
+    roomName: text("room_name"),
+    invigilatorStaffId: text("invigilator_staff_id").references(
+      () => staff.id,
+      { onDelete: "set null" },
+    ),
+    maximumMarks: integer("maximum_marks").notNull().default(100),
+    status: text("status").notNull().default("scheduled"),
+    notes: text("notes"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("exam_timetable_class_subject_date_uq").on(
+      t.academicYearId,
+      t.campusId,
+      t.classId,
+      t.sectionId,
+      t.subjectId,
+      t.examDate,
+      t.startsAt,
+    ),
+    index("exam_timetable_campus_date_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.examDate,
+      t.status,
+    ),
+    index("exam_timetable_invigilator_idx").on(
+      t.organizationId,
+      t.invigilatorStaffId,
+      t.examDate,
+      t.startsAt,
+      t.endsAt,
+    ),
+  ],
+);
+
+export const schoolEvents = sqliteTable(
+  "school_events",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "cascade",
+    }),
+    academicYearId: text("academic_year_id").references(
+      () => academicYears.id,
+      { onDelete: "set null" },
+    ),
+    title: text("title").notNull(),
+    eventType: text("event_type").notNull().default("school"),
+    startsOn: text("starts_on").notNull(),
+    endsOn: text("ends_on").notNull(),
+    startsAt: text("starts_at"),
+    endsAt: text("ends_at"),
+    location: text("location"),
+    description: text("description"),
+    audience: text("audience").notNull().default("all"),
+    status: text("status").notNull().default("scheduled"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("school_events_scope_date_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.startsOn,
+      t.status,
+    ),
+  ],
+);
+
 export const studentAttendanceCorrections = sqliteTable(
   "student_attendance_corrections",
   {

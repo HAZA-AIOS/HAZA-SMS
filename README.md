@@ -23,6 +23,7 @@ HAZA-SMS is a multi-tenant School Management System for independent schools and 
 - Daily student attendance, correction requests, reports and absence alerts
 - Seasonal school schedules, period definitions and class timetables
 - Teacher timetables, workload summaries, conflict detection and substitutions
+- Examination timetables, invigilator and room conflict checks, and school events calendar
 
 ## Architecture
 
