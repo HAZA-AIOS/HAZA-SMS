@@ -113,13 +113,23 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 6. Merge the completed phase into `main`.
 7. Publish and verify the Sites deployment.
 
-## Roadmap
-
-The project is completing Phase 6, covering timetables and scheduling. Planned phases continue with examination timetables and calendars, fees and finance, examinations and results, learning resources, communications, parent/student portals, operational modules and reporting.
-
 ## Screenshots
 
-Interface screenshots will be maintained under `docs/screenshots/` as stable milestones are published. The live application link above always shows the latest deployed interface.
+### School management dashboard
+
+![HAZA-SMS school management dashboard](docs/screenshots/dashboard-overview.png)
+
+### Academic configuration
+
+![HAZA-SMS academic configuration](docs/screenshots/academic-configuration.png)
+
+### Classes and grade mapping
+
+![HAZA-SMS classes and grade mapping](docs/screenshots/classes-and-grades.png)
+
+## Roadmap
+
+The project is completing Phase 7, covering fees and finance. Planned phases continue with late fees, expenses, financial reports, examinations and results, learning resources, communications, parent/student portals, operational modules and analytics.
 
 ## License
 
