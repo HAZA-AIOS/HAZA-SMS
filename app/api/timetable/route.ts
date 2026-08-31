@@ -72,6 +72,9 @@ export async function GET() {
     sections,
     subjects,
     teachers,
+    substitutions,
+    teacherConflicts,
+    roomConflicts,
   ] = await Promise.all([
     env.DB.prepare(
       "SELECT * FROM school_schedules WHERE organization_id=?1 AND campus_id=?2 AND status='active' ORDER BY season DESC",
@@ -109,11 +112,46 @@ export async function GET() {
       .bind(auth.organizationId, campusId)
       .all(),
     env.DB.prepare(
-      "SELECT id,first_name||' '||coalesce(last_name,'') name FROM staff WHERE organization_id=?1 AND home_campus_id=?2 AND status='active' AND employment_status='active' ORDER BY first_name",
+      "SELECT id,first_name||' '||coalesce(last_name,'') name,designation FROM staff WHERE organization_id=?1 AND campus_id=?2 AND status='active' ORDER BY first_name",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT ts.*,e.weekday,e.schedule_id,e.period_id,e.class_id,e.section_id,e.subject_id,p.name period_name,p.starts_at,p.ends_at,cl.name class_name,se.name section_name,s.name subject_name,os.first_name||' '||coalesce(os.last_name,'') original_teacher_name,ss.first_name||' '||coalesce(ss.last_name,'') substitute_teacher_name FROM timetable_substitutions ts JOIN timetable_entries e ON e.id=ts.timetable_entry_id JOIN timetable_periods p ON p.id=e.period_id JOIN classes cl ON cl.id=e.class_id LEFT JOIN sections se ON se.id=e.section_id LEFT JOIN subjects s ON s.id=e.subject_id LEFT JOIN staff os ON os.id=ts.original_staff_id JOIN staff ss ON ss.id=ts.substitute_staff_id WHERE ts.organization_id=?1 AND ts.campus_id=?2 AND ts.status!='cancelled' ORDER BY ts.substitution_date DESC,p.period_number",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT staff_id,schedule_id,weekday,period_id,count(*) conflict_count FROM timetable_entries WHERE organization_id=?1 AND campus_id=?2 AND status='active' AND staff_id IS NOT NULL GROUP BY staff_id,schedule_id,weekday,period_id HAVING count(*)>1",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT room_name,schedule_id,weekday,period_id,count(*) conflict_count FROM timetable_entries WHERE organization_id=?1 AND campus_id=?2 AND status='active' AND room_name IS NOT NULL AND trim(room_name)!='' GROUP BY lower(room_name),schedule_id,weekday,period_id HAVING count(*)>1",
     )
       .bind(auth.organizationId, campusId)
       .all(),
   ]);
+  const workload = (teachers.results as Record<string, unknown>[]).map(
+    (teacher) => {
+      const assigned = (entries.results as Record<string, unknown>[]).filter(
+        (entry) => entry.staff_id === teacher.id,
+      );
+      return {
+        ...teacher,
+        weeklyPeriods: assigned.length,
+        teachingDays: new Set(assigned.map((entry) => entry.weekday)).size,
+        freePeriods: Math.max(
+          0,
+          (periods.results as Record<string, unknown>[]).filter(
+            (period) => !period.is_break,
+          ).length *
+            6 -
+            assigned.length,
+        ),
+      };
+    },
+  );
   return Response.json(
     {
       campusId,
@@ -125,6 +163,18 @@ export async function GET() {
       sections: sections.results,
       subjects: subjects.results,
       teachers: teachers.results,
+      workload,
+      substitutions: substitutions.results,
+      conflicts: [
+        ...(teacherConflicts.results as Record<string, unknown>[]).map((v) => ({
+          ...v,
+          type: "teacher",
+        })),
+        ...(roomConflicts.results as Record<string, unknown>[]).map((v) => ({
+          ...v,
+          type: "room",
+        })),
+      ],
       canManage: auth.permissions.has("timetable.manage"),
     },
     { headers: { "cache-control": "private, no-store" } },
@@ -310,7 +360,7 @@ export async function POST(request: Request) {
       (section &&
         (section.class_id !== classId || section.campus_id !== campusId)) ||
       (subject && subject.campus_id && subject.campus_id !== campusId) ||
-      (teacher && teacher.home_campus_id !== campusId)
+      (teacher && teacher.campus_id !== campusId)
     )
       return Response.json(
         { error: "Select valid timetable values for this campus." },
@@ -333,6 +383,26 @@ export async function POST(request: Request) {
       if (conflict)
         return Response.json(
           { error: "This teacher is already assigned during that period." },
+          { status: 409 },
+        );
+    }
+    if (roomName) {
+      const roomConflict = await env.DB.prepare(
+        "SELECT id FROM timetable_entries WHERE organization_id=?1 AND campus_id=?2 AND academic_year_id=?3 AND schedule_id=?4 AND weekday=?5 AND period_id=?6 AND lower(room_name)=lower(?7) AND status='active'",
+      )
+        .bind(
+          auth.organizationId,
+          campusId,
+          academicYearId,
+          scheduleId,
+          weekday,
+          periodId,
+          roomName,
+        )
+        .first();
+      if (roomConflict)
+        return Response.json(
+          { error: "That room is already in use during this period." },
           { status: 409 },
         );
     }
@@ -393,6 +463,143 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
+  }
+  if (action === "create_substitution") {
+    const timetableEntryId = clean(body?.timetableEntryId),
+      substituteStaffId = clean(body?.substituteStaffId),
+      substitutionDate = clean(body?.substitutionDate, 10),
+      reason = clean(body?.reason, 300),
+      notes = clean(body?.notes, 500) || null;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(substitutionDate) || !reason)
+      return Response.json(
+        { error: "Choose a valid date and enter a substitution reason." },
+        { status: 400 },
+      );
+    const entry = await env.DB.prepare(
+      "SELECT * FROM timetable_entries WHERE id=?1 AND organization_id=?2 AND campus_id=?3 AND status='active'",
+    )
+      .bind(timetableEntryId, auth.organizationId, campusId)
+      .first<Record<string, unknown>>();
+    const substitute = await owned(
+      "staff",
+      substituteStaffId,
+      auth.organizationId,
+    );
+    if (
+      !entry ||
+      !entry.staff_id ||
+      !substitute ||
+      substitute.campus_id !== campusId ||
+      substitute.status !== "active" ||
+      substituteStaffId === entry.staff_id
+    )
+      return Response.json(
+        { error: "Select a valid timetable entry and substitute teacher." },
+        { status: 400 },
+      );
+    const dateWeekday = new Date(`${substitutionDate}T12:00:00Z`).getUTCDay();
+    if (dateWeekday !== Number(entry.weekday))
+      return Response.json(
+        { error: "The substitution date must match the timetable weekday." },
+        { status: 400 },
+      );
+    const conflict = await env.DB.prepare(
+      "SELECT id FROM timetable_entries WHERE organization_id=?1 AND campus_id=?2 AND academic_year_id=?3 AND schedule_id=?4 AND weekday=?5 AND period_id=?6 AND staff_id=?7 AND status='active'",
+    )
+      .bind(
+        auth.organizationId,
+        campusId,
+        entry.academic_year_id,
+        entry.schedule_id,
+        entry.weekday,
+        entry.period_id,
+        substituteStaffId,
+      )
+      .first();
+    if (conflict)
+      return Response.json(
+        { error: "The substitute teacher is already teaching in this period." },
+        { status: 409 },
+      );
+    const id = crypto.randomUUID();
+    try {
+      await env.DB.batch([
+        env.DB.prepare(
+          "INSERT INTO timetable_substitutions (id,organization_id,campus_id,timetable_entry_id,substitution_date,original_staff_id,substitute_staff_id,reason,notes,created_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
+        ).bind(
+          id,
+          auth.organizationId,
+          campusId,
+          timetableEntryId,
+          substitutionDate,
+          entry.staff_id,
+          substituteStaffId,
+          reason,
+          notes,
+          auth.userId,
+        ),
+        env.DB.prepare(
+          "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'timetable.substitution.create','timetable_substitution',?5,'success',?6)",
+        ).bind(
+          crypto.randomUUID(),
+          auth.organizationId,
+          campusId,
+          auth.userId,
+          id,
+          safeMetadata({
+            timetableEntryId,
+            substituteStaffId,
+            substitutionDate,
+          }),
+        ),
+      ]);
+      return Response.json({ ok: true, id });
+    } catch {
+      return Response.json(
+        {
+          error:
+            "A substitution already exists for this class period and date.",
+        },
+        { status: 409 },
+      );
+    }
+  }
+  if (action === "cancel_substitution") {
+    const substitutionId = clean(body?.substitutionId),
+      reason = clean(body?.reason, 300);
+    if (!reason)
+      return Response.json(
+        { error: "Enter a reason for cancelling the substitution." },
+        { status: 400 },
+      );
+    const changed = await env.DB.prepare(
+      "UPDATE timetable_substitutions SET status='cancelled',notes=coalesce(notes,'')||?1,updated_at=unixepoch()*1000 WHERE id=?2 AND organization_id=?3 AND campus_id=?4 AND status!='cancelled'",
+    )
+      .bind(
+        `\nCancelled: ${reason}`,
+        substitutionId,
+        auth.organizationId,
+        campusId,
+      )
+      .run();
+    if (!changed.meta.changes)
+      return Response.json(
+        { error: "Substitution not found." },
+        { status: 404 },
+      );
+    await env.DB.prepare(
+      "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'timetable.substitution.cancel','timetable_substitution',?5,'success',?6)",
+    )
+      .bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        auth.userId,
+        substitutionId,
+        safeMetadata({ reason }),
+      )
+      .run();
+    return Response.json({ ok: true });
   }
   return Response.json({ error: "Invalid timetable action." }, { status: 400 });
 }

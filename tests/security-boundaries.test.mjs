@@ -96,7 +96,7 @@ test("dashboard loaders follow the selected campus without losing organization s
 test("backup snapshots use organization-scoped R2 keys and rate limits", async () => {
   const source = await read("app/api/security/backups/route.ts");
   assert.match(source, /organizations\/\$\{auth\.organizationId\}\/backups/);
-  assert.match(source, /enforceRateLimit\(auth,"backup\.create"/);
+  assert.match(source, /enforceRateLimit\(auth,\s*"backup\.create"/);
   assert.match(source, /requireSameOrigin\(request\)/);
 });
 
@@ -408,9 +408,18 @@ test("promotion rules and enrollment conversion are protected, tenant scoped and
   assert.match(promotions, /INSERT INTO enrollment_events/);
   assert.match(promotions, /await env\.DB\.batch\(statements\)/);
   assert.match(authorization, /"promotions\.apply"/);
-  assert.match(schema, /promotionRules\s*=\s*sqliteTable\(\s*"promotion_rules"/);
-  assert.match(schema, /promotionBatches\s*=\s*sqliteTable\(\s*"promotion_batches"/);
-  assert.match(schema, /promotionDecisions\s*=\s*sqliteTable\(\s*"promotion_decisions"/);
+  assert.match(
+    schema,
+    /promotionRules\s*=\s*sqliteTable\(\s*"promotion_rules"/,
+  );
+  assert.match(
+    schema,
+    /promotionBatches\s*=\s*sqliteTable\(\s*"promotion_batches"/,
+  );
+  assert.match(
+    schema,
+    /promotionDecisions\s*=\s*sqliteTable\(\s*"promotion_decisions"/,
+  );
   assert.match(migration, /CREATE TABLE `promotion_rules`/);
   assert.match(migration, /CREATE TABLE `promotion_batches`/);
   assert.match(migration, /CREATE TABLE `promotion_decisions`/);
@@ -501,7 +510,10 @@ test("attendance reports, linked-parent visibility, correction approval and aler
     schema,
     /studentAttendanceCorrectionRequests\s*=\s*sqliteTable\(\s*"student_attendance_correction_requests"/,
   );
-  assert.match(schema, /attendanceAlerts\s*=\s*sqliteTable\(\s*"attendance_alerts"/);
+  assert.match(
+    schema,
+    /attendanceAlerts\s*=\s*sqliteTable\(\s*"attendance_alerts"/,
+  );
   assert.match(migration, /attendance_alert_record_type_uq/);
   assert.match(backup, /"attendance_alerts"/);
 });
@@ -521,4 +533,33 @@ test("seasonal schedules, periods and timetable entries are tenant and campus sc
   assert.match(panel, /Class timetable/);
   assert.match(migration, /school_schedules_campus_season_uq/);
   assert.match(migration, /timetable_entry_teacher_slot_idx/);
+});
+
+test("teacher timetables, room conflicts and substitutions are protected and tenant scoped", async () => {
+  const source = await read("app/api/timetable/route.ts");
+  const panel = await read("app/TimetablePanel.tsx");
+  const schema = await read("db/schema.ts");
+  const migration = await read(
+    "drizzle/0020_teacher_timetable_substitutions.sql",
+  );
+  const backup = await read("app/api/security/backups/route.ts");
+  assert.match(source, /staff WHERE organization_id=\?1 AND campus_id=\?2/);
+  assert.doesNotMatch(
+    source,
+    /staff WHERE organization_id=\?1 AND home_campus_id/,
+  );
+  assert.match(source, /That room is already in use during this period/);
+  assert.match(source, /action === "create_substitution"/);
+  assert.match(
+    source,
+    /The substitute teacher is already teaching in this period/,
+  );
+  assert.match(source, /timetable\.substitution\.create/);
+  assert.match(source, /organization_id=\?1 AND campus_id=\?2/);
+  assert.match(panel, /Teacher timetables/);
+  assert.match(panel, /Schedule a substitution/);
+  assert.match(panel, /Conflict centre/);
+  assert.match(schema, /timetableSubstitutions\s*=\s*sqliteTable/);
+  assert.match(migration, /timetable_substitution_entry_date_uq/);
+  assert.match(backup, /"timetable_substitutions"/);
 });

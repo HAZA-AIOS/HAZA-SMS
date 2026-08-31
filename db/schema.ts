@@ -1314,6 +1314,54 @@ export const timetableEntries = sqliteTable(
   ],
 );
 
+export const timetableSubstitutions = sqliteTable(
+  "timetable_substitutions",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    timetableEntryId: text("timetable_entry_id")
+      .notNull()
+      .references(() => timetableEntries.id, { onDelete: "cascade" }),
+    substitutionDate: text("substitution_date").notNull(),
+    originalStaffId: text("original_staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "restrict" }),
+    substituteStaffId: text("substitute_staff_id")
+      .notNull()
+      .references(() => staff.id, { onDelete: "restrict" }),
+    reason: text("reason").notNull(),
+    notes: text("notes"),
+    status: text("status").notNull().default("scheduled"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("timetable_substitution_entry_date_uq").on(
+      t.timetableEntryId,
+      t.substitutionDate,
+    ),
+    index("timetable_substitution_teacher_date_idx").on(
+      t.organizationId,
+      t.substituteStaffId,
+      t.substitutionDate,
+      t.status,
+    ),
+    index("timetable_substitution_campus_date_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.substitutionDate,
+      t.status,
+    ),
+  ],
+);
+
 export const studentAttendanceCorrections = sqliteTable(
   "student_attendance_corrections",
   {

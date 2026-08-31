@@ -12,6 +12,9 @@ type Data = {
   sections: Row[];
   subjects: Row[];
   teachers: Row[];
+  workload: Row[];
+  substitutions: Row[];
+  conflicts: Row[];
   canManage: boolean;
 };
 const days = [
@@ -32,6 +35,9 @@ const empty: Data = {
   sections: [],
   subjects: [],
   teachers: [],
+  workload: [],
+  substitutions: [],
+  conflicts: [],
   canManage: false,
 };
 const fmt = (v: unknown) => {
@@ -45,15 +51,25 @@ export default function TimetablePanel() {
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState("");
   const [scheduleId, setScheduleId] = useState("");
+  const [teacherId, setTeacherId] = useState("");
   const load = async () => {
     setBusy(true);
-    const r = await fetch("/api/timetable", { cache: "no-store" }),
-      j = (await r.json()) as Data & { error?: string };
-    if (r.ok) {
-      setData(j);
-      setScheduleId((v) => v || j.schedules[0]?.id || "");
-    } else setMessage(j.error || "Unable to load timetable.");
-    setBusy(false);
+    setMessage("");
+    try {
+      const r = await fetch("/api/timetable", { cache: "no-store" });
+      const j = (await r.json()) as Data & { error?: string };
+      if (r.ok) {
+        setData(j);
+        setScheduleId((v) => v || j.schedules[0]?.id || "");
+        setTeacherId((v) => v || j.teachers[0]?.id || "");
+      } else setMessage(j.error || "Unable to load timetable.");
+    } catch {
+      setMessage(
+        "The timetable service could not be loaded. Please try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
   useEffect(() => {
     void load();
@@ -93,11 +109,13 @@ export default function TimetablePanel() {
     <div className="foundation-page timetable-page">
       <div className="phase-heading">
         <div>
-          <span className="eyebrow">PHASE 6A · TIMETABLE FOUNDATION</span>
-          <h1>School timings and timetable</h1>
+          <span className="eyebrow">
+            PHASE 6B · TEACHER TIMETABLES & SUBSTITUTIONS
+          </span>
+          <h1>School and teacher timetables</h1>
           <p>
-            Configure seasonal hours, teaching periods and the class timetable
-            for the selected campus.
+            Configure seasonal hours, class and teacher schedules, conflict
+            checks and temporary substitutions for the selected campus.
           </p>
         </div>
         <span className="phase-badge complete">
@@ -135,6 +153,9 @@ export default function TimetablePanel() {
             ["schedules", "Seasonal schedules"],
             ["periods", "Period definitions"],
             ["grid", "Class timetable"],
+            ["teachers", "Teacher timetables"],
+            ["conflicts", "Conflicts"],
+            ["substitutions", "Substitutions"],
           ].map(([id, label]) => (
             <button
               className={tab === id ? "active" : ""}
@@ -479,6 +500,251 @@ export default function TimetablePanel() {
                 </p>
               </div>
             )}
+          </div>
+        )}
+        {tab === "teachers" && (
+          <div className="teacher-timetable-space">
+            <div className="timetable-grid-toolbar">
+              <label>
+                Teacher
+                <select
+                  value={teacherId}
+                  onChange={(e) => setTeacherId(e.target.value)}
+                >
+                  {data.teachers.map((teacher) => (
+                    <option value={teacher.id} key={teacher.id}>
+                      {teacher.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <section className="teacher-workload-grid">
+              {data.workload.map((teacher) => (
+                <article
+                  className={teacher.id === teacherId ? "active" : ""}
+                  key={teacher.id}
+                  onClick={() => setTeacherId(String(teacher.id))}
+                >
+                  <span>👩‍🏫</span>
+                  <div>
+                    <h3>{teacher.name}</h3>
+                    <p>{String(teacher.designation || "Teacher")}</p>
+                  </div>
+                  <b>{String(teacher.weeklyPeriods)} periods</b>
+                  <small>{String(teacher.teachingDays)} teaching days</small>
+                </article>
+              ))}
+            </section>
+            {teacherId ? (
+              <div className="weekly-timetable teacher-view">
+                {days.map(([id, name]) => (
+                  <section key={id}>
+                    <header>{name}</header>
+                    {periods.map((period) => {
+                      const assigned = entries.find(
+                        (entry) =>
+                          entry.weekday === id &&
+                          entry.period_id === period.id &&
+                          entry.staff_id === teacherId,
+                      );
+                      return (
+                        <div
+                          className={period.is_break ? "break" : ""}
+                          key={period.id}
+                        >
+                          <time>{fmt(period.starts_at)}</time>
+                          {period.is_break ? (
+                            <b>{period.name}</b>
+                          ) : assigned ? (
+                            <article
+                              style={{
+                                borderLeftColor: String(
+                                  assigned.color || "#7456de",
+                                ),
+                              }}
+                            >
+                              <b>
+                                {String(assigned.subject_name || "Activity")}
+                              </b>
+                              <small>
+                                {String(assigned.class_name)}
+                                {assigned.section_name
+                                  ? ` · ${String(assigned.section_name)}`
+                                  : ""}
+                              </small>
+                              <small>
+                                {String(
+                                  assigned.room_name || "Room not assigned",
+                                )}
+                              </small>
+                            </article>
+                          ) : (
+                            <span className="free-slot">Free period</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <div className="timetable-empty">
+                <span>👩‍🏫</span>
+                <h3>No active teachers</h3>
+                <p>Add active teaching staff to view individual timetables.</p>
+              </div>
+            )}
+          </div>
+        )}
+        {tab === "conflicts" && (
+          <div className="timetable-conflict-space">
+            <header className="timetable-section-heading">
+              <div>
+                <span>⚠️</span>
+                <div>
+                  <h2>Conflict centre</h2>
+                  <p>
+                    Teacher and room clashes are blocked while saving and
+                    monitored here.
+                  </p>
+                </div>
+              </div>
+              <b className={data.conflicts.length ? "warning" : "clear"}>
+                {data.conflicts.length
+                  ? `${data.conflicts.length} conflicts`
+                  : "No conflicts"}
+              </b>
+            </header>
+            {data.conflicts.length ? (
+              <div className="conflict-list">
+                {data.conflicts.map((conflict, index) => (
+                  <article key={`${conflict.type}-${index}`}>
+                    <span>{conflict.type === "teacher" ? "👩‍🏫" : "🚪"}</span>
+                    <div>
+                      <h3>
+                        {conflict.type === "teacher"
+                          ? "Teacher overlap"
+                          : "Room overlap"}
+                      </h3>
+                      <p>
+                        Schedule slot has {String(conflict.conflict_count)}{" "}
+                        active assignments.
+                      </p>
+                    </div>
+                    <b>Needs review</b>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="timetable-empty">
+                <span>✅</span>
+                <h3>Timetable is conflict-free</h3>
+                <p>
+                  No teacher or room is assigned to more than one class in the
+                  same period.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        {tab === "substitutions" && (
+          <div className="substitution-space">
+            {data.canManage && (
+              <form
+                className="substitution-form"
+                onSubmit={(e) => submit(e, "create_substitution")}
+              >
+                <header>
+                  <span>🔄</span>
+                  <div>
+                    <h2>Schedule a substitution</h2>
+                    <p>
+                      Temporarily replace an assigned teacher for one class
+                      period.
+                    </p>
+                  </div>
+                </header>
+                <label>
+                  Timetable entry
+                  <select name="timetableEntryId" required>
+                    <option value="">Select assigned class</option>
+                    {data.entries
+                      .filter((entry) => entry.staff_id)
+                      .map((entry) => (
+                        <option value={entry.id} key={entry.id}>
+                          {days.find(([id]) => id === entry.weekday)?.[1]} ·{" "}
+                          {entry.period_name} · {entry.class_name} ·{" "}
+                          {entry.teacher_name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label>
+                  Date
+                  <input type="date" name="substitutionDate" required />
+                </label>
+                <label>
+                  Substitute teacher
+                  <select name="substituteStaffId" required>
+                    <option value="">Select available teacher</option>
+                    {data.teachers.map((teacher) => (
+                      <option value={teacher.id} key={teacher.id}>
+                        {teacher.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Reason
+                  <input
+                    name="reason"
+                    placeholder="Original teacher is on leave"
+                    required
+                  />
+                </label>
+                <label>
+                  Notes
+                  <input name="notes" placeholder="Optional instructions" />
+                </label>
+                <button>Schedule substitution</button>
+              </form>
+            )}
+            <div className="substitution-list">
+              {data.substitutions.length ? (
+                data.substitutions.map((item) => (
+                  <article key={item.id}>
+                    <span>🔄</span>
+                    <div>
+                      <small>
+                        {String(item.substitution_date)} ·{" "}
+                        {String(item.period_name)}
+                      </small>
+                      <h3>
+                        {String(item.class_name)}
+                        {item.section_name
+                          ? ` · ${String(item.section_name)}`
+                          : ""}
+                      </h3>
+                      <p>
+                        {String(item.original_teacher_name)} →{" "}
+                        <b>{String(item.substitute_teacher_name)}</b>
+                      </p>
+                      <small>{String(item.reason)}</small>
+                    </div>
+                    <i>{String(item.status)}</i>
+                  </article>
+                ))
+              ) : (
+                <div className="timetable-empty">
+                  <span>🔄</span>
+                  <h3>No substitutions scheduled</h3>
+                  <p>
+                    Future and recent teacher substitutions will appear here.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>

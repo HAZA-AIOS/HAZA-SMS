@@ -1,107 +1,123 @@
-# vinext-starter
+# HAZA-SMS
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+HAZA-SMS is a multi-tenant School Management System for independent schools and school groups. Each registered school receives an isolated workspace, may operate multiple campuses, and sees only its own academic, operational, staff, student and financial records.
 
-## Prerequisites
+**Live application:** [The Mentor School SMS](https://mentor-school-sms.mussawarhussain.chatgpt.site/)
 
-- Node.js `>=22.13.0`
-- Linux with `flock`, `curl`, and GNU `timeout`
+## Current capabilities
 
-## Sites Lifecycle
+- School registration, verified identity and organization selection
+- Multi-school and multi-campus data isolation
+- Server-enforced roles and granular permissions
+- School, campus and academic-year configuration
+- Audit history, security controls and backup foundation
+- Student directory, complete profiles, guardians, documents and enrollment history
+- Bulk student import/export and validation
+- Admission enquiry, application, assessment, approval and enrollment conversion
+- Printable admission forms, admission letters and reporting
+- Staff profiles, photographs, documents, qualifications and experience
+- Teacher subject, class and class-teacher assignments
+- Staff attendance, leave management, salary configuration and payroll foundation
+- Academic years, terms, grade levels, classes, sections, subjects and curriculum mapping
+- Promotion rules and enrollment-history integration
+- Daily student attendance, correction requests, reports and absence alerts
+- Seasonal school schedules, period definitions and class timetables
+- Teacher timetables, workload summaries, conflict detection and substitutions
 
-The Sites lifecycle CLI runs the locked dependency install before returning this checkout. Edit the source under `app/`, then checkpoint when a coherent milestone is ready to inspect or share. The remote Sites builder runs `npm run build` against the pushed commit. Do not repeat install or build as a normal pre-checkpoint step.
+## Architecture
 
-This starter does not use `wrangler.jsonc`.
+| Layer           | Technology                                   | Responsibility                                        |
+| --------------- | -------------------------------------------- | ----------------------------------------------------- |
+| Application     | React, Vinext, TypeScript                    | Server-rendered dashboard and protected workflows     |
+| Styling         | Tailwind-compatible CSS and component styles | Responsive school administration interface            |
+| Runtime         | Cloudflare Workers                           | API routes and server-side authorization              |
+| Structured data | Cloudflare D1 + Drizzle                      | Tenant records, migrations and indexes                |
+| File storage    | Cloudflare R2                                | Student/staff photos, documents and generated records |
+| Identity        | Sign in with ChatGPT temporarily             | Verified user identity during development             |
+| Authorization   | Application RBAC                             | Permission and campus checks on protected operations  |
+| History         | D1 audit logs                                | Records sensitive views and data changes              |
 
-`install:ci` is intentionally a single, non-retrying `npm ci`. It refuses a concurrent install for the same project, consumes a matching image-seeded npm cache with `--prefer-offline` while retaining registry fallback for a missing cache object, otherwise downloads and verifies the complete vinext tarball recorded in `package-lock.json`, limits npm to one socket, and terminates a stalled install. `build` applies a short timeout. These helpers target Linux and use GNU `timeout`; they are not native macOS scripts.
+## Multi-tenant security model
 
-Scripts that need writable project-scoped home, npm, XDG, and temporary paths use `scripts/sites-env.sh`. The `dev` and `start` scripts honor the caller's runtime environment and keep Wrangler logs inside the checkout. The generated `.sites-runtime/` directory is disposable and ignored by Git.
+Every protected record is scoped by `organization_id`. Campus-specific records are additionally scoped by `campus_id`. API routes resolve the authenticated user’s active organization and campus, verify permissions server-side, and reject cross-tenant or unauthorized campus access. Sidebar visibility is only a convenience; it is not the security boundary.
 
-## Included Shape
+Key controls include:
 
-- edit site code under `app/`
-- `app/chatgpt-auth.ts` provides optional dispatch-owned ChatGPT sign-in helpers
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/index.ts` reads the D1 binding from the Cloudflare Worker environment
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+- Organization and campus ownership checks
+- Server-side permission checks for view, create, edit, approve, export and sensitive-data actions
+- Same-origin validation and rate limiting for writes
+- Audited high-value actions
+- Tenant-scoped D1 queries and R2 object paths
+- Version-controlled migrations and indexed query paths
+- Backup manifests restricted to one organization
 
-## Workspace Auth Headers
+## Timetable system
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
+- Winter and summer schedules per campus
+- Configurable school hours, breaks and working days
+- Teaching-period definitions
+- Class, section, subject, teacher and room assignments
+- Individual teacher weekly timetables
+- Teacher workload and free-period summaries
+- Teacher, class and room conflict prevention
+- Temporary substitute-teacher scheduling
+- Campus, academic-year and schedule isolation
+- Audit history for timetable changes
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+## Repository structure
 
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```text
+app/                 Dashboard panels and protected API routes
+db/                  Drizzle schema and D1 access helpers
+drizzle/             Version-controlled D1 migrations
+lib/                 Authorization, security and CSV helpers
+public/              School logo and public assets
+tests/               Render and security-boundary tests
+worker/              Cloudflare Worker entry point
+.openai/hosting.json Sites bindings for D1 and R2
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## Local development
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+Requirements: Node.js 22.13 or later and npm.
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+```bash
+npm ci
+npm run dev
+```
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+Useful commands:
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+```bash
+npm test
+npm run build
+npm run db:generate
+```
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+Do not commit `.env` files, credentials, production exports or student/staff documents.
 
-## Diagnostic Commands
+## Database migrations
 
-- `npm run install:ci`: perform the one bounded lockfile install
-- `npm run dev`: start the Vite/Vinext development server
-- `npm run build`: build the deployable Sites artifact
-- `npm run start`: start the built Vinext application
-- `npm test`: build and verify the rendered development-preview metadata
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+The `drizzle/` directory contains the ordered D1 schema history. New database work must use a new migration, be reviewed for tenant ownership and indexes, and pass testing before deployment. Never rewrite an already-deployed migration.
 
-Use build commands for targeted diagnosis after a remote failure, not as part of the normal checkpoint path.
+## Development workflow
 
-The timeout defaults can be overridden for a controlled canary with `SITES_INSTALL_TIMEOUT`, `SITES_INSTALL_KILL_AFTER`, `SITES_BUILD_TIMEOUT`, and `SITES_BUILD_KILL_AFTER`. A timeout fails the command; the helpers never retry an unchanged install or build.
+1. Create a focused branch for the phase or fix.
+2. Implement database, API, permission and interface layers together.
+3. Add or update security-boundary tests.
+4. Run the complete test suite.
+5. Commit and update GitHub.
+6. Merge the completed phase into `main`.
+7. Publish and verify the Sites deployment.
 
-## Learn More
+## Roadmap
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+The project is completing Phase 6, covering timetables and scheduling. Planned phases continue with examination timetables and calendars, fees and finance, examinations and results, learning resources, communications, parent/student portals, operational modules and reporting.
+
+## Screenshots
+
+Interface screenshots will be maintained under `docs/screenshots/` as stable milestones are published. The live application link above always shows the latest deployed interface.
+
+## License
+
+This repository is licensed under the [MIT License](LICENSE).
