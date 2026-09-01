@@ -12,10 +12,20 @@ type Data = {
   classes: Row[];
   invoices: Row[];
   payments: Row[];
+  lateFeeRules: Row[];
+  lateFeeApplications: Row[];
+  expenseCategories: Row[];
+  expenses: Row[];
+  report: Row[];
+  reportFrom: string;
+  reportTo: string;
   canManage: boolean;
   canAssign: boolean;
   canInvoice: boolean;
   canCollect: boolean;
+  canLateFees: boolean;
+  canManageExpenses: boolean;
+  canViewReports: boolean;
   canViewFinancial: boolean;
 };
 const empty: Data = {
@@ -29,10 +39,20 @@ const empty: Data = {
   classes: [],
   invoices: [],
   payments: [],
+  lateFeeRules: [],
+  lateFeeApplications: [],
+  expenseCategories: [],
+  expenses: [],
+  report: [],
+  reportFrom: "",
+  reportTo: "",
   canManage: false,
   canAssign: false,
   canInvoice: false,
   canCollect: false,
+  canLateFees: false,
+  canManageExpenses: false,
+  canViewReports: false,
   canViewFinancial: false,
 };
 const money = (v: unknown) => `PKR ${Number(v || 0).toLocaleString()}`;
@@ -40,11 +60,14 @@ export default function FeesPanel() {
   const [data, setData] = useState<Data>(empty),
     [tab, setTab] = useState("invoices"),
     [busy, setBusy] = useState(true),
-    [message, setMessage] = useState("");
-  const load = async () => {
+    [message, setMessage] = useState(""),
+    [reportFrom, setReportFrom] = useState(""),
+    [reportTo, setReportTo] = useState("");
+  const load = async (from = reportFrom, to = reportTo) => {
     setBusy(true);
     try {
-      const r = await fetch("/api/fees", { cache: "no-store" }),
+      const query = from && to ? `?from=${from}&to=${to}` : "",
+        r = await fetch(`/api/fees${query}`, { cache: "no-store" }),
         j = (await r.json()) as Data & { error?: string };
       if (!r.ok) throw new Error(j.error || "Unable to load fees.");
       setData(j);
@@ -91,12 +114,12 @@ export default function FeesPanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 7B · INVOICES, PAYMENTS & RECEIPTS
+            PHASE 7C · LATE FEES, EXPENSES & REPORTS
           </span>
-          <h1>Invoices, payments and printable receipts</h1>
+          <h1>Complete fees and financial control</h1>
           <p>
-            Generate monthly invoices, collect payments, track balances and
-            print school-branded receipts.
+            Apply controlled late charges, record campus expenses and review
+            clear monthly financial performance.
           </p>
         </div>
         <span className="phase-badge complete">
@@ -105,25 +128,41 @@ export default function FeesPanel() {
       </div>
       <section className="fee-summary">
         <article>
-          <span>🧩</span>
-          <b>{data.invoices.length}</b>
-          <small>Total invoices</small>
-        </article>
-        <article>
-          <span>📋</span>
-          <b>{data.invoices.filter((v) => v.status === "paid").length}</b>
-          <small>Paid invoices</small>
-        </article>
-        <article>
-          <span>🎓</span>
+          <span>💳</span>
           <b>
-            {
-              data.invoices.filter(
-                (v) => v.status === "unpaid" || v.status === "partial",
-              ).length
-            }
+            {data.canViewFinancial
+              ? money(
+                  data.payments.reduce((n, v) => n + Number(v.amount || 0), 0),
+                )
+              : "Protected"}
           </b>
-          <small>Outstanding invoices</small>
+          <small>Total collected</small>
+        </article>
+        <article>
+          <span>🧾</span>
+          <b>
+            {data.canViewFinancial
+              ? money(
+                  data.expenses.reduce((n, v) => n + Number(v.amount || 0), 0),
+                )
+              : "Protected"}
+          </b>
+          <small>Total expenses</small>
+        </article>
+        <article>
+          <span>📈</span>
+          <b>
+            {data.canViewFinancial
+              ? money(
+                  data.payments.reduce((n, v) => n + Number(v.amount || 0), 0) -
+                    data.expenses.reduce(
+                      (n, v) => n + Number(v.amount || 0),
+                      0,
+                    ),
+                )
+              : "Protected"}
+          </b>
+          <small>Net cash position</small>
         </article>
         <article>
           <span>💰</span>
@@ -148,6 +187,9 @@ export default function FeesPanel() {
             ["payments", "Payments & receipts"],
             ["generate", "Generate invoices"],
             ["collect", "Collect payment"],
+            ["late-fees", "Late fees"],
+            ["expenses", "Expenses"],
+            ["reports", "Financial reports"],
             ["structures", "Fee structures"],
             ["categories", "Categories"],
             ["assignments", "Student assignments"],
@@ -352,6 +394,256 @@ export default function FeesPanel() {
                 Post payment and create receipt
               </button>
             </form>
+          </div>
+        )}
+        {tab === "late-fees" && (
+          <div className="finance-split">
+            <section>
+              <h2>Late-fee rules</h2>
+              {data.lateFeeRules.map((v) => (
+                <article className="finance-list-card" key={v.id}>
+                  <span>⏱️</span>
+                  <div>
+                    <b>{v.name as string}</b>
+                    <small>
+                      {v.grace_days as number} grace days ·{" "}
+                      {v.calculation_type === "percentage"
+                        ? `${v.value}%`
+                        : money(v.value)}
+                    </small>
+                  </div>
+                </article>
+              ))}
+              {!data.lateFeeRules.length && (
+                <p className="finance-empty">No late-fee rules created.</p>
+              )}
+            </section>
+            <div className="fee-forms compact">
+              <form onSubmit={(e) => send(e, "create_late_fee_rule")}>
+                <h2>Create late-fee rule</h2>
+                <label>
+                  Rule name
+                  <input
+                    name="name"
+                    placeholder="Monthly overdue charge"
+                    required
+                  />
+                </label>
+                <div>
+                  <label>
+                    Calculation
+                    <select name="calculationType">
+                      <option value="fixed">Fixed amount</option>
+                      <option value="percentage">Percentage</option>
+                    </select>
+                  </label>
+                  <label>
+                    Value
+                    <input name="value" type="number" min="1" required />
+                  </label>
+                </div>
+                <div>
+                  <label>
+                    Grace days
+                    <input
+                      name="graceDays"
+                      type="number"
+                      min="0"
+                      max="90"
+                      defaultValue="5"
+                    />
+                  </label>
+                  <label>
+                    Maximum amount
+                    <input name="maximumAmount" type="number" min="0" />
+                  </label>
+                </div>
+                <label>
+                  Academic year
+                  <select name="academicYearId">
+                    <option value="">All years</option>
+                    {data.academicYears.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button disabled={!data.canLateFees}>Save rule</button>
+              </form>
+              <form onSubmit={(e) => send(e, "apply_late_fees")}>
+                <h2>Apply late fees</h2>
+                <label>
+                  Rule
+                  <select name="ruleId" required>
+                    <option value="">Select rule</option>
+                    {data.lateFeeRules.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Apply as of
+                  <input name="appliedOn" type="date" required />
+                </label>
+                <button disabled={!data.canLateFees}>
+                  Apply to eligible invoices
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+        {tab === "expenses" && (
+          <div className="finance-split">
+            <section>
+              <h2>Expense register</h2>
+              {data.expenses.map((v) => (
+                <article className="finance-list-card" key={v.id}>
+                  <span>💸</span>
+                  <div>
+                    <b>{v.payee as string}</b>
+                    <small>
+                      {v.expense_date as string} · {v.category_name as string} ·{" "}
+                      {v.description as string}
+                    </small>
+                  </div>
+                  <strong>
+                    {data.canViewFinancial ? money(v.amount) : "Protected"}
+                  </strong>
+                </article>
+              ))}
+              {!data.expenses.length && (
+                <p className="finance-empty">
+                  No expenses recorded for this campus.
+                </p>
+              )}
+            </section>
+            <div className="fee-forms compact">
+              <form onSubmit={(e) => send(e, "record_expense")}>
+                <h2>Record expense</h2>
+                <label>
+                  Category
+                  <select name="categoryId" required>
+                    <option value="">Select category</option>
+                    {data.expenseCategories.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div>
+                  <label>
+                    Date
+                    <input name="expenseDate" type="date" required />
+                  </label>
+                  <label>
+                    Amount
+                    <input name="amount" type="number" min="1" required />
+                  </label>
+                </div>
+                <label>
+                  Paid to
+                  <input name="payee" required />
+                </label>
+                <label>
+                  Description
+                  <input name="description" required />
+                </label>
+                <div>
+                  <label>
+                    Method
+                    <select name="paymentMethod">
+                      <option value="cash">Cash</option>
+                      <option value="bank">Bank transfer</option>
+                      <option value="card">Card</option>
+                      <option value="online">Online</option>
+                      <option value="cheque">Cheque</option>
+                    </select>
+                  </label>
+                  <label>
+                    Reference
+                    <input name="referenceNumber" />
+                  </label>
+                </div>
+                <button disabled={!data.canManageExpenses}>
+                  Record expense
+                </button>
+              </form>
+              <form onSubmit={(e) => send(e, "create_expense_category")}>
+                <h2>Add expense category</h2>
+                <label>
+                  Name
+                  <input name="name" placeholder="Utilities" required />
+                </label>
+                <label>
+                  Code
+                  <input name="code" placeholder="UTILITIES" required />
+                </label>
+                <button disabled={!data.canManageExpenses}>Add category</button>
+              </form>
+            </div>
+          </div>
+        )}
+        {tab === "reports" && (
+          <div className="financial-report">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void load(reportFrom, reportTo);
+              }}
+            >
+              <label>
+                From
+                <input
+                  type="date"
+                  value={reportFrom}
+                  onChange={(e) => setReportFrom(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                To
+                <input
+                  type="date"
+                  value={reportTo}
+                  onChange={(e) => setReportTo(e.target.value)}
+                  required
+                />
+              </label>
+              <button disabled={!data.canViewReports}>Run report</button>
+            </form>
+            <div className="invoice-table finance-report-table">
+              <div className="head">
+                <span>Month</span>
+                <span>Billed</span>
+                <span>Collected</span>
+                <span>Expenses</span>
+                <span>Outstanding</span>
+                <span>Net cash</span>
+              </div>
+              {data.report.map((v) => (
+                <div key={v.period as string}>
+                  <span>
+                    <b>{v.period as string}</b>
+                  </span>
+                  <span>{money(v.billed)}</span>
+                  <span>{money(v.collected)}</span>
+                  <span>{money(v.expenses)}</span>
+                  <span>{money(v.outstanding)}</span>
+                  <span>
+                    <b>{money(v.net)}</b>
+                  </span>
+                </div>
+              ))}
+            </div>
+            {!data.report.length && (
+              <p className="finance-empty">
+                No financial activity in the selected period.
+              </p>
+            )}
           </div>
         )}
         {tab === "structures" &&

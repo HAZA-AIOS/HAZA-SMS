@@ -1725,6 +1725,136 @@ export const feePayments = sqliteTable(
   ],
 );
 
+export const lateFeeRules = sqliteTable(
+  "late_fee_rules",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "cascade",
+    }),
+    academicYearId: text("academic_year_id").references(
+      () => academicYears.id,
+      { onDelete: "restrict" },
+    ),
+    name: text("name").notNull(),
+    calculationType: text("calculation_type").notNull().default("fixed"),
+    value: integer("value").notNull().default(0),
+    graceDays: integer("grace_days").notNull().default(0),
+    maximumAmount: integer("maximum_amount"),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("late_fee_rules_scope_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.academicYearId,
+      t.status,
+    ),
+  ],
+);
+
+export const feeLateFeeApplications = sqliteTable(
+  "fee_late_fee_applications",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    invoiceId: text("invoice_id")
+      .notNull()
+      .references(() => feeInvoices.id, { onDelete: "cascade" }),
+    ruleId: text("rule_id")
+      .notNull()
+      .references(() => lateFeeRules.id, { onDelete: "restrict" }),
+    amount: integer("amount").notNull(),
+    appliedOn: text("applied_on").notNull(),
+    appliedBy: text("applied_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    uniqueIndex("fee_late_fee_invoice_rule_uq").on(t.invoiceId, t.ruleId),
+    index("fee_late_fee_scope_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.appliedOn,
+    ),
+  ],
+);
+
+export const expenseCategories = sqliteTable(
+  "expense_categories",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("expense_categories_org_code_uq").on(t.organizationId, t.code),
+  ],
+);
+
+export const expenses = sqliteTable(
+  "expenses",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    categoryId: text("category_id")
+      .notNull()
+      .references(() => expenseCategories.id, { onDelete: "restrict" }),
+    expenseDate: text("expense_date").notNull(),
+    amount: integer("amount").notNull(),
+    payee: text("payee").notNull(),
+    description: text("description").notNull(),
+    paymentMethod: text("payment_method").notNull().default("cash"),
+    referenceNumber: text("reference_number"),
+    status: text("status").notNull().default("posted"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("expenses_scope_date_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.expenseDate,
+      t.status,
+    ),
+    index("expenses_category_date_idx").on(
+      t.organizationId,
+      t.categoryId,
+      t.expenseDate,
+    ),
+  ],
+);
+
 export const studentAttendanceCorrections = sqliteTable(
   "student_attendance_corrections",
   {

@@ -280,6 +280,93 @@
 .fee-workspace .academic-empty {
   padding: 54px 20px;
 }
+.finance-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+  gap: 18px;
+  padding: 18px;
+}
+.finance-split > section {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.finance-split h2,
+.financial-report h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+.finance-list-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #eee3de;
+  border-radius: 14px;
+}
+.finance-list-card > span {
+  font-size: 25px;
+}
+.finance-list-card div {
+  display: grid;
+  gap: 4px;
+}
+.finance-list-card small {
+  color: #776d67;
+}
+.finance-list-card strong {
+  color: #16815f;
+}
+.fee-forms.compact {
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.fee-forms.compact form {
+  width: 100%;
+  padding: 17px;
+}
+.finance-empty {
+  padding: 28px;
+  text-align: center;
+  color: #776d67;
+  background: #faf6f3;
+  border-radius: 14px;
+}
+.financial-report {
+  padding: 18px;
+}
+.financial-report > form {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 16px;
+}
+.financial-report > form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: #4d443f;
+}
+.financial-report > form input {
+  border: 1px solid #dcd1cc;
+  border-radius: 10px;
+  padding: 10px;
+  font: inherit;
+}
+.financial-report > form button {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 17px;
+  background: #198b66;
+  color: white;
+  font-weight: 700;
+}
+.finance-report-table > div {
+  grid-template-columns: repeat(6, minmax(105px, 1fr));
+}
 @media (max-width: 900px) {
   .fee-summary {
     grid-template-columns: repeat(2, 1fr);
@@ -296,6 +383,15 @@
   .fee-assignment-table > div {
     min-width: 760px;
   }
+  .finance-split {
+    grid-template-columns: 1fr;
+  }
+  .finance-report-table {
+    overflow: auto;
+  }
+  .finance-report-table > div {
+    min-width: 760px;
+  }
 }
 @media (max-width: 600px) {
   .fee-summary,
@@ -310,6 +406,10 @@
   }
   .fee-structure-grid form {
     grid-template-columns: 1fr 1fr;
+  }
+  .financial-report > form {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

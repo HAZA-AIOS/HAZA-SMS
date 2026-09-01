@@ -638,3 +638,32 @@ test("monthly invoices, payment collection and receipts are protected and tenant
   assert.match(backup, /"fee_payments"/);
   assert.match(auth, /"fees\.collect"/);
 });
+
+test("late fees, expenses and financial reports are protected and campus scoped", async () => {
+  const source = await read("app/api/fees/route.ts"),
+    panel = await read("app/FeesPanel.tsx"),
+    schema = await read("db/schema.ts"),
+    migration = await read("drizzle/0024_late_fees_expenses_reports.sql"),
+    backup = await read("app/api/security/backups/route.ts"),
+    auth = await read("lib/authorization.ts");
+  assert.match(source, /action === "apply_late_fees"/);
+  assert.match(source, /fee\.late_fee\.apply/);
+  assert.match(source, /NOT EXISTS \(SELECT 1 FROM fee_late_fee_applications/);
+  assert.match(source, /action === "record_expense"/);
+  assert.match(source, /expense\.create/);
+  assert.match(source, /organization_id=\?1 AND campus_id=\?2/);
+  assert.match(source, /finance\.reports/);
+  assert.match(source, /const canViewFinancial/);
+  assert.match(panel, /Financial reports/);
+  assert.match(panel, /Apply to eligible invoices/);
+  assert.match(panel, /Record expense/);
+  assert.match(schema, /lateFeeRules\s*=\s*sqliteTable/);
+  assert.match(schema, /expenses\s*=\s*sqliteTable/);
+  assert.match(migration, /fee_late_fee_invoice_rule_uq/);
+  assert.match(migration, /expenses_scope_date_idx/);
+  assert.match(backup, /"fee_late_fee_applications"/);
+  assert.match(backup, /"expenses"/);
+  assert.match(auth, /"fees\.late_fees"/);
+  assert.match(auth, /"expenses\.manage"/);
+  assert.match(auth, /"finance\.reports"/);
+});

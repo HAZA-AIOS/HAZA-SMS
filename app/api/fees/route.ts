@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const clean = (v: unknown, n = 140) =>
   typeof v === "string" ? v.trim().slice(0, n) : "";
 const iso = /^\d{4}-\d{2}-\d{2}$/;
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await authorize("fees.view");
   if (!auth)
     return Response.json(
@@ -24,6 +24,14 @@ export async function GET() {
     );
   const denied = await requireCampusAccess(auth, campusId, "fees.view");
   if (denied) return denied;
+  const url = new URL(request.url),
+    today = new Date().toISOString().slice(0, 10),
+    from = iso.test(url.searchParams.get("from") || "")
+      ? url.searchParams.get("from")!
+      : `${today.slice(0, 4)}-01-01`,
+    to = iso.test(url.searchParams.get("to") || "")
+      ? url.searchParams.get("to")!
+      : today;
   const [
     categories,
     structures,
@@ -34,6 +42,13 @@ export async function GET() {
     classes,
     invoices,
     payments,
+    lateFeeRules,
+    lateFeeApplications,
+    expenseCategories,
+    expenses,
+    invoiceReport,
+    paymentReport,
+    expenseReport,
   ] = await Promise.all([
     env.DB.prepare(
       "SELECT * FROM fee_categories WHERE organization_id=?1 AND status='active' ORDER BY name",
@@ -80,24 +95,119 @@ export async function GET() {
     )
       .bind(auth.organizationId, campusId)
       .all(),
+    env.DB.prepare(
+      "SELECT * FROM late_fee_rules WHERE organization_id=?1 AND (campus_id IS NULL OR campus_id=?2) AND status='active' ORDER BY created_at DESC",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT a.*,i.invoice_number,s.first_name||' '||coalesce(s.last_name,'') student_name,r.name rule_name FROM fee_late_fee_applications a JOIN fee_invoices i ON i.id=a.invoice_id JOIN students s ON s.id=i.student_id JOIN late_fee_rules r ON r.id=a.rule_id WHERE a.organization_id=?1 AND a.campus_id=?2 ORDER BY a.applied_on DESC LIMIT 300",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT * FROM expense_categories WHERE organization_id=?1 AND status='active' ORDER BY name",
+    )
+      .bind(auth.organizationId)
+      .all(),
+    env.DB.prepare(
+      "SELECT e.*,c.name category_name,u.display_name created_by_name FROM expenses e JOIN expense_categories c ON c.id=e.category_id LEFT JOIN users u ON u.id=e.created_by WHERE e.organization_id=?1 AND e.campus_id=?2 AND e.status='posted' ORDER BY e.expense_date DESC,e.created_at DESC LIMIT 500",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT substr(issued_on,1,7) period,sum(total_amount) billed,sum(balance_amount) outstanding FROM fee_invoices WHERE organization_id=?1 AND campus_id=?2 AND issued_on BETWEEN ?3 AND ?4 GROUP BY period ORDER BY period",
+    )
+      .bind(auth.organizationId, campusId, from, to)
+      .all(),
+    env.DB.prepare(
+      "SELECT substr(payment_date,1,7) period,sum(amount) collected FROM fee_payments WHERE organization_id=?1 AND campus_id=?2 AND status='posted' AND payment_date BETWEEN ?3 AND ?4 GROUP BY period ORDER BY period",
+    )
+      .bind(auth.organizationId, campusId, from, to)
+      .all(),
+    env.DB.prepare(
+      "SELECT substr(expense_date,1,7) period,sum(amount) expenses FROM expenses WHERE organization_id=?1 AND campus_id=?2 AND status='posted' AND expense_date BETWEEN ?3 AND ?4 GROUP BY period ORDER BY period",
+    )
+      .bind(auth.organizationId, campusId, from, to)
+      .all(),
   ]);
+  const periods = new Map<string, Record<string, unknown>>();
+  for (const row of [
+    ...invoiceReport.results,
+    ...paymentReport.results,
+    ...expenseReport.results,
+  ]) {
+    const period = String((row as Record<string, unknown>).period);
+    periods.set(period, {
+      ...(periods.get(period) || {
+        period,
+        billed: 0,
+        collected: 0,
+        expenses: 0,
+        outstanding: 0,
+      }),
+      ...row,
+    });
+  }
+  const report = [...periods.values()]
+    .sort((a, b) => String(a.period).localeCompare(String(b.period)))
+    .map((row) => ({
+      ...row,
+      net: Number(row.collected || 0) - Number(row.expenses || 0),
+    }));
+  const canViewFinancial = auth.permissions.has("fees.financial"),
+    redact = (rows: unknown[]) =>
+      canViewFinancial
+        ? rows
+        : rows.map((value) => {
+            const row = { ...(value as Record<string, unknown>) };
+            for (const key of [
+              "amount",
+              "gross_amount",
+              "subtotal",
+              "discount_amount",
+              "late_fee",
+              "total_amount",
+              "paid_amount",
+              "balance_amount",
+              "billed",
+              "collected",
+              "expenses",
+              "outstanding",
+              "net",
+              "value",
+              "maximum_amount",
+            ])
+              if (key in row) row[key] = null;
+            return row;
+          });
   return Response.json(
     {
       campusId,
       categories: categories.results,
-      structures: structures.results,
-      items: items.results,
-      assignments: assignments.results,
+      structures: redact(structures.results),
+      items: redact(items.results),
+      assignments: redact(assignments.results),
       students: students.results,
       academicYears: years.results,
       classes: classes.results,
-      invoices: invoices.results,
-      payments: payments.results,
+      invoices: redact(invoices.results),
+      payments: redact(payments.results),
+      lateFeeRules: redact(lateFeeRules.results),
+      lateFeeApplications: redact(lateFeeApplications.results),
+      expenseCategories: expenseCategories.results,
+      expenses: redact(expenses.results),
+      report: auth.permissions.has("finance.reports") ? redact(report) : [],
+      reportFrom: from,
+      reportTo: to,
       canManage: auth.permissions.has("fees.manage"),
       canAssign: auth.permissions.has("fees.assign"),
       canInvoice: auth.permissions.has("fees.invoice"),
       canCollect: auth.permissions.has("fees.collect"),
-      canViewFinancial: auth.permissions.has("fees.financial"),
+      canLateFees: auth.permissions.has("fees.late_fees"),
+      canManageExpenses: auth.permissions.has("expenses.manage"),
+      canViewReports: auth.permissions.has("finance.reports"),
+      canViewFinancial,
     },
     { headers: { "cache-control": "private, no-store" } },
   );
@@ -129,7 +239,12 @@ export async function POST(request: Request) {
           ? "fees.invoice"
           : action === "collect_payment"
             ? "fees.collect"
-            : "fees.manage";
+            : action === "create_late_fee_rule" || action === "apply_late_fees"
+              ? "fees.late_fees"
+              : action === "create_expense_category" ||
+                  action === "record_expense"
+                ? "expenses.manage"
+                : "fees.manage";
   if (!auth.permissions.has(permission))
     return Response.json(
       { error: "You do not have permission for this action." },
@@ -547,6 +662,232 @@ export async function POST(request: Request) {
       ),
     ]);
     return Response.json({ ok: true, id, receiptNumber });
+  }
+  if (action === "create_late_fee_rule") {
+    const name = clean(body?.name),
+      academicYearId = clean(body?.academicYearId) || null,
+      calculationType = clean(body?.calculationType, 20),
+      value = Math.max(0, Math.round(Number(body?.value) || 0)),
+      graceDays = Math.max(
+        0,
+        Math.min(90, Math.round(Number(body?.graceDays) || 0)),
+      ),
+      maximumAmount = body?.maximumAmount
+        ? Math.max(0, Math.round(Number(body.maximumAmount)))
+        : null;
+    if (
+      !name ||
+      !["fixed", "percentage"].includes(calculationType) ||
+      value < 1 ||
+      (calculationType === "percentage" && value > 100)
+    )
+      return Response.json(
+        { error: "Enter a valid late-fee rule." },
+        { status: 400 },
+      );
+    if (academicYearId) {
+      const year = await env.DB.prepare(
+        "SELECT id FROM academic_years WHERE id=?1 AND organization_id=?2",
+      )
+        .bind(academicYearId, auth.organizationId)
+        .first();
+      if (!year)
+        return Response.json(
+          { error: "Invalid academic year." },
+          { status: 400 },
+        );
+    }
+    const id = crypto.randomUUID();
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO late_fee_rules (id,organization_id,campus_id,academic_year_id,name,calculation_type,value,grace_days,maximum_amount,created_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
+      ).bind(
+        id,
+        auth.organizationId,
+        campusId,
+        academicYearId,
+        name,
+        calculationType,
+        value,
+        graceDays,
+        maximumAmount,
+        auth.userId,
+      ),
+      env.DB.prepare(
+        "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome) VALUES (?1,?2,?3,?4,'fee.late_rule.create','late_fee_rule',?5,'success')",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        auth.userId,
+        id,
+      ),
+    ]);
+    return Response.json({ ok: true, id });
+  }
+  if (action === "apply_late_fees") {
+    const ruleId = clean(body?.ruleId),
+      appliedOn = clean(body?.appliedOn, 10);
+    if (!ruleId || !iso.test(appliedOn))
+      return Response.json(
+        { error: "Select a rule and valid application date." },
+        { status: 400 },
+      );
+    const rule = await env.DB.prepare(
+      "SELECT * FROM late_fee_rules WHERE id=?1 AND organization_id=?2 AND (campus_id IS NULL OR campus_id=?3) AND status='active'",
+    )
+      .bind(ruleId, auth.organizationId, campusId)
+      .first<Record<string, unknown>>();
+    if (!rule)
+      return Response.json(
+        { error: "Late-fee rule not found for this campus." },
+        { status: 404 },
+      );
+    const overdue = await env.DB.prepare(
+      "SELECT i.id,i.balance_amount FROM fee_invoices i WHERE i.organization_id=?1 AND i.campus_id=?2 AND i.status IN ('unpaid','partial') AND date(i.due_on,'+'||?3||' days')<?4 AND (?5 IS NULL OR i.academic_year_id=?5) AND NOT EXISTS (SELECT 1 FROM fee_late_fee_applications a WHERE a.invoice_id=i.id AND a.rule_id=?6)",
+    )
+      .bind(
+        auth.organizationId,
+        campusId,
+        Number(rule.grace_days),
+        appliedOn,
+        rule.academic_year_id || null,
+        ruleId,
+      )
+      .all<{ id: string; balance_amount: number }>();
+    let applied = 0,
+      total = 0;
+    for (const invoice of overdue.results) {
+      let amount =
+        rule.calculation_type === "percentage"
+          ? Math.round((invoice.balance_amount * Number(rule.value)) / 100)
+          : Number(rule.value);
+      if (rule.maximum_amount)
+        amount = Math.min(amount, Number(rule.maximum_amount));
+      if (amount < 1) continue;
+      const applicationId = crypto.randomUUID();
+      await env.DB.batch([
+        env.DB.prepare(
+          "INSERT INTO fee_late_fee_applications (id,organization_id,campus_id,invoice_id,rule_id,amount,applied_on,applied_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8)",
+        ).bind(
+          applicationId,
+          auth.organizationId,
+          campusId,
+          invoice.id,
+          ruleId,
+          amount,
+          appliedOn,
+          auth.userId,
+        ),
+        env.DB.prepare(
+          "UPDATE fee_invoices SET late_fee=late_fee+?1,total_amount=total_amount+?1,balance_amount=balance_amount+?1,updated_at=unixepoch()*1000 WHERE id=?2 AND organization_id=?3 AND campus_id=?4",
+        ).bind(amount, invoice.id, auth.organizationId, campusId),
+        env.DB.prepare(
+          "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'fee.late_fee.apply','fee_invoice',?5,'success',?6)",
+        ).bind(
+          crypto.randomUUID(),
+          auth.organizationId,
+          campusId,
+          auth.userId,
+          invoice.id,
+          safeMetadata({ ruleId, amount, appliedOn }),
+        ),
+      ]);
+      applied++;
+      total += amount;
+    }
+    return Response.json({ ok: true, applied, total });
+  }
+  if (action === "create_expense_category") {
+    const name = clean(body?.name),
+      code = clean(body?.code, 30).toUpperCase();
+    if (!name || !code)
+      return Response.json(
+        { error: "Enter an expense category name and code." },
+        { status: 400 },
+      );
+    const id = crypto.randomUUID();
+    try {
+      await env.DB.batch([
+        env.DB.prepare(
+          "INSERT INTO expense_categories (id,organization_id,name,code,created_by) VALUES (?1,?2,?3,?4,?5)",
+        ).bind(id, auth.organizationId, name, code, auth.userId),
+        env.DB.prepare(
+          "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome) VALUES (?1,?2,?3,?4,'expense.category.create','expense_category',?5,'success')",
+        ).bind(
+          crypto.randomUUID(),
+          auth.organizationId,
+          campusId,
+          auth.userId,
+          id,
+        ),
+      ]);
+      return Response.json({ ok: true, id });
+    } catch {
+      return Response.json(
+        { error: "That expense category code already exists." },
+        { status: 409 },
+      );
+    }
+  }
+  if (action === "record_expense") {
+    const categoryId = clean(body?.categoryId),
+      expenseDate = clean(body?.expenseDate, 10),
+      amount = Math.max(1, Math.round(Number(body?.amount) || 0)),
+      payee = clean(body?.payee),
+      description = clean(body?.description, 500),
+      paymentMethod = clean(body?.paymentMethod, 20),
+      referenceNumber = clean(body?.referenceNumber, 80) || null;
+    if (
+      !categoryId ||
+      !iso.test(expenseDate) ||
+      !payee ||
+      !description ||
+      !["cash", "bank", "card", "online", "cheque"].includes(paymentMethod)
+    )
+      return Response.json(
+        { error: "Complete all required expense details." },
+        { status: 400 },
+      );
+    const category = await env.DB.prepare(
+      "SELECT id FROM expense_categories WHERE id=?1 AND organization_id=?2 AND status='active'",
+    )
+      .bind(categoryId, auth.organizationId)
+      .first();
+    if (!category)
+      return Response.json(
+        { error: "Invalid expense category." },
+        { status: 400 },
+      );
+    const id = crypto.randomUUID();
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO expenses (id,organization_id,campus_id,category_id,expense_date,amount,payee,description,payment_method,reference_number,created_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+      ).bind(
+        id,
+        auth.organizationId,
+        campusId,
+        categoryId,
+        expenseDate,
+        amount,
+        payee,
+        description,
+        paymentMethod,
+        referenceNumber,
+        auth.userId,
+      ),
+      env.DB.prepare(
+        "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'expense.create','expense',?5,'success',?6)",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        auth.userId,
+        id,
+        safeMetadata({ amount, categoryId, expenseDate }),
+      ),
+    ]);
+    return Response.json({ ok: true, id });
   }
   return Response.json({ error: "Unsupported action." }, { status: 400 });
 }
