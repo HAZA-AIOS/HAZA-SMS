@@ -224,19 +224,6 @@ export const academicYears = sqliteTable(
       .notNull()
       .default(false),
     status: text("status").notNull().default("draft"),
-    submittedBy: text("submitted_by").references(() => users.id, {
-      onDelete: "restrict",
-    }),
-    submittedAt: integer("submitted_at"),
-    approvedBy: text("approved_by").references(() => users.id, {
-      onDelete: "restrict",
-    }),
-    approvedAt: integer("approved_at"),
-    publishedBy: text("published_by").references(() => users.id, {
-      onDelete: "restrict",
-    }),
-    publishedAt: integer("published_at"),
-    approvalRemarks: text("approval_remarks"),
     ...ts,
   },
   (t) => [
@@ -1575,6 +1562,19 @@ export const assessments = sqliteTable(
     passingMarks: integer("passing_marks").notNull().default(40),
     weightage: integer("weightage").notNull().default(100),
     status: text("status").notNull().default("draft"),
+    submittedBy: text("submitted_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    submittedAt: integer("submitted_at"),
+    approvedBy: text("approved_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    approvedAt: integer("approved_at"),
+    publishedBy: text("published_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    publishedAt: integer("published_at"),
+    approvalRemarks: text("approval_remarks"),
     createdBy: text("created_by")
       .notNull()
       .references(() => users.id),

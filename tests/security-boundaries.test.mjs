@@ -791,6 +791,7 @@ test("result approval publication and printable cards are protected and tenant s
   assert.match(panel, /Publish results/);
   assert.match(panel, /Print card/);
   assert.match(schema, /resultPublications\s*=\s*sqliteTable/);
+  assert.match(schema, /assessments[\s\S]*submittedBy[\s\S]*publishedAt[\s\S]*assessments_publication_idx/);
   assert.match(migration, /CREATE TABLE `result_publications`/);
   assert.match(migration, /assessments_publication_idx/);
   assert.match(backup, /"result_publications"/);
