@@ -9380,3 +9380,43 @@ body {
     grid-column: 2;
   }
 }
+
+
+/* Landing hero balance correction — centered on standard laptop viewports */
+@media (min-width: 1051px) {
+  .landing-hero {
+    padding-left: max(calc((100vw - 1240px) / 2), 32px);
+    padding-right: max(calc((100vw - 1240px) / 2), 32px);
+  }
+
+  .hero-copy {
+    width: min(600px, 48vw);
+  }
+
+  .hero-copy h1 {
+    font-size: clamp(46px, 4.65vw, 66px);
+    max-width: 650px;
+  }
+
+  .hero-copy > p {
+    max-width: 570px;
+  }
+
+  .hero-panel {
+    right: max(calc((100vw - 1240px) / 2), 32px);
+    width: min(400px, 31vw);
+  }
+}
+
+@media (min-width: 1051px) and (max-width: 1400px) {
+  .landing-hero {
+    padding-left: 5vw;
+    padding-right: 5vw;
+  }
+
+  .hero-panel {
+    right: 5vw;
+    width: 32vw;
+    max-width: 390px;
+  }
+}
