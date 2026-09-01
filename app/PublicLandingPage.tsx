@@ -1,14 +1,14 @@
 const learning = [
-  ["📕", "Less carrying", "A bag-free school day built around purposeful classroom learning."],
-  ["🧠", "Deep understanding", "Short explanations, guided practice and meaningful revision."],
-  ["🌱", "Whole-child growth", "Confidence, communication, character and healthy movement."],
+  ["▣", "Bag-Free Learning", "All learning materials are provided at school. Students carry only a light folder—no heavy bags."],
+  ["◷", "Minimal Homework", "Learning is completed during school hours. Homework is given only twice a week and is research-based."],
+  ["⌁", "AI-Enhanced Education", "Students use visual learning and purposeful AI tools to understand concepts that simple teaching cannot."],
 ];
 
 const values = [
-  ["🎯", "Personal attention", "A clear learning path with support that meets children where they are."],
-  ["📚", "Strong foundations", "Reading, writing, mathematics and scientific thinking developed step by step."],
-  ["💻", "Digital confidence", "Technology is used as a practical learning tool, not a distraction."],
-  ["🤝", "Parent partnership", "Families stay informed and connected throughout the learning journey."],
+  ["▣", "Bag-Free Learning", "Students carry only a light folder. All materials are provided at school—no heavy bags or physical strain."],
+  ["⌁", "AI-Enhanced Education", "We use AI technology and visual learning to prepare students for a future built on intelligence."],
+  ["◎", "Global Curriculum", "An international-standard model means our students can move anywhere and never feel behind."],
+  ["♡", "Stress-Free Growth", "Minimal homework, research-based learning and a nurturing environment where wellbeing comes first."],
 ];
 
 const advantages = [
@@ -33,38 +33,38 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
       <header className="landing-nav">
         <a href="#home" className="landing-brand" aria-label="The Mentor School home">
           <img src="/tms-original-logo-transparent.png" alt="The Mentor School original logo" />
-          <span><b>The Mentor School</b><small>Education for life</small></span>
+          <span><b>The Mentor <em>School</em></b></span>
         </a>
         <nav aria-label="Main navigation">
-          <a href="#why-us">Why us</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#campus">Campus</a>
+          <a href="#home">Home</a><a href="#why-us">Our Approach</a><a href="#advantage">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">Gallery</a><a href="#campus">Contact</a>
         </nav>
-        <a className="nav-cta" href={signInPath}>School portal <span>↗</span></a>
+        <a className="portal-link" href={signInPath}>Dashboard</a><a className="nav-cta" href="#enroll">Enroll Now</a>
       </header>
 
       <section className="landing-hero" id="home">
         <img className="hero-photo" src="/tms-landing-hero.jpg" alt="Students learning together with their teacher" />
         <div className="hero-shade" />
         <div className="hero-copy">
-          <span className="landing-kicker"><i /> ADMISSIONS OPEN</span>
+          <span className="landing-kicker"><i /> BAG-FREE · AI-ENHANCED EDUCATION</span>
           <h1>A Bag-Free School.<br />Where <em>Learning Is Light.</em><br />The Future Is <strong>Bright.</strong></h1>
-          <p>Modern learning, strong values and personal attention—designed to help every child grow with confidence.</p>
+          <p>The Mentor School is a bag-free school where students carry only a light folder. With minimal, research-based homework and an international-standard curriculum, we prepare students for a global future.</p>
           <div className="hero-actions"><a href="#enroll">Enroll your child</a><a className="outline" href="#why-us">Explore our approach</a></div>
           <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>Global</b><small>Curriculum outlook</small></span></div>
         </div>
-        <aside className="hero-panel"><span>THE TMS PROMISE</span><h2>Learning that feels lighter—and goes deeper.</h2><ul><li>✓ Minimal homework</li><li>✓ Modern digital resources</li><li>✓ Small-school attention</li><li>✓ Values-led education</li></ul></aside>
+        <aside className="hero-panel"><span>WHY THE MENTOR SCHOOL?</span><h2>A lighter school day. A brighter future.</h2><ul><li>✓ No heavy bags</li><li>✓ Minimal homework</li><li>✓ Conceptual learning</li><li>✓ AI-enhanced education</li><li>✓ Global curriculum</li></ul></aside>
       </section>
 
       <section className="landing-section intro" id="why-us">
-        <span className="section-label">OUR APPROACH</span><h2>A Smarter Way to <em>Learn</em></h2><p className="section-lead">School should prepare children for life, not simply prepare them for the next test.</p>
+        <span className="section-label">OUR APPROACH</span><h2>A Smarter Way to <strong>Learn</strong></h2>
         <div className="learning-grid">{learning.map(([icon,title,text])=><article key={title}><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
       <section className="landing-section values-section">
-        <span className="section-label">WHAT WE BELIEVE</span><h2>What We <em>Stand For</em></h2><p className="section-lead">A clear promise to students and families.</p>
+        <span className="section-label">OUR CORE VALUES</span><h2>What We <em>Stand For</em></h2><p className="section-lead">Four principles that shape everything we do at The Mentor School.</p>
         <div className="values-grid">{values.map(([icon,title,text])=><article key={title}><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
-      <section className="landing-section advantage-section">
+      <section className="landing-section advantage-section" id="advantage">
         <span className="section-label">WHY TMS</span><h2>The TMS <em>Advantage</em></h2>
         <div className="advantage-grid">{advantages.map(([n,title,text],i)=><article key={title} className={i===2||i===4?"photo-card":""}><b>{n}</b><h3>{title}</h3><p>{text}</p>{(i===2||i===4)&&<img src="/tms-campus-life.jpg" alt="Students taking part in school activities" />}</article>)}</div>
       </section>
