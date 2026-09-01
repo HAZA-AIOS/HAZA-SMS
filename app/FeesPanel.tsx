@@ -17,6 +17,9 @@ type Data = {
   expenseCategories: Row[];
   expenses: Row[];
   report: Row[];
+  financialAccounts: Row[];
+  approvalRequests: Row[];
+  accountSummaries: Row[];
   reportFrom: string;
   reportTo: string;
   canManage: boolean;
@@ -26,6 +29,9 @@ type Data = {
   canLateFees: boolean;
   canManageExpenses: boolean;
   canViewReports: boolean;
+  canManageAccounts: boolean;
+  canApproveFinance: boolean;
+  canExportFinance: boolean;
   canViewFinancial: boolean;
 };
 const empty: Data = {
@@ -44,6 +50,9 @@ const empty: Data = {
   expenseCategories: [],
   expenses: [],
   report: [],
+  financialAccounts: [],
+  approvalRequests: [],
+  accountSummaries: [],
   reportFrom: "",
   reportTo: "",
   canManage: false,
@@ -53,9 +62,26 @@ const empty: Data = {
   canLateFees: false,
   canManageExpenses: false,
   canViewReports: false,
+  canManageAccounts: false,
+  canApproveFinance: false,
+  canExportFinance: false,
   canViewFinancial: false,
 };
 const money = (v: unknown) => `PKR ${Number(v || 0).toLocaleString()}`;
+async function readJson<T>(response: Response): Promise<T> {
+  const body = await response.text();
+  if (!body)
+    throw new Error(
+      "The fees service returned an empty response. Please refresh and try again.",
+    );
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    throw new Error(
+      "The fees service returned an invalid response. Please refresh and try again.",
+    );
+  }
+}
 export default function FeesPanel() {
   const [data, setData] = useState<Data>(empty),
     [tab, setTab] = useState("invoices"),
@@ -68,7 +94,7 @@ export default function FeesPanel() {
     try {
       const query = from && to ? `?from=${from}&to=${to}` : "",
         r = await fetch(`/api/fees${query}`, { cache: "no-store" }),
-        j = (await r.json()) as Data & { error?: string };
+        j = await readJson<Data & { error?: string }>(r);
       if (!r.ok) throw new Error(j.error || "Unable to load fees.");
       setData(j);
     } catch (e) {
@@ -86,17 +112,37 @@ export default function FeesPanel() {
     const values = Object.fromEntries(new FormData(e.currentTarget));
     if ("refundable" in values) values.refundable = true;
     if ("mandatory" in values) values.mandatory = true;
+    if ("schoolWide" in values) values.schoolWide = true;
     const r = await fetch("/api/fees", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, campusId: data.campusId, ...values }),
       }),
-      j = (await r.json()) as { error?: string };
+      j = await readJson<{ error?: string }>(r);
     if (!r.ok) {
       setMessage(j.error || "Unable to save.");
       return;
     }
     e.currentTarget.reset();
+    await load();
+  };
+  const decide = async (
+    approvalId: string,
+    action: "approve_expense" | "reject_expense",
+  ) => {
+    const decisionNotes = window.prompt("Decision notes (optional)") || "";
+    const r = await fetch("/api/fees", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action,
+          campusId: data.campusId,
+          approvalId,
+          decisionNotes,
+        }),
+      }),
+      j = await readJson<{ error?: string }>(r);
+    if (!r.ok) return setMessage(j.error || "Unable to save decision.");
     await load();
   };
   const currentYear =
@@ -114,12 +160,12 @@ export default function FeesPanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 7C · LATE FEES, EXPENSES & REPORTS
+            PHASE 7D · CASH, BANK, APPROVALS & EXPORTS
           </span>
-          <h1>Complete fees and financial control</h1>
+          <h1>Cash, bank and financial governance</h1>
           <p>
-            Apply controlled late charges, record campus expenses and review
-            clear monthly financial performance.
+            Track account balances, approve expenses independently and export
+            secure financial reports.
           </p>
         </div>
         <span className="phase-badge complete">
@@ -190,6 +236,8 @@ export default function FeesPanel() {
             ["late-fees", "Late fees"],
             ["expenses", "Expenses"],
             ["reports", "Financial reports"],
+            ["accounts", "Cash & bank"],
+            ["approvals", "Approvals"],
             ["structures", "Fee structures"],
             ["categories", "Categories"],
             ["assignments", "Student assignments"],
@@ -376,6 +424,17 @@ export default function FeesPanel() {
                     <option value="card">Card</option>
                     <option value="online">Online</option>
                     <option value="cheque">Cheque</option>
+                  </select>
+                </label>
+                <label>
+                  Deposit account
+                  <select name="financialAccountId" required>
+                    <option value="">Select cash or bank account</option>
+                    {data.financialAccounts.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} · {v.account_type}
+                      </option>
+                    ))}
                   </select>
                 </label>
               </div>
@@ -639,10 +698,179 @@ export default function FeesPanel() {
                 </div>
               ))}
             </div>
+            <div className="report-actions">
+              <a
+                className={!data.canExportFinance ? "disabled" : ""}
+                href={`/api/fees/reports/export?format=csv&from=${reportFrom || data.reportFrom}&to=${reportTo || data.reportTo}`}
+              >
+                ⬇ Export CSV
+              </a>
+              <a
+                className={!data.canExportFinance ? "disabled" : ""}
+                target="_blank"
+                rel="noreferrer"
+                href={`/api/fees/reports/export?format=print&from=${reportFrom || data.reportFrom}&to=${reportTo || data.reportTo}`}
+              >
+                🖨 Printable report
+              </a>
+            </div>
             {!data.report.length && (
               <p className="finance-empty">
                 No financial activity in the selected period.
               </p>
+            )}
+          </div>
+        )}
+        {tab === "accounts" && (
+          <div className="finance-split">
+            <section>
+              <h2>Cash and bank summary</h2>
+              {data.accountSummaries.map((v) => (
+                <article className="account-summary-card" key={v.id}>
+                  <span>{v.account_type === "cash" ? "💵" : "🏦"}</span>
+                  <div>
+                    <small>
+                      {v.code as string} · {v.bank_name || "Cash account"}
+                    </small>
+                    <h3>{v.name as string}</h3>
+                  </div>
+                  <dl>
+                    <div>
+                      <dt>Inflow</dt>
+                      <dd>
+                        {data.canViewFinancial
+                          ? money(v.period_inflow)
+                          : "Protected"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Outflow</dt>
+                      <dd>
+                        {data.canViewFinancial
+                          ? money(v.period_outflow)
+                          : "Protected"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Balance</dt>
+                      <dd>
+                        {data.canViewFinancial
+                          ? money(v.current_balance)
+                          : "Protected"}
+                      </dd>
+                    </div>
+                  </dl>
+                </article>
+              ))}
+              {!data.accountSummaries.length && (
+                <p className="finance-empty">
+                  Create the first cash or bank account.
+                </p>
+              )}
+            </section>
+            <div className="fee-forms compact">
+              <form onSubmit={(e) => send(e, "create_financial_account")}>
+                <h2>Create financial account</h2>
+                <label>
+                  Account name
+                  <input name="name" placeholder="Main cash counter" required />
+                </label>
+                <div>
+                  <label>
+                    Code
+                    <input name="code" placeholder="CASH-MAIN" required />
+                  </label>
+                  <label>
+                    Type
+                    <select name="accountType">
+                      <option value="cash">Cash</option>
+                      <option value="bank">Bank</option>
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  Bank name
+                  <input
+                    name="bankName"
+                    placeholder="Required only for bank accounts"
+                  />
+                </label>
+                <label>
+                  Masked account number
+                  <input name="accountNumberMasked" placeholder="•••• 1234" />
+                </label>
+                <label>
+                  Opening balance
+                  <input name="openingBalance" type="number" defaultValue="0" />
+                </label>
+                <label className="check-line">
+                  <input type="checkbox" name="schoolWide" /> Available to all
+                  campuses
+                </label>
+                <button disabled={!data.canManageAccounts}>
+                  Create account
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+        {tab === "approvals" && (
+          <div className="approval-list">
+            <header>
+              <div>
+                <h2>Financial approvals</h2>
+                <p>Expense requesters cannot approve their own entries.</p>
+              </div>
+              <span>
+                {
+                  data.approvalRequests.filter((v) => v.status === "pending")
+                    .length
+                }{" "}
+                pending
+              </span>
+            </header>
+            {data.approvalRequests.map((v) => (
+              <article key={v.id}>
+                <span>
+                  {v.status === "pending"
+                    ? "⏳"
+                    : v.status === "approved"
+                      ? "✅"
+                      : "⛔"}
+                </span>
+                <div>
+                  <b>{v.payee as string}</b>
+                  <small>
+                    {v.expense_date as string} · {v.category_name as string} ·
+                    Requested by {v.requested_by_name as string}
+                  </small>
+                  <p>{v.description as string}</p>
+                </div>
+                <strong>
+                  {data.canViewFinancial ? money(v.amount) : "Protected"}
+                </strong>
+                {v.status === "pending" && data.canApproveFinance && (
+                  <div className="approval-actions">
+                    <button
+                      onClick={() => void decide(v.id, "approve_expense")}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="reject"
+                      onClick={() => void decide(v.id, "reject_expense")}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+                {v.status !== "pending" && (
+                  <i className={String(v.status)}>{String(v.status)}</i>
+                )}
+              </article>
+            ))}
+            {!data.approvalRequests.length && (
+              <p className="finance-empty">No financial approval requests.</p>
             )}
           </div>
         )}
@@ -852,6 +1080,17 @@ export default function FeesPanel() {
                     ))}
                   </select>
                 </label>
+                <label>
+                  Paid from account
+                  <select name="financialAccountId" required>
+                    <option value="">Select cash or bank account</option>
+                    {data.financialAccounts.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} · {v.account_type}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
               <div>
                 <label>
@@ -903,7 +1142,7 @@ export default function FeesPanel() {
                   <option value="">Select enrolled student</option>
                   {data.students.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.name} · {v.admission_number} · {v.class_name}
+                      {v.student_name} · {v.admission_number} · {v.class_name}
                     </option>
                   ))}
                 </select>

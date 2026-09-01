@@ -1703,6 +1703,7 @@ export const feePayments = sqliteTable(
     paymentDate: text("payment_date").notNull(),
     paymentMethod: text("payment_method").notNull().default("cash"),
     referenceNumber: text("reference_number"),
+    financialAccountId: text("financial_account_id"),
     notes: text("notes"),
     receivedBy: text("received_by")
       .notNull()
@@ -1834,6 +1835,7 @@ export const expenses = sqliteTable(
     description: text("description").notNull(),
     paymentMethod: text("payment_method").notNull().default("cash"),
     referenceNumber: text("reference_number"),
+    financialAccountId: text("financial_account_id"),
     status: text("status").notNull().default("posted"),
     createdBy: text("created_by")
       .notNull()
@@ -1851,6 +1853,76 @@ export const expenses = sqliteTable(
       t.organizationId,
       t.categoryId,
       t.expenseDate,
+    ),
+  ],
+);
+
+export const financialAccounts = sqliteTable(
+  "financial_accounts",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "cascade",
+    }),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    accountType: text("account_type").notNull(),
+    bankName: text("bank_name"),
+    accountNumberMasked: text("account_number_masked"),
+    openingBalance: integer("opening_balance").notNull().default(0),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("financial_accounts_org_code_uq").on(t.organizationId, t.code),
+    index("financial_accounts_scope_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.accountType,
+      t.status,
+    ),
+  ],
+);
+
+export const financialApprovalRequests = sqliteTable(
+  "financial_approval_requests",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    amount: integer("amount").notNull(),
+    status: text("status").notNull().default("pending"),
+    requestedBy: text("requested_by")
+      .notNull()
+      .references(() => users.id),
+    decidedBy: text("decided_by").references(() => users.id),
+    decisionNotes: text("decision_notes"),
+    decidedAt: integer("decided_at", { mode: "timestamp_ms" }),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("financial_approval_entity_uq").on(
+      t.organizationId,
+      t.entityType,
+      t.entityId,
+    ),
+    index("financial_approval_scope_status_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.status,
+      t.createdAt,
     ),
   ],
 );

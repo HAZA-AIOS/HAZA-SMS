@@ -49,6 +49,9 @@ export async function GET(request: Request) {
     invoiceReport,
     paymentReport,
     expenseReport,
+    financialAccounts,
+    approvalRequests,
+    accountSummaries,
   ] = await Promise.all([
     env.DB.prepare(
       "SELECT * FROM fee_categories WHERE organization_id=?1 AND status='active' ORDER BY name",
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
       .bind(auth.organizationId, campusId)
       .all(),
     env.DB.prepare(
-      "SELECT DISTINCT s.id,s.admission_number,s.first_name||' '||coalesce(s.last_name,'') name,e.class_id,c.name class_name,e.academic_year_id FROM students s JOIN enrollments e ON e.student_id=s.id AND e.status='active' LEFT JOIN classes c ON c.id=e.class_id WHERE s.organization_id=?1 AND e.campus_id=?2 AND s.status='active' ORDER BY name",
+      "SELECT DISTINCT s.id,s.admission_number,s.first_name||' '||coalesce(s.last_name,'') student_name,e.class_id,c.name class_name,e.academic_year_id FROM students s JOIN enrollments e ON e.student_id=s.id AND e.status='active' LEFT JOIN classes c ON c.id=e.class_id WHERE s.organization_id=?1 AND e.campus_id=?2 AND s.status='active' ORDER BY s.first_name,s.last_name",
     )
       .bind(auth.organizationId, campusId)
       .all(),
@@ -130,6 +133,21 @@ export async function GET(request: Request) {
     )
       .bind(auth.organizationId, campusId, from, to)
       .all(),
+    env.DB.prepare(
+      "SELECT * FROM financial_accounts WHERE organization_id=?1 AND (campus_id IS NULL OR campus_id=?2) AND status='active' ORDER BY account_type,name",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT r.*,e.expense_date,e.payee,e.description,c.name category_name,requester.display_name requested_by_name,decider.display_name decided_by_name FROM financial_approval_requests r JOIN expenses e ON e.id=r.entity_id AND r.entity_type='expense' JOIN expense_categories c ON c.id=e.category_id LEFT JOIN users requester ON requester.id=r.requested_by LEFT JOIN users decider ON decider.id=r.decided_by WHERE r.organization_id=?1 AND r.campus_id=?2 ORDER BY CASE r.status WHEN 'pending' THEN 0 ELSE 1 END,r.created_at DESC LIMIT 300",
+    )
+      .bind(auth.organizationId, campusId)
+      .all(),
+    env.DB.prepare(
+      "SELECT a.*,coalesce((SELECT sum(p.amount) FROM fee_payments p WHERE p.organization_id=a.organization_id AND p.campus_id=?2 AND p.financial_account_id=a.id AND p.status='posted' AND p.payment_date BETWEEN ?3 AND ?4),0) period_inflow,coalesce((SELECT sum(e.amount) FROM expenses e WHERE e.organization_id=a.organization_id AND e.campus_id=?2 AND e.financial_account_id=a.id AND e.status='posted' AND e.expense_date BETWEEN ?3 AND ?4),0) period_outflow,a.opening_balance+coalesce((SELECT sum(p.amount) FROM fee_payments p WHERE p.organization_id=a.organization_id AND p.campus_id=?2 AND p.financial_account_id=a.id AND p.status='posted' AND p.payment_date<=?4),0)-coalesce((SELECT sum(e.amount) FROM expenses e WHERE e.organization_id=a.organization_id AND e.campus_id=?2 AND e.financial_account_id=a.id AND e.status='posted' AND e.expense_date<=?4),0) current_balance FROM financial_accounts a WHERE a.organization_id=?1 AND (a.campus_id IS NULL OR a.campus_id=?2) AND a.status='active' ORDER BY a.account_type,a.name",
+    )
+      .bind(auth.organizationId, campusId, from, to)
+      .all(),
   ]);
   const periods = new Map<string, Record<string, unknown>>();
   for (const row of [
@@ -177,6 +195,10 @@ export async function GET(request: Request) {
               "net",
               "value",
               "maximum_amount",
+              "opening_balance",
+              "period_inflow",
+              "period_outflow",
+              "current_balance",
             ])
               if (key in row) row[key] = null;
             return row;
@@ -200,6 +222,9 @@ export async function GET(request: Request) {
       report: auth.permissions.has("finance.reports") ? redact(report) : [],
       reportFrom: from,
       reportTo: to,
+      financialAccounts: redact(financialAccounts.results),
+      approvalRequests: redact(approvalRequests.results),
+      accountSummaries: redact(accountSummaries.results),
       canManage: auth.permissions.has("fees.manage"),
       canAssign: auth.permissions.has("fees.assign"),
       canInvoice: auth.permissions.has("fees.invoice"),
@@ -207,6 +232,9 @@ export async function GET(request: Request) {
       canLateFees: auth.permissions.has("fees.late_fees"),
       canManageExpenses: auth.permissions.has("expenses.manage"),
       canViewReports: auth.permissions.has("finance.reports"),
+      canManageAccounts: auth.permissions.has("finance.accounts"),
+      canApproveFinance: auth.permissions.has("finance.approve"),
+      canExportFinance: auth.permissions.has("finance.export"),
       canViewFinancial,
     },
     { headers: { "cache-control": "private, no-store" } },
@@ -244,7 +272,11 @@ export async function POST(request: Request) {
               : action === "create_expense_category" ||
                   action === "record_expense"
                 ? "expenses.manage"
-                : "fees.manage";
+                : action === "create_financial_account"
+                  ? "finance.accounts"
+                  : action === "approve_expense" || action === "reject_expense"
+                    ? "finance.approve"
+                    : "fees.manage";
   if (!auth.permissions.has(permission))
     return Response.json(
       { error: "You do not have permission for this action." },
@@ -597,6 +629,7 @@ export async function POST(request: Request) {
   }
   if (action === "collect_payment") {
     const invoiceId = clean(body?.invoiceId),
+      financialAccountId = clean(body?.financialAccountId),
       amount = Math.max(1, Math.round(Number(body?.amount) || 0)),
       paymentDate = clean(body?.paymentDate, 10),
       paymentMethod = clean(body?.paymentMethod, 20),
@@ -604,6 +637,7 @@ export async function POST(request: Request) {
       notes = clean(body?.notes, 300) || null;
     if (
       !invoiceId ||
+      !financialAccountId ||
       !iso.test(paymentDate) ||
       !["cash", "bank", "card", "online", "cheque"].includes(paymentMethod)
     )
@@ -616,9 +650,17 @@ export async function POST(request: Request) {
     )
       .bind(invoiceId, auth.organizationId, campusId)
       .first<{ id: string; student_id: string; balance_amount: number }>();
-    if (!invoice)
+    const account = await env.DB.prepare(
+      "SELECT id FROM financial_accounts WHERE id=?1 AND organization_id=?2 AND (campus_id IS NULL OR campus_id=?3) AND status='active'",
+    )
+      .bind(financialAccountId, auth.organizationId, campusId)
+      .first();
+    if (!invoice || !account)
       return Response.json(
-        { error: "Select an outstanding invoice from this campus." },
+        {
+          error:
+            "Select an outstanding invoice and financial account from this campus.",
+        },
         { status: 400 },
       );
     if (amount > invoice.balance_amount)
@@ -632,7 +674,7 @@ export async function POST(request: Request) {
       status = balance === 0 ? "paid" : "partial";
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO fee_payments (id,organization_id,campus_id,invoice_id,student_id,receipt_number,amount,payment_date,payment_method,reference_number,notes,received_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
+        "INSERT INTO fee_payments (id,organization_id,campus_id,invoice_id,student_id,receipt_number,amount,payment_date,payment_method,reference_number,notes,received_by,financial_account_id) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)",
       ).bind(
         id,
         auth.organizationId,
@@ -646,6 +688,7 @@ export async function POST(request: Request) {
         referenceNumber,
         notes,
         auth.userId,
+        financialAccountId,
       ),
       env.DB.prepare(
         "UPDATE fee_invoices SET paid_amount=paid_amount+?1,balance_amount=?2,status=?3,updated_at=unixepoch()*1000 WHERE id=?4 AND organization_id=?5 AND campus_id=?6",
@@ -832,6 +875,7 @@ export async function POST(request: Request) {
   }
   if (action === "record_expense") {
     const categoryId = clean(body?.categoryId),
+      financialAccountId = clean(body?.financialAccountId),
       expenseDate = clean(body?.expenseDate, 10),
       amount = Math.max(1, Math.round(Number(body?.amount) || 0)),
       payee = clean(body?.payee),
@@ -840,6 +884,7 @@ export async function POST(request: Request) {
       referenceNumber = clean(body?.referenceNumber, 80) || null;
     if (
       !categoryId ||
+      !financialAccountId ||
       !iso.test(expenseDate) ||
       !payee ||
       !description ||
@@ -849,20 +894,27 @@ export async function POST(request: Request) {
         { error: "Complete all required expense details." },
         { status: 400 },
       );
-    const category = await env.DB.prepare(
-      "SELECT id FROM expense_categories WHERE id=?1 AND organization_id=?2 AND status='active'",
-    )
-      .bind(categoryId, auth.organizationId)
-      .first();
-    if (!category)
+    const [category, account] = await Promise.all([
+      env.DB.prepare(
+        "SELECT id FROM expense_categories WHERE id=?1 AND organization_id=?2 AND status='active'",
+      )
+        .bind(categoryId, auth.organizationId)
+        .first(),
+      env.DB.prepare(
+        "SELECT id FROM financial_accounts WHERE id=?1 AND organization_id=?2 AND (campus_id IS NULL OR campus_id=?3) AND status='active'",
+      )
+        .bind(financialAccountId, auth.organizationId, campusId)
+        .first(),
+    ]);
+    if (!category || !account)
       return Response.json(
-        { error: "Invalid expense category." },
+        { error: "Invalid expense category or financial account." },
         { status: 400 },
       );
     const id = crypto.randomUUID();
     await env.DB.batch([
       env.DB.prepare(
-        "INSERT INTO expenses (id,organization_id,campus_id,category_id,expense_date,amount,payee,description,payment_method,reference_number,created_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+        "INSERT INTO expenses (id,organization_id,campus_id,category_id,expense_date,amount,payee,description,payment_method,reference_number,created_by,status,financial_account_id) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,'pending',?12)",
       ).bind(
         id,
         auth.organizationId,
@@ -874,6 +926,17 @@ export async function POST(request: Request) {
         description,
         paymentMethod,
         referenceNumber,
+        auth.userId,
+        financialAccountId,
+      ),
+      env.DB.prepare(
+        "INSERT INTO financial_approval_requests (id,organization_id,campus_id,entity_type,entity_id,amount,requested_by) VALUES (?1,?2,?3,'expense',?4,?5,?6)",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        id,
+        amount,
         auth.userId,
       ),
       env.DB.prepare(
@@ -888,6 +951,111 @@ export async function POST(request: Request) {
       ),
     ]);
     return Response.json({ ok: true, id });
+  }
+  if (action === "create_financial_account") {
+    const name = clean(body?.name),
+      code = clean(body?.code, 30).toUpperCase(),
+      accountType = clean(body?.accountType, 20),
+      bankName = clean(body?.bankName) || null,
+      accountNumberMasked = clean(body?.accountNumberMasked, 40) || null,
+      openingBalance = Math.round(Number(body?.openingBalance) || 0),
+      campusScope = body?.schoolWide === true ? null : campusId;
+    if (!name || !code || !["cash", "bank"].includes(accountType))
+      return Response.json(
+        { error: "Enter a valid cash or bank account." },
+        { status: 400 },
+      );
+    if (accountType === "bank" && !bankName)
+      return Response.json(
+        { error: "Bank name is required for bank accounts." },
+        { status: 400 },
+      );
+    const id = crypto.randomUUID();
+    try {
+      await env.DB.batch([
+        env.DB.prepare(
+          "INSERT INTO financial_accounts (id,organization_id,campus_id,name,code,account_type,bank_name,account_number_masked,opening_balance,created_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10)",
+        ).bind(
+          id,
+          auth.organizationId,
+          campusScope,
+          name,
+          code,
+          accountType,
+          bankName,
+          accountNumberMasked,
+          openingBalance,
+          auth.userId,
+        ),
+        env.DB.prepare(
+          "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome) VALUES (?1,?2,?3,?4,'finance.account.create','financial_account',?5,'success')",
+        ).bind(
+          crypto.randomUUID(),
+          auth.organizationId,
+          campusId,
+          auth.userId,
+          id,
+        ),
+      ]);
+      return Response.json({ ok: true, id });
+    } catch {
+      return Response.json(
+        { error: "That financial account code already exists." },
+        { status: 409 },
+      );
+    }
+  }
+  if (action === "approve_expense" || action === "reject_expense") {
+    const approvalId = clean(body?.approvalId),
+      decisionNotes = clean(body?.decisionNotes, 300) || null,
+      decision = action === "approve_expense" ? "approved" : "rejected";
+    const approval = await env.DB.prepare(
+      "SELECT id,entity_id,requested_by FROM financial_approval_requests WHERE id=?1 AND organization_id=?2 AND campus_id=?3 AND entity_type='expense' AND status='pending'",
+    )
+      .bind(approvalId, auth.organizationId, campusId)
+      .first<{ id: string; entity_id: string; requested_by: string }>();
+    if (!approval)
+      return Response.json(
+        { error: "Pending approval not found for this campus." },
+        { status: 404 },
+      );
+    if (approval.requested_by === auth.userId)
+      return Response.json(
+        { error: "You cannot approve or reject your own expense request." },
+        { status: 403 },
+      );
+    await env.DB.batch([
+      env.DB.prepare(
+        "UPDATE financial_approval_requests SET status=?1,decided_by=?2,decision_notes=?3,decided_at=unixepoch()*1000,updated_at=unixepoch()*1000 WHERE id=?4 AND organization_id=?5 AND campus_id=?6 AND status='pending'",
+      ).bind(
+        decision,
+        auth.userId,
+        decisionNotes,
+        approvalId,
+        auth.organizationId,
+        campusId,
+      ),
+      env.DB.prepare(
+        "UPDATE expenses SET status=?1,updated_at=unixepoch()*1000 WHERE id=?2 AND organization_id=?3 AND campus_id=?4 AND status='pending'",
+      ).bind(
+        decision === "approved" ? "posted" : "rejected",
+        approval.entity_id,
+        auth.organizationId,
+        campusId,
+      ),
+      env.DB.prepare(
+        "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,?5,'expense',?6,'success',?7)",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        auth.userId,
+        `expense.${decision}`,
+        approval.entity_id,
+        safeMetadata({ approvalId, decisionNotes }),
+      ),
+    ]);
+    return Response.json({ ok: true });
   }
   return Response.json({ error: "Unsupported action." }, { status: 400 });
 }

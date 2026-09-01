@@ -367,6 +367,144 @@
 .finance-report-table > div {
   grid-template-columns: repeat(6, minmax(105px, 1fr));
 }
+.report-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.report-actions a {
+  text-decoration: none;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: #198b66;
+  color: #fff;
+  font-weight: 700;
+}
+.report-actions a:last-child {
+  background: #0b2740;
+}
+.report-actions a.disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.account-summary-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  padding: 17px;
+  background: #fff;
+  border: 1px solid #eee3de;
+  border-radius: 16px;
+}
+.account-summary-card > span {
+  font-size: 30px;
+}
+.account-summary-card h3 {
+  margin: 3px 0;
+}
+.account-summary-card small {
+  color: #776d67;
+}
+.account-summary-card dl {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 0 0;
+}
+.account-summary-card dl div {
+  padding: 10px;
+  background: #f4f7fb;
+  border-radius: 10px;
+}
+.account-summary-card dt {
+  color: #687b8b;
+  font-size: 12px;
+}
+.account-summary-card dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+.check-line {
+  display: flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+}
+.check-line input {
+  width: auto;
+}
+.approval-list {
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+}
+.approval-list > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+.approval-list > header h2 {
+  margin: 0;
+}
+.approval-list > header p {
+  margin: 4px 0 0;
+  color: #776d67;
+}
+.approval-list > header span {
+  padding: 8px 12px;
+  border-radius: 99px;
+  background: #fff0cf;
+  color: #966900;
+  font-weight: 700;
+}
+.approval-list article {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #eee3de;
+  border-radius: 14px;
+}
+.approval-list article > span {
+  font-size: 25px;
+}
+.approval-list article small {
+  display: block;
+  color: #776d67;
+  margin-top: 4px;
+}
+.approval-list article p {
+  margin: 5px 0 0;
+}
+.approval-actions {
+  display: flex;
+  gap: 7px;
+}
+.approval-actions button {
+  border: 0;
+  border-radius: 9px;
+  background: #198b66;
+  color: white;
+  padding: 9px 12px;
+  font-weight: 700;
+}
+.approval-actions button.reject {
+  background: #cf4b4b;
+}
+.approval-list i {
+  text-transform: capitalize;
+  font-style: normal;
+  font-weight: 700;
+}
+.approval-list i.approved {
+  color: #11825f;
+}
+.approval-list i.rejected {
+  color: #cf4b4b;
+}
 @media (max-width: 900px) {
   .fee-summary {
     grid-template-columns: repeat(2, 1fr);
@@ -391,6 +529,14 @@
   }
   .finance-report-table > div {
     min-width: 760px;
+  }
+  .approval-list article {
+    grid-template-columns: auto 1fr;
+  }
+  .approval-list article > strong,
+  .approval-list article > i,
+  .approval-actions {
+    grid-column: 2;
   }
 }
 @media (max-width: 600px) {

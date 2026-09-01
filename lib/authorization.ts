@@ -1060,6 +1060,15 @@ export async function ensureFeeAccess(organizationId: string) {
     ],
     ["permission:finance.reports", "finance.reports", "finance", "reports", 1],
     [
+      "permission:finance.accounts",
+      "finance.accounts",
+      "finance",
+      "manage_accounts",
+      1,
+    ],
+    ["permission:finance.approve", "finance.approve", "finance", "approve", 1],
+    ["permission:finance.export", "finance.export", "finance", "export", 1],
+    [
       "permission:fees.financial",
       "fees.financial",
       "fees",
@@ -1090,8 +1099,12 @@ export async function ensureFeeAccess(organizationId: string) {
       "fees.late_fees",
       "expenses.manage",
       "finance.reports",
+      "finance.accounts",
+      "finance.export",
     ],
-    accountant: definitions.map((v) => v[1]),
+    accountant: definitions
+      .map((v) => v[1])
+      .filter((code) => code !== "finance.approve"),
     receptionist: ["fees.view"],
     read_only_auditor: ["fees.view", "fees.financial"],
   };

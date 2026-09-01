@@ -32,6 +32,8 @@ const tenantTables = [
   "fee_late_fee_applications",
   "expense_categories",
   "expenses",
+  "financial_accounts",
+  "financial_approval_requests",
   "admission_enquiries",
   "admission_applications",
   "admission_documents",

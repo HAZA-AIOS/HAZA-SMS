@@ -667,3 +667,38 @@ test("late fees, expenses and financial reports are protected and campus scoped"
   assert.match(auth, /"expenses\.manage"/);
   assert.match(auth, /"finance\.reports"/);
 });
+
+test("cash bank summaries approvals and report exports are protected and tenant scoped", async () => {
+  const source = await read("app/api/fees/route.ts"),
+    exportRoute = await read("app/api/fees/reports/export/route.ts"),
+    panel = await read("app/FeesPanel.tsx"),
+    schema = await read("db/schema.ts"),
+    migration = await read(
+      "drizzle/0025_financial_accounts_approvals_exports.sql",
+    ),
+    backup = await read("app/api/security/backups/route.ts"),
+    auth = await read("lib/authorization.ts");
+  assert.match(source, /action === "create_financial_account"/);
+  assert.match(source, /action === "approve_expense"/);
+  assert.match(source, /You cannot approve or reject your own expense request/);
+  assert.match(source, /financial_account_id/);
+  assert.match(source, /finance\.account\.create/);
+  assert.match(exportRoute, /authorize\("finance\.export"\)/);
+  assert.match(
+    exportRoute,
+    /requireCampusAccess\(auth, campusId, "finance\.export"\)/,
+  );
+  assert.match(exportRoute, /finance\.report\.export/);
+  assert.match(exportRoute, /text\/csv/);
+  assert.match(panel, /Cash and bank summary/);
+  assert.match(panel, /Financial approvals/);
+  assert.match(panel, /Export CSV/);
+  assert.match(schema, /financialAccounts\s*=\s*sqliteTable/);
+  assert.match(schema, /financialApprovalRequests\s*=\s*sqliteTable/);
+  assert.match(migration, /financial_approval_entity_uq/);
+  assert.match(migration, /fee_payments_account_date_idx/);
+  assert.match(backup, /"financial_accounts"/);
+  assert.match(backup, /"financial_approval_requests"/);
+  assert.match(auth, /"finance\.approve"/);
+  assert.match(auth, /"finance\.export"/);
+});

@@ -27,6 +27,7 @@ HAZA-SMS is a multi-tenant School Management System for independent schools and 
 - Fee categories, class/campus fee structures, concessions and student fee assignments
 - Monthly invoices, outstanding balances, payment collection and printable fee receipts
 - Campus-aware late-fee rules, expense tracking and monthly financial reports
+- Cash and bank account summaries, independent expense approvals and CSV/print exports
 
 ## Architecture
 
@@ -127,6 +128,18 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 ### Classes and grade mapping
 
 ![HAZA-SMS classes and grade mapping](docs/screenshots/classes-and-grades.png)
+
+### Fees and financial control
+
+![HAZA-SMS fees and financial control](docs/screenshots/fees-financial-control.png)
+
+### Server-side finance permissions
+
+![HAZA-SMS finance permission implementation](docs/screenshots/code-finance-permissions.png)
+
+### Financial approval enforcement
+
+![HAZA-SMS financial approval implementation](docs/screenshots/code-financial-approval.png)
 
 ## Roadmap
 
