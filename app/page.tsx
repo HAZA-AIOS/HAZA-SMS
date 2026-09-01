@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { getChatGPTUser, chatGPTSignInPath } from "./chatgpt-auth";
 import DashboardShell from "./DashboardShell";
 import RegistrationForm from "./RegistrationForm";
+import PublicLandingPage from "./PublicLandingPage";
 import SchoolSelectionPanel from "./SchoolSelectionPanel";
 import type { AccessData } from "./AccessControlPanel";
 import type { ConfigurationData } from "./ConfigurationPanel";
@@ -601,26 +602,7 @@ async function loadAcademicsData(
 export default async function Home() {
   const user = await getChatGPTUser();
   if (!user)
-    return (
-      <main className="welcome-page">
-        <section className="welcome-card">
-          <img
-            src="/tms-original-logo-transparent.png"
-            alt="The Mentor School logo"
-          />
-          <span className="welcome-kicker">SCHOOL MANAGEMENT SYSTEM</span>
-          <h1>One secure workspace for your entire school.</h1>
-          <p>
-            Manage campuses, people, academics and operations with
-            organization-isolated data and role-based access.
-          </p>
-          <a className="chatgpt-signin" href={chatGPTSignInPath("/")}>
-            ✦ Continue with ChatGPT
-          </a>
-          <small>Temporary authentication for the development phase</small>
-        </section>
-      </main>
-    );
+    return <PublicLandingPage signInPath={chatGPTSignInPath("/")} />;
   await acceptPendingInvitation(user.email, user.displayName);
   const access = await authorize();
   if (!access) {

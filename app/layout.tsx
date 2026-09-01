@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "The Mentor School SMS",
-  description: "School management system for دی منٹور سکول.",
+  title: "The Mentor School | Education for Life",
+  description: "A modern, bag-free school in Adda Machiwal, Vehari—combining strong values, personal attention and international-standard learning.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
