@@ -27,6 +27,12 @@ const courses = [
   ["Computing", "Digital skills", "Safe, creative and productive use of modern technology."],
 ];
 
+const teamGroups = [
+  ["/school/school-office.webp", "School Leadership", "Direction, planning and a safe, purposeful learning culture."],
+  ["/school/classroom-learning.webp", "Teaching Faculty", "Dedicated educators guiding every child with care and clear learning goals."],
+  ["/school/student-achievement.webp", "Student Support Team", "Helping students grow in confidence, character, participation and responsibility."],
+];
+
 export default function PublicLandingPage({ signInPath }: { signInPath: string }) {
   return (
     <main className="landing-page">
@@ -36,13 +42,13 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
           <span><b>The Mentor <em>School</em></b></span>
         </a>
         <nav aria-label="Main navigation">
-          <a href="#home">Home</a><a href="#why-us">Our Approach</a><a href="#advantage">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">Gallery</a><a href="#campus">Contact</a>
+          <a href="#home">Home</a><a href="#why-us">Our Approach</a><a href="#advantage">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">Gallery</a><a href="#team">Our Team</a><a href="#campus">Contact</a>
         </nav>
         <a className="portal-link" href={signInPath}>Dashboard</a><a className="nav-cta" href="#enroll">Enroll Now</a>
       </header>
 
       <section className="landing-hero" id="home">
-        <img className="hero-photo" src="/tms-landing-hero.jpg" alt="Students learning together with their teacher" />
+        <img className="hero-photo" src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" />
         <div className="hero-shade" />
         <div className="hero-copy">
           <span className="landing-kicker"><i /> BAG-FREE · AI-ENHANCED EDUCATION</span>
@@ -66,12 +72,12 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section advantage-section" id="advantage">
         <span className="section-label">WHY TMS</span><h2>The TMS <em>Advantage</em></h2>
-        <div className="advantage-grid">{advantages.map(([n,title,text],i)=><article key={title} className={i===2||i===4?"photo-card":""}><b>{n}</b><h3>{title}</h3><p>{text}</p>{(i===2||i===4)&&<img src="/tms-campus-life.jpg" alt="Students taking part in school activities" />}</article>)}</div>
+        <div className="advantage-grid">{advantages.map(([n,title,text],i)=><article key={title} className={i===2||i===4?"photo-card":""}><b>{n}</b><h3>{title}</h3><p>{text}</p>{i===2&&<img src="/school/campus-ground.webp" alt="The Mentor School green campus ground" />}{i===4&&<img src="/school/school-exterior.webp" alt="The Mentor School campus exterior" />}</article>)}</div>
       </section>
 
       <section className="landing-section thrive-section">
         <span className="section-label">BEYOND THE CLASSROOM</span><h2>Where Students <em>Thrive</em></h2><p className="section-lead">Confidence grows when children learn, create, play and belong.</p>
-        <div className="story-gallery"><figure className="wide"><img src="/tms-campus-life.jpg" alt="Students enjoying an outdoor team activity" /><figcaption><b>Sports & teamwork</b><span>Healthy bodies. Stronger friendships.</span></figcaption></figure><figure><img src="/tms-landing-hero.jpg" alt="Collaborative classroom learning" /><figcaption><b>Active classrooms</b><span>Questions, discussion and discovery.</span></figcaption></figure><figure><img src="/tms-campus-life.jpg" alt="School community activity" /><figcaption><b>School community</b><span>Moments children remember.</span></figcaption></figure></div>
+        <div className="story-gallery"><figure className="wide"><img src="/school/sports-team.webp" alt="Students enjoying an outdoor team activity" /><figcaption><b>Sports & teamwork</b><span>Healthy bodies. Stronger friendships.</span></figcaption></figure><figure><img src="/school/student-achievement.webp" alt="Students celebrating an academic achievement" /><figcaption><b>Student achievement</b><span>Confidence built through participation.</span></figcaption></figure><figure><img src="/school/food-festival.webp" alt="The Mentor School community food festival" /><figcaption><b>School community</b><span>Moments children remember.</span></figcaption></figure></div>
       </section>
 
       <section className="landing-section courses-section" id="curriculum">
@@ -81,7 +87,15 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section life-section" id="life">
         <span className="section-label">EVERY DAY COUNTS</span><h2>Life at <em>TMS</em></h2><p className="section-lead">Rich school days filled with learning, friendship, movement and creativity.</p>
-        <div className="life-collage"><img className="large" src="/tms-campus-life.jpg" alt="Outdoor school life" /><img src="/tms-landing-hero.jpg" alt="Learning in the classroom" /><img src="/tms-campus-life.jpg" alt="Teamwork at school" /><img src="/tms-landing-hero.jpg" alt="Teacher supporting students" /></div>
+        <div className="life-collage"><img className="large" src="/school/school-event.webp" alt="A colorful outdoor event at The Mentor School" /><img src="/school/morning-assembly.webp" alt="Students participating in the morning assembly" /><img src="/school/examination-day.webp" alt="Students completing an assessment" /><img src="/school/outdoor-activities.webp" alt="Students taking part in outdoor activities" /></div>
+        <div className="life-gallery-strip"><figure><img src="/school/campus-walkway.webp" alt="The green campus walkway" /><figcaption>Green campus</figcaption></figure><figure><img src="/school/classroom-environment.webp" alt="A prepared classroom at The Mentor School" /><figcaption>Prepared classrooms</figcaption></figure><figure><img src="/school/student-assessment.webp" alt="Students working during an assessment" /><figcaption>Focused learning</figcaption></figure></div>
+      </section>
+
+      <section className="landing-section team-section" id="team">
+        <span className="section-label">OUR FACULTY</span>
+        <h2>Meet the <em>Educators</em></h2>
+        <p className="section-lead">Passionate, qualified and dedicated to nurturing every student’s potential—the team behind The Mentor School.</p>
+        <div className="team-grid">{teamGroups.map(([image,title,text])=><article key={title}><img src={image} alt={title} /><div><h3>{title}</h3><p>{text}</p></div></article>)}</div>
       </section>
 
       <section className="landing-section parent-section">
@@ -95,7 +109,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
       </section>
 
       <section className="landing-section campus-section" id="campus">
-        <div className="campus-image"><img src="/tms-campus-life.jpg" alt="Students enjoying campus life" /></div>
+        <div className="campus-image"><img src="/school/school-exterior.webp" alt="The Mentor School campus in Adda Machiwal" /></div>
         <div className="campus-copy"><span className="section-label">WELCOME TO OUR SCHOOL</span><h2>Visit Our <em>Campus</em></h2><p>See our learning environment, meet the team and discover whether The Mentor School is right for your child.</p><ul><li><b>Address</b><span>1 KM Chak No. 557/E.B Road, Adda Machiwal, Vehari</span></li><li><b>Phone</b><span>0301 0763122</span></li><li><b>Admissions</b><span>Reception 1 through Grade 8</span></li></ul><a href="#enroll">Plan your visit →</a></div>
       </section>
 
@@ -103,7 +117,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section enroll-section" id="enroll"><div className="enroll-glow"/><span className="section-label">START THEIR JOURNEY</span><h2>Enroll Your Child <em>Today</em></h2><p>Give your child a lighter school day and a brighter path forward.</p><div><a href={signInPath}>Begin online admission</a><a className="outline" href="tel:+923010763122">Call 0301 0763122</a></div></section>
 
-      <footer className="landing-footer"><div className="footer-brand"><img src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div><b>The Mentor School</b><small>Education for life</small></div></div><p>A modern, bag-free school serving families in Adda Machiwal, Vehari.</p><nav><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#campus">Contact</a></nav><small>© {new Date().getFullYear()} The Mentor School. All rights reserved.</small></footer>
+      <footer className="landing-footer"><div className="footer-brand"><img src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div><b>The Mentor School</b><small>Education for life</small></div></div><p>A modern, bag-free school serving families in Adda Machiwal, Vehari.</p><nav><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="#campus">Contact</a></nav><small>© {new Date().getFullYear()} The Mentor School. All rights reserved.</small></footer>
     </main>
   );
 }
