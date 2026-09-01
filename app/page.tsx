@@ -599,10 +599,19 @@ async function loadAcademicsData(
   };
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ portal?: string }>;
+}) {
+  const { portal } = await searchParams;
+  const dashboardPath = "/?portal=dashboard";
+  if (portal !== "dashboard")
+    return <PublicLandingPage signInPath={dashboardPath} />;
+
   const user = await getChatGPTUser();
   if (!user)
-    return <PublicLandingPage signInPath={chatGPTSignInPath("/")} />;
+    return <PublicLandingPage signInPath={chatGPTSignInPath(dashboardPath)} />;
   await acceptPendingInvitation(user.email, user.displayName);
   const access = await authorize();
   if (!access) {
