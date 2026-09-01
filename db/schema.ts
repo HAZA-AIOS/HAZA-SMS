@@ -3,6 +3,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -1427,6 +1428,166 @@ export const examinationTimetableEntries = sqliteTable(
       t.examDate,
       t.startsAt,
       t.endsAt,
+    ),
+  ],
+);
+
+export const examinationTypes = sqliteTable(
+  "examination_types",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    assessmentMode: text("assessment_mode").notNull().default("written"),
+    defaultWeightage: integer("default_weightage").notNull().default(100),
+    requiresApproval: integer("requires_approval", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("examination_types_org_code_uq").on(t.organizationId, t.code),
+  ],
+);
+
+export const gradingSchemes = sqliteTable(
+  "grading_schemes",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id").references(
+      () => academicYears.id,
+      { onDelete: "restrict" },
+    ),
+    name: text("name").notNull(),
+    code: text("code").notNull(),
+    isDefault: integer("is_default", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    status: text("status").notNull().default("active"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("grading_schemes_org_code_uq").on(t.organizationId, t.code),
+    index("grading_schemes_year_idx").on(
+      t.organizationId,
+      t.academicYearId,
+      t.status,
+    ),
+  ],
+);
+
+export const gradeBoundaries = sqliteTable(
+  "grade_boundaries",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    gradingSchemeId: text("grading_scheme_id")
+      .notNull()
+      .references(() => gradingSchemes.id, { onDelete: "cascade" }),
+    gradeLabel: text("grade_label").notNull(),
+    minimumPercentage: integer("minimum_percentage").notNull(),
+    maximumPercentage: integer("maximum_percentage").notNull(),
+    gradePoint: real("grade_point"),
+    remarks: text("remarks"),
+    isPassing: integer("is_passing", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("grade_boundaries_scheme_label_uq").on(
+      t.gradingSchemeId,
+      t.gradeLabel,
+    ),
+    index("grade_boundaries_range_idx").on(
+      t.organizationId,
+      t.gradingSchemeId,
+      t.minimumPercentage,
+      t.maximumPercentage,
+    ),
+  ],
+);
+
+export const assessments = sqliteTable(
+  "assessments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id")
+      .notNull()
+      .references(() => academicYears.id, { onDelete: "restrict" }),
+    termId: text("term_id").references(() => academicTerms.id, {
+      onDelete: "set null",
+    }),
+    examinationTypeId: text("examination_type_id")
+      .notNull()
+      .references(() => examinationTypes.id, { onDelete: "restrict" }),
+    gradingSchemeId: text("grading_scheme_id").references(
+      () => gradingSchemes.id,
+      { onDelete: "restrict" },
+    ),
+    classId: text("class_id")
+      .notNull()
+      .references(() => classes.id, { onDelete: "cascade" }),
+    sectionId: text("section_id").references(() => sections.id, {
+      onDelete: "cascade",
+    }),
+    subjectId: text("subject_id")
+      .notNull()
+      .references(() => subjects.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    assessmentDate: text("assessment_date").notNull(),
+    maximumMarks: integer("maximum_marks").notNull().default(100),
+    passingMarks: integer("passing_marks").notNull().default(40),
+    weightage: integer("weightage").notNull().default(100),
+    status: text("status").notNull().default("draft"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("assessments_scope_title_uq").on(
+      t.academicYearId,
+      t.campusId,
+      t.classId,
+      t.sectionId,
+      t.subjectId,
+      t.title,
+    ),
+    index("assessments_campus_date_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.assessmentDate,
+      t.status,
+    ),
+    index("assessments_class_subject_idx").on(
+      t.organizationId,
+      t.academicYearId,
+      t.classId,
+      t.sectionId,
+      t.subjectId,
     ),
   ],
 );

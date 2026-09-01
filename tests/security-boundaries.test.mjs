@@ -702,3 +702,47 @@ test("cash bank summaries approvals and report exports are protected and tenant 
   assert.match(auth, /"finance\.approve"/);
   assert.match(auth, /"finance\.export"/);
 });
+
+test("examination types assessments and grading are protected and tenant scoped", async () => {
+  const route = await read("app/api/examination-schedule/route.ts"),
+    panel = await read("app/ExaminationSchedulePanel.tsx"),
+    migration = await read(
+      "drizzle/0026_examination_types_assessments_grading.sql",
+    ),
+    authorization = await read("lib/authorization.ts"),
+    backup = await read("app/api/security/backups/route.ts");
+  for (const permission of [
+    "examination_types.manage",
+    "assessments.manage",
+    "grading.manage",
+  ])
+    assert.match(authorization, new RegExp(permission.replace(".", "\\.")));
+  for (const action of [
+    "create_exam_type",
+    "create_grading_scheme",
+    "add_grade_boundary",
+    "create_assessment",
+  ])
+    assert.match(route, new RegExp(action));
+  assert.match(route, /a\.organization_id=\?1 AND a\.campus_id=\?2/);
+  assert.match(route, /invalid for this organization or campus/);
+  assert.match(route, /overlaps an existing grade band/);
+  assert.match(route, /assessment\.create/);
+  for (const table of [
+    "examination_types",
+    "grading_schemes",
+    "grade_boundaries",
+    "assessments",
+  ])
+    assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
+  assert.match(migration, /assessments_campus_date_idx/);
+  assert.match(panel, /PHASE 8A · EXAM TYPES, ASSESSMENTS & GRADING/);
+  assert.match(panel, /Grade configuration/);
+  for (const table of [
+    "examination_types",
+    "grading_schemes",
+    "grade_boundaries",
+    "assessments",
+  ])
+    assert.match(backup, new RegExp(table));
+});

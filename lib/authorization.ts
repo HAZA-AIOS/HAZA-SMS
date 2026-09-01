@@ -1003,6 +1003,27 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
     ],
     ["permission:events.view", "events.view", "events", "view", 0],
     ["permission:events.manage", "events.manage", "events", "manage", 1],
+    [
+      "permission:examination_types.manage",
+      "examination_types.manage",
+      "examinations",
+      "manage_types",
+      1,
+    ],
+    [
+      "permission:assessments.manage",
+      "assessments.manage",
+      "examinations",
+      "manage_assessments",
+      1,
+    ],
+    [
+      "permission:grading.manage",
+      "grading.manage",
+      "examinations",
+      "manage_grading",
+      1,
+    ],
   ] as const;
   const statements = definitions.map((v) =>
     env.DB.prepare(

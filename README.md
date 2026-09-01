@@ -1,8 +1,34 @@
 # HAZA-SMS
 
+[![Live](https://img.shields.io/badge/live-HAZA--SMS-6c4be7)](https://mentor-school-sms.mussawarhussain.chatgpt.site/)
+![Cloudflare Workers](https://img.shields.io/badge/runtime-Cloudflare%20Workers-f38020)
+![TypeScript](https://img.shields.io/badge/language-TypeScript-3178c6)
+![Multi-tenant](https://img.shields.io/badge/security-multi--tenant-20a779)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 HAZA-SMS is a multi-tenant School Management System for independent schools and school groups. Each registered school receives an isolated workspace, may operate multiple campuses, and sees only its own academic, operational, staff, student and financial records.
 
 **Live application:** [The Mentor School SMS](https://mentor-school-sms.mussawarhussain.chatgpt.site/)
+
+## A school operating system, not just a dashboard
+
+HAZA-SMS is being built as a dependable operating layer for real schools: one secure account can manage an organization with multiple campuses, while every campus retains its own students, staff, timetable and operational records. School leadership can see an organization-wide picture without weakening campus or tenant boundaries.
+
+The project combines polished day-to-day workflows with infrastructure that is usually postponed until much later: database migrations, granular permissions, audit history, isolation tests, durable document storage and approval controls. That combination is the core ambition of HAZA-SMS.
+
+## Platform at a glance
+
+| Area                | What HAZA-SMS delivers                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Identity & tenancy  | School registration, verified users, organization context and multi-campus access           |
+| Student information | Profiles, guardians, documents, enrollment history, archive/restore and validated bulk data |
+| Admissions          | Enquiries through approval, fee assignment, student conversion, letters and printable forms |
+| Workforce           | Staff profiles, teacher allocations, attendance, leave, salary and payroll foundations      |
+| Academics           | Years, terms, grades, classes, sections, subjects, curriculum and promotions                |
+| Scheduling          | Seasonal timings, periods, class/teacher timetables, conflicts, substitutions and events    |
+| Finance             | Fee plans, concessions, invoices, receipts, late fees, expenses, accounts and approvals     |
+| Examinations        | Examination types, assessments, grading schemes, grade bands and examination timetable      |
+| Governance          | Role-based authorization, tenant/campus isolation, audit logs, backups and exports          |
 
 ## Current capabilities
 
@@ -28,6 +54,22 @@ HAZA-SMS is a multi-tenant School Management System for independent schools and 
 - Monthly invoices, outstanding balances, payment collection and printable fee receipts
 - Campus-aware late-fee rules, expense tracking and monthly financial reports
 - Cash and bank account summaries, independent expense approvals and CSV/print exports
+- Reusable examination types, class assessments and academic-year grading schemes
+- Validated, non-overlapping grade boundaries with pass/fail and grade-point configuration
+
+## Security architecture
+
+```mermaid
+flowchart TD
+    A[Authenticated user] --> B[Server authorization]
+    B --> C[Organization boundary]
+    C --> D[Campus boundary]
+    D --> E[(Cloudflare D1)]
+    D --> F[(Cloudflare R2)]
+    B --> G[(Audit history)]
+```
+
+The browser never decides whether an operation is allowed. Every protected request is re-authorized on the server, bound to the active organization and—where applicable—the selected campus. Linked academic records are validated against that same scope before a write is accepted.
 
 ## Architecture
 
@@ -68,6 +110,18 @@ Key controls include:
 - Temporary substitute-teacher scheduling
 - Campus, academic-year and schedule isolation
 - Audit history for timetable changes
+
+## Examination and grading foundation
+
+- Reusable written, oral, practical, project and mixed assessment types
+- Default weightage and result-approval requirements per type
+- Campus-specific assessments linked to year, term, class, section and subject
+- Maximum marks, passing marks and assessment weightage validation
+- Academic-year or organization-wide grading schemes
+- Percentage bands, grade points, remarks and passing-status rules
+- Overlap prevention for grading ranges
+- Existing examination timetable, rooms, invigilators and events retained
+- Audit entries for type, assessment, scheme and boundary creation
 
 ## Repository structure
 
@@ -143,7 +197,24 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 
 ## Roadmap
 
-The project is completing Phase 7, covering fees and finance. Planned phases continue with late fees, expenses, financial reports, examinations and results, learning resources, communications, parent/student portals, operational modules and analytics.
+| Milestone                                                                         | Status      |
+| --------------------------------------------------------------------------------- | ----------- |
+| Phase 0 — Secure multi-tenant foundation                                          | Complete    |
+| Phase 1 — Student information system                                              | Complete    |
+| Phase 2 — Admissions management                                                   | Complete    |
+| Phase 3 — Staff and payroll foundation                                            | Complete    |
+| Phase 4 — Academic structure and tenant isolation                                 | Complete    |
+| Phase 5 — Attendance foundation                                                   | Complete    |
+| Phase 6 — Timetables, substitutions and events                                    | Complete    |
+| Phase 7 — Fees and financial controls                                             | Complete    |
+| Phase 8 — Examinations and results                                                | In progress |
+| Phases 9–14 — Learning, communication, portals, operations, analytics and rollout | Planned     |
+
+The next product milestone expands Phase 8 into secure marks entry, result calculation, teacher remarks, approval and publication. Later phases add learning resources, communications, parent/student portals and role-aware analytics without replacing the foundations already built.
+
+## The long-term vision
+
+HAZA-SMS aims to give an independent school the operational depth of a large enterprise platform without losing clarity. The result should be a system where a receptionist can complete an admission, a teacher can manage an assigned class, an accountant can control collections, and a principal can approve and analyze school performance—with each person seeing exactly the information their role permits.
 
 ## License
 

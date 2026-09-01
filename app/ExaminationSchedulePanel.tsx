@@ -11,8 +11,15 @@ type Data = {
   sections: Row[];
   subjects: Row[];
   staff: Row[];
+  examTypes: Row[];
+  gradingSchemes: Row[];
+  gradeBoundaries: Row[];
+  assessments: Row[];
   canManage: boolean;
   canManageEvents: boolean;
+  canManageTypes: boolean;
+  canManageAssessments: boolean;
+  canManageGrading: boolean;
 };
 const empty: Data = {
   campusId: "",
@@ -24,8 +31,15 @@ const empty: Data = {
   sections: [],
   subjects: [],
   staff: [],
+  examTypes: [],
+  gradingSchemes: [],
+  gradeBoundaries: [],
+  assessments: [],
   canManage: false,
   canManageEvents: false,
+  canManageTypes: false,
+  canManageAssessments: false,
+  canManageGrading: false,
 };
 const nice = (v: unknown) =>
   new Date(`${String(v)}T00:00:00`).toLocaleDateString("en-GB", {
@@ -39,7 +53,7 @@ const clock = (v: unknown) => {
 };
 export default function ExaminationSchedulePanel() {
   const [data, setData] = useState<Data>(empty),
-    [tab, setTab] = useState("exams"),
+    [tab, setTab] = useState("assessments"),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState("");
   const load = async () => {
@@ -47,7 +61,9 @@ export default function ExaminationSchedulePanel() {
     setMessage("");
     try {
       const r = await fetch("/api/examination-schedule", { cache: "no-store" }),
-        j = (await r.json()) as Data & { error?: string };
+        j = (await r.json().catch(() => ({
+          error: "The server returned an empty response. Please try again.",
+        }))) as Data & { error?: string };
       if (!r.ok) throw new Error(j.error || "Unable to load schedules.");
       setData(j);
     } catch (e) {
@@ -68,7 +84,9 @@ export default function ExaminationSchedulePanel() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, campusId: data.campusId, ...body }),
       }),
-      j = (await r.json()) as { error?: string };
+      j = (await r.json().catch(() => ({
+        error: "The server returned an empty response. Please try again.",
+      }))) as { error?: string };
     if (!r.ok) {
       setMessage(j.error || "Unable to save.");
       return;
@@ -84,7 +102,9 @@ export default function ExaminationSchedulePanel() {
     });
     if (r.ok) await load();
     else {
-      const j = (await r.json()) as { error?: string };
+      const j = (await r.json().catch(() => ({
+        error: "The server returned an empty response. Please try again.",
+      }))) as { error?: string };
       setMessage(j.error || "Unable to cancel.");
     }
   };
@@ -108,52 +128,48 @@ export default function ExaminationSchedulePanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 6C · EXAMINATION TIMETABLE & EVENTS
+            PHASE 8A · EXAM TYPES, ASSESSMENTS & GRADING
           </span>
-          <h1>Examination schedule and events calendar</h1>
+          <h1>Examinations and assessment configuration</h1>
           <p>
-            Plan assessments, invigilation, rooms and school events for the
-            selected campus.
+            Define examination types, assessment plans and transparent grading
+            rules while retaining campus timetables and events.
           </p>
         </div>
         <span className="phase-badge complete">
-          {upcoming.length} upcoming exams
+          {data.assessments.length} assessments
         </span>
       </div>
       <section className="exam-summary">
         <article>
           <span>📝</span>
-          <b>{data.entries.length}</b>
-          <small>Scheduled examinations</small>
+          <b>{data.examTypes.length}</b>
+          <small>Examination types</small>
         </article>
         <article>
           <span>📅</span>
-          <b>{data.events.length}</b>
-          <small>Calendar events</small>
+          <b>{data.assessments.length}</b>
+          <small>Configured assessments</small>
         </article>
         <article>
           <span>🏫</span>
-          <b>
-            {new Set(data.entries.map((v) => v.room_name).filter(Boolean)).size}
-          </b>
-          <small>Examination rooms</small>
+          <b>{data.gradingSchemes.length}</b>
+          <small>Grading schemes</small>
         </article>
         <article>
           <span>👩‍🏫</span>
-          <b>
-            {
-              new Set(
-                data.entries.map((v) => v.invigilator_staff_id).filter(Boolean),
-              ).size
-            }
-          </b>
-          <small>Invigilators assigned</small>
+          <b>{upcoming.length}</b>
+          <small>Upcoming timetable entries</small>
         </article>
       </section>
       {message && <p className="timetable-message">{message}</p>}
       <section className="exam-workspace">
         <nav>
           {[
+            ["assessments", "Assessments"],
+            ["exam-types", "Exam types"],
+            ["grading", "Grade configuration"],
+            ["create-assessment", "Create assessment"],
             ["exams", "Examination timetable"],
             ["calendar", "Events calendar"],
             ["add-exam", "Schedule examination"],
@@ -168,6 +184,410 @@ export default function ExaminationSchedulePanel() {
             </button>
           ))}
         </nav>
+        {tab === "assessments" &&
+          (data.assessments.length ? (
+            <div className="assessment-grid">
+              {data.assessments.map((v) => (
+                <article key={v.id}>
+                  <div className="assessment-card-top">
+                    <span>🧾</span>
+                    <small>{String(v.status).toUpperCase()}</small>
+                  </div>
+                  <h3>{v.title as string}</h3>
+                  <p>
+                    {v.examination_type_name as string} ·{" "}
+                    {v.assessment_mode as string}
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Class</dt>
+                      <dd>
+                        {v.class_name as string}
+                        {v.section_name ? ` / ${v.section_name}` : ""}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Subject</dt>
+                      <dd>{v.subject_name as string}</dd>
+                    </div>
+                    <div>
+                      <dt>Date</dt>
+                      <dd>{nice(v.assessment_date)}</dd>
+                    </div>
+                    <div>
+                      <dt>Marks</dt>
+                      <dd>
+                        {v.passing_marks as number} /{" "}
+                        {v.maximum_marks as number} pass
+                      </dd>
+                    </div>
+                  </dl>
+                  <footer>
+                    <span>{v.weightage as number}% weightage</span>
+                    <span>
+                      {(v.grading_scheme_name as string) || "No grading scheme"}
+                    </span>
+                  </footer>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="academic-empty">
+              <span>🧾</span>
+              <h3>No assessments configured</h3>
+              <p>
+                Create a class and subject assessment with marks and grading
+                rules.
+              </p>
+              {data.canManageAssessments && (
+                <button onClick={() => setTab("create-assessment")}>
+                  ＋ Create assessment
+                </button>
+              )}
+            </div>
+          ))}
+        {tab === "exam-types" && (
+          <div className="exam-config-grid">
+            <section>
+              <h2>Reusable examination types</h2>
+              <p>
+                Standardize how assessments are classified across the school.
+              </p>
+              <div className="exam-type-grid">
+                {data.examTypes.map((v) => (
+                  <article key={v.id}>
+                    <span>📝</span>
+                    <div>
+                      <h3>{v.name}</h3>
+                      <p>
+                        {v.code as string} · {v.assessment_mode as string}
+                      </p>
+                    </div>
+                    <b>{v.default_weightage as number}%</b>
+                  </article>
+                ))}
+              </div>
+            </section>
+            {data.canManageTypes && (
+              <form
+                className="exam-form compact"
+                onSubmit={(e) => send(e, "create_exam_type")}
+              >
+                <h2>Add examination type</h2>
+                <label>
+                  Name
+                  <input name="name" placeholder="Term Examination" required />
+                </label>
+                <div>
+                  <label>
+                    Code
+                    <input name="code" placeholder="TERM" required />
+                  </label>
+                  <label>
+                    Mode
+                    <select name="assessmentMode">
+                      <option value="written">Written</option>
+                      <option value="oral">Oral</option>
+                      <option value="practical">Practical</option>
+                      <option value="project">Project</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  Default weightage
+                  <input
+                    type="number"
+                    name="defaultWeightage"
+                    min="1"
+                    max="100"
+                    defaultValue="100"
+                  />
+                </label>
+                <label className="check-label">
+                  <input type="checkbox" name="requiresApproval" /> Results
+                  require approval
+                </label>
+                <button>Save type</button>
+              </form>
+            )}
+          </div>
+        )}
+        {tab === "grading" && (
+          <div className="grading-grid">
+            <section>
+              <h2>Grading schemes</h2>
+              {data.gradingSchemes.map((s) => (
+                <article key={s.id}>
+                  <header>
+                    <div>
+                      <h3>{s.name}</h3>
+                      <p>
+                        {s.code as string} ·{" "}
+                        {(s.academic_year_name as string) ||
+                          "All academic years"}
+                      </p>
+                    </div>
+                    {Boolean(s.is_default) && <span>Default</span>}
+                  </header>
+                  <div className="grade-bands">
+                    {data.gradeBoundaries
+                      .filter((b) => b.grading_scheme_id === s.id)
+                      .map((b) => (
+                        <div key={b.id}>
+                          <b>{b.grade_label as string}</b>
+                          <span>
+                            {b.minimum_percentage as number}–
+                            {b.maximum_percentage as number}%
+                          </span>
+                          <small>
+                            {Boolean(b.is_passing) ? "Pass" : "Not passing"}
+                          </small>
+                        </div>
+                      ))}
+                  </div>
+                </article>
+              ))}
+            </section>
+            {data.canManageGrading && (
+              <section className="grading-forms">
+                <form
+                  className="exam-form compact"
+                  onSubmit={(e) => send(e, "create_grading_scheme")}
+                >
+                  <h2>New grading scheme</h2>
+                  <div>
+                    <label>
+                      Name
+                      <input
+                        name="name"
+                        placeholder="Standard grading"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Code
+                      <input name="code" placeholder="STD" required />
+                    </label>
+                  </div>
+                  <label>
+                    Academic year
+                    <select name="academicYearId">
+                      <option value="">All years</option>
+                      {data.academicYears.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="check-label">
+                    <input type="checkbox" name="isDefault" /> Set as default
+                  </label>
+                  <button>Save scheme</button>
+                </form>
+                <form
+                  className="exam-form compact"
+                  onSubmit={(e) => send(e, "add_grade_boundary")}
+                >
+                  <h2>Add grade band</h2>
+                  <label>
+                    Scheme
+                    <select name="gradingSchemeId" required>
+                      <option value="">Select scheme</option>
+                      {data.gradingSchemes.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div>
+                    <label>
+                      Grade
+                      <input name="label" placeholder="A+" required />
+                    </label>
+                    <label>
+                      Minimum %
+                      <input
+                        type="number"
+                        name="minimumPercentage"
+                        min="0"
+                        max="100"
+                        required
+                      />
+                    </label>
+                    <label>
+                      Maximum %
+                      <input
+                        type="number"
+                        name="maximumPercentage"
+                        min="0"
+                        max="100"
+                        required
+                      />
+                    </label>
+                  </div>
+                  <label>
+                    Grade point
+                    <input
+                      type="number"
+                      name="gradePoint"
+                      min="0"
+                      max="10"
+                      step="0.01"
+                    />
+                  </label>
+                  <label>
+                    Remarks
+                    <input name="remarks" placeholder="Outstanding" />
+                  </label>
+                  <label className="check-label">
+                    <input type="checkbox" name="isPassing" /> Passing grade
+                  </label>
+                  <button>Add grade band</button>
+                </form>
+              </section>
+            )}
+          </div>
+        )}
+        {tab === "create-assessment" && (
+          <form
+            className="exam-form"
+            onSubmit={(e) => send(e, "create_assessment")}
+          >
+            <header>
+              <span>🧾</span>
+              <div>
+                <h2>Create assessment</h2>
+                <p>
+                  Connect the assessment to the selected campus, academic year,
+                  class and subject.
+                </p>
+              </div>
+            </header>
+            <input type="hidden" name="academicYearId" value={year?.id || ""} />
+            <label>
+              Assessment title
+              <input name="title" placeholder="Term 1 Mathematics" required />
+            </label>
+            <div>
+              <label>
+                Examination type
+                <select name="examinationTypeId" required>
+                  <option value="">Select type</option>
+                  {data.examTypes.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Term
+                <select name="termId">
+                  <option value="">No term</option>
+                  {data.terms
+                    .filter((v) => !year || v.academic_year_id === year.id)
+                    .map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Grading scheme
+                <select name="gradingSchemeId">
+                  <option value="">No scheme</option>
+                  {data.gradingSchemes.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div>
+              <label>
+                Class
+                <select name="classId" required>
+                  <option value="">Select class</option>
+                  {data.classes.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Section
+                <select name="sectionId">
+                  <option value="">All sections</option>
+                  {data.sections.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Subject
+                <select name="subjectId" required>
+                  <option value="">Select subject</option>
+                  {data.subjects.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div>
+              <label>
+                Assessment date
+                <input type="date" name="assessmentDate" required />
+              </label>
+              <label>
+                Maximum marks
+                <input
+                  type="number"
+                  name="maximumMarks"
+                  min="1"
+                  defaultValue="100"
+                  required
+                />
+              </label>
+              <label>
+                Passing marks
+                <input
+                  type="number"
+                  name="passingMarks"
+                  min="0"
+                  defaultValue="40"
+                  required
+                />
+              </label>
+              <label>
+                Weightage %
+                <input
+                  type="number"
+                  name="weightage"
+                  min="1"
+                  max="100"
+                  defaultValue="100"
+                  required
+                />
+              </label>
+            </div>
+            <button
+              disabled={!data.canManageAssessments || !data.examTypes.length}
+            >
+              Save assessment
+            </button>
+            {!data.examTypes.length && <p>Create an examination type first.</p>}
+          </form>
+        )}
         {tab === "exams" &&
           (data.entries.length ? (
             <div className="exam-list">
