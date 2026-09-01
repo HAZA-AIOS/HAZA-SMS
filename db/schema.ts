@@ -224,6 +224,19 @@ export const academicYears = sqliteTable(
       .notNull()
       .default(false),
     status: text("status").notNull().default("draft"),
+    submittedBy: text("submitted_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    submittedAt: integer("submitted_at"),
+    approvedBy: text("approved_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    approvedAt: integer("approved_at"),
+    publishedBy: text("published_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    publishedAt: integer("published_at"),
+    approvalRemarks: text("approval_remarks"),
     ...ts,
   },
   (t) => [
@@ -1589,7 +1602,28 @@ export const assessments = sqliteTable(
       t.sectionId,
       t.subjectId,
     ),
+    index("assessments_publication_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.status,
+      t.publishedAt,
+    ),
   ],
+);
+
+export const resultPublications = sqliteTable(
+  "result_publications",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").notNull().references(() => campuses.id, { onDelete: "cascade" }),
+    assessmentId: text("assessment_id").notNull().references(() => assessments.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    remarks: text("remarks"),
+    actedBy: text("acted_by").notNull().references(() => users.id, { onDelete: "restrict" }),
+    actedAt: integer("acted_at").notNull().default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [index("result_publications_assessment_idx").on(t.organizationId, t.campusId, t.assessmentId, t.actedAt)],
 );
 
 export const assessmentMarks = sqliteTable(

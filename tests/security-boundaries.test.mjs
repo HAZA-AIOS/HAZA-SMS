@@ -736,7 +736,7 @@ test("examination types assessments and grading are protected and tenant scoped"
   ])
     assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
   assert.match(migration, /assessments_campus_date_idx/);
-  assert.match(panel, /PHASE 8B · MARKS, RESULTS & TEACHER REMARKS/);
+  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
   assert.match(panel, /Grade configuration/);
   for (const table of [
     "examination_types",
@@ -764,7 +764,7 @@ test("marks entry result calculation and teacher remarks are protected and tenan
   assert.match(route, /grade_boundaries WHERE organization_id=\?1/);
   assert.match(route, /assessment\.marks\.save/);
   assert.match(route, /ON CONFLICT\(assessment_id,student_id\)/);
-  assert.match(panel, /PHASE 8B · MARKS, RESULTS & TEACHER REMARKS/);
+  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
   assert.match(panel, /Save marks and calculate results/);
   assert.match(panel, /Teacher remarks/);
   assert.match(schema, /assessmentMarks\s*=\s*sqliteTable/);
@@ -772,4 +772,26 @@ test("marks entry result calculation and teacher remarks are protected and tenan
   assert.match(migration, /assessment_marks_student_uq/);
   assert.match(migration, /assessment_marks_scope_idx/);
   assert.match(backup, /"assessment_marks"/);
+});
+
+test("result approval publication and printable cards are protected and tenant scoped", async () => {
+  const route = await read("app/api/examination-results/route.ts"), card = await read("app/api/examination-results/cards/[studentId]/route.ts"), panel = await read("app/ExaminationSchedulePanel.tsx"), migration = await read("drizzle/0028_result_approval_publication.sql"), schema = await read("db/schema.ts"), authorization = await read("lib/authorization.ts"), backup = await read("app/api/security/backups/route.ts");
+  for (const permission of ["results.approve", "results.publish", "result_cards.print"]) assert.match(authorization, new RegExp(permission.replace(".", "\\.")));
+  assert.match(route, /requireCampusAccess\(auth, campusId/);
+  assert.match(route, /marks_entered.*submitted/);
+  assert.match(route, /submitted.*approved/);
+  assert.match(route, /approved.*published/);
+  assert.match(route, /result_publications/);
+  assert.match(card, /authorize\("result_cards\.print"\)/);
+  assert.match(card, /status='published'/);
+  assert.match(card, /result\.card\.print/);
+  assert.match(card, /content-security-policy/);
+  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
+  assert.match(panel, /Submit for approval/);
+  assert.match(panel, /Publish results/);
+  assert.match(panel, /Print card/);
+  assert.match(schema, /resultPublications\s*=\s*sqliteTable/);
+  assert.match(migration, /CREATE TABLE `result_publications`/);
+  assert.match(migration, /assessments_publication_idx/);
+  assert.match(backup, /"result_publications"/);
 });

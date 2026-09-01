@@ -175,6 +175,11 @@ Key controls include:
 - Automatic percentage, grade, grade-point and pass/fail calculation
 - Student absence tracking and contextual teacher remarks
 - Audited marks updates with organization and campus validation
+- Controlled workflow from marks entry through submission, approval and publication
+- Separate server permissions for approving, publishing and printing results
+- Published results locked until an authorized officer deliberately unpublishes them
+- School-branded A4 result cards with marks, percentages, grades, remarks and signatures
+- Tenant- and campus-scoped result-card access with an audit entry for every print
 
 ## Repository structure
 
@@ -260,10 +265,10 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 | Phase 5 — Attendance foundation                                                   | Complete    |
 | Phase 6 — Timetables, substitutions and events                                    | Complete    |
 | Phase 7 — Fees and financial controls                                             | Complete    |
-| Phase 8 — Examinations and results                                                | In progress |
+| Phase 8 — Examinations and results                                                | In progress — 8A–8C complete |
 | Phases 9–14 — Learning, communication, portals, operations, analytics and rollout | Planned     |
 
-The next product milestone expands Phase 8 into secure marks entry, result calculation, teacher remarks, approval and publication. Later phases add learning resources, communications, parent/student portals and role-aware analytics without replacing the foundations already built.
+The next product milestone, **Phase 8D**, adds class and subject performance analysis, promotion-ready examination summaries and controlled exports. Later phases add learning resources, communications, parent/student portals and role-aware analytics without replacing the foundations already built.
 
 ## The long-term vision
 

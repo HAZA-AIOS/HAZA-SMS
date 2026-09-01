@@ -1025,6 +1025,9 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
       1,
     ],
     ["permission:marks.enter", "marks.enter", "examinations", "enter_marks", 1],
+    ["permission:results.approve", "results.approve", "examinations", "approve_results", 1],
+    ["permission:results.publish", "results.publish", "examinations", "publish_results", 1],
+    ["permission:result_cards.print", "result_cards.print", "examinations", "print_result_cards", 1],
   ] as const;
   const statements = definitions.map((v) =>
     env.DB.prepare(
@@ -1039,12 +1042,12 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
   const grants: Record<string, string[]> = {
     super_administrator: definitions.map((v) => v[1]),
     principal: definitions.map((v) => v[1]),
-    school_administrator: definitions.map((v) => v[1]),
-    examination_officer: definitions.map((v) => v[1]),
-    teacher: ["examinations.view", "events.view", "marks.enter"],
+    school_administrator: definitions.map((v) => v[1]).filter((v) => v !== "results.publish"),
+    examination_officer: definitions.map((v) => v[1]).filter((v) => v !== "results.publish"),
+    teacher: ["examinations.view", "events.view", "marks.enter", "result_cards.print"],
     receptionist: ["events.view"],
-    parent: ["examinations.view", "events.view"],
-    student: ["examinations.view", "events.view"],
+    parent: ["examinations.view", "events.view", "result_cards.print"],
+    student: ["examinations.view", "events.view", "result_cards.print"],
     read_only_auditor: ["examinations.view", "events.view"],
   };
   for (const [key, codes] of Object.entries(grants))

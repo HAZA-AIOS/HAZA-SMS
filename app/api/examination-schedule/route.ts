@@ -210,6 +210,11 @@ export async function POST(request: Request) {
         { error: "Select a valid assessment with a class roster." },
         { status: 400 },
       );
+    if (["submitted", "approved", "published"].includes(String(assessment.status)))
+      return Response.json(
+        { error: "Submitted or published results are locked. Ask an examination officer to return them for correction." },
+        { status: 409 },
+      );
     const teacherRole = await env.DB.prepare(
       "SELECT 1 ok FROM membership_roles mr JOIN roles r ON r.id=mr.role_id WHERE mr.membership_id=?1 AND r.key='teacher' LIMIT 1",
     )

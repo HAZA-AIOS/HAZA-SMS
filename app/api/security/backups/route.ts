@@ -26,6 +26,7 @@ const tenantTables = [
   "grade_boundaries",
   "assessments",
   "assessment_marks",
+  "result_publications",
   "fee_categories",
   "fee_structures",
   "fee_structure_items",

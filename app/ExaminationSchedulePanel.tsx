@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 type Row = Record<string, unknown> & { id: string; name?: string };
+type ResultData = { campusId: string; assessments: Row[]; roster: Row[]; canApprove: boolean; canPublish: boolean; canPrint: boolean };
 type Data = {
   campusId: string;
   entries: Row[];
@@ -45,6 +46,7 @@ const empty: Data = {
   canManageGrading: false,
   canEnterMarks: false,
 };
+const emptyResults: ResultData = { campusId: "", assessments: [], roster: [], canApprove: false, canPublish: false, canPrint: false };
 const nice = (v: unknown) =>
   new Date(`${String(v)}T00:00:00`).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -60,7 +62,9 @@ export default function ExaminationSchedulePanel() {
     [tab, setTab] = useState("assessments"),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState(""),
-    [selectedAssessment, setSelectedAssessment] = useState("");
+    [selectedAssessment, setSelectedAssessment] = useState(""),
+    [resultData, setResultData] = useState<ResultData>(emptyResults),
+    [resultAssessment, setResultAssessment] = useState("");
   const load = async (assessmentId = selectedAssessment) => {
     setBusy(true);
     setMessage("");
@@ -80,11 +84,28 @@ export default function ExaminationSchedulePanel() {
       setBusy(false);
     }
   };
+  const loadResults = async (assessmentId = resultAssessment) => {
+    const r = await fetch(`/api/examination-results${assessmentId ? `?assessmentId=${encodeURIComponent(assessmentId)}` : ""}`, { cache: "no-store" }),
+      j = await r.json().catch(() => ({ error: "The server returned an empty response. Please try again." })) as ResultData & { error?: string };
+    if (!r.ok) { setMessage(j.error || "Unable to load result workflow."); return; }
+    setResultData(j);
+  };
   useEffect(() => {
     void load();
+    void loadResults();
     // Initial campus load only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const openResults = async (id: string) => { setResultAssessment(id); await loadResults(id); };
+  const resultAction = async (action: string) => {
+    if (!resultAssessment) return;
+    const remarks = action === "return" || action === "unpublish" ? window.prompt("Reason for this action:") : "";
+    if ((action === "return" || action === "unpublish") && !remarks) return;
+    const r = await fetch("/api/examination-results", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, assessmentId: resultAssessment, campusId: resultData.campusId, remarks }) }),
+      j = await r.json().catch(() => ({ error: "The server returned an empty response. Please try again." })) as { error?: string; status?: string };
+    if (!r.ok) { setMessage(j.error || "Unable to update results."); return; }
+    setMessage(`Results moved to ${j.status}.`); await loadResults(resultAssessment); await load(selectedAssessment);
+  };
   const openMarks = async (id: string) => {
     setSelectedAssessment(id);
     setTab("marks");
@@ -180,9 +201,9 @@ export default function ExaminationSchedulePanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 8B · MARKS, RESULTS & TEACHER REMARKS
+            PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS
           </span>
-          <h1>Examinations, marks and calculated results</h1>
+          <h1>Controlled examinations and published results</h1>
           <p>
             Define examination types, assessment plans and transparent grading
             rules while retaining campus timetables and events.
@@ -219,6 +240,7 @@ export default function ExaminationSchedulePanel() {
         <nav>
           {[
             ["marks", "Marks entry"],
+            ["results", "Approval & result cards"],
             ["assessments", "Assessments"],
             ["exam-types", "Exam types"],
             ["grading", "Grade configuration"],
@@ -237,6 +259,33 @@ export default function ExaminationSchedulePanel() {
             </button>
           ))}
         </nav>
+        {tab === "results" && (
+          <div className="results-workspace">
+            <header className="results-header">
+              <div><h2>Result approval and publication</h2><p>Review calculated results, approve them, publish them to authorized users, and print school-branded result cards.</p></div>
+              <select value={resultAssessment} onChange={(e) => void openResults(e.target.value)}><option value="">Select assessment</option>{resultData.assessments.map((v) => <option key={v.id} value={v.id}>{v.title as string} · {v.class_name as string} · {v.subject_name as string}</option>)}</select>
+            </header>
+            {!resultAssessment ? <div className="academic-empty"><span>✅</span><h3>Select results to review</h3><p>Only campus-owned assessments appear in this approval queue.</p></div> : (() => {
+              const selected = resultData.assessments.find((v) => v.id === resultAssessment), status = String(selected?.status || "draft");
+              return <>
+                <section className="result-approval-summary">
+                  <article><small>Workflow status</small><b className={`result-status ${status}`}>{status.replaceAll("_", " ")}</b></article>
+                  <article><small>Marked students</small><b>{Number(selected?.marked_count || 0)}</b></article>
+                  <article><small>Class average</small><b>{selected?.class_average == null ? "—" : `${selected.class_average}%`}</b></article>
+                  <article><small>Passed / absent</small><b>{Number(selected?.passed_count || 0)} / {Number(selected?.absent_count || 0)}</b></article>
+                </section>
+                <div className="result-actions">
+                  {status === "marks_entered" && data.canEnterMarks && <button onClick={() => void resultAction("submit")}>Submit for approval</button>}
+                  {status === "submitted" && resultData.canApprove && <><button onClick={() => void resultAction("approve")}>Approve results</button><button className="secondary" onClick={() => void resultAction("return")}>Return for correction</button></>}
+                  {status === "approved" && resultData.canPublish && <><button onClick={() => void resultAction("publish")}>Publish results</button><button className="secondary" onClick={() => void resultAction("return")}>Return for correction</button></>}
+                  {status === "published" && resultData.canPublish && <button className="secondary" onClick={() => void resultAction("unpublish")}>Unpublish</button>}
+                  <span>{status === "published" ? "Published results are locked and printable." : "Result cards become available after publication."}</span>
+                </div>
+                <div className="result-review-table"><div className="head"><span>Student</span><span>Marks</span><span>Grade</span><span>Status</span><span>Remarks</span><span>Result card</span></div>{resultData.roster.map((v) => <div key={String(v.student_id)}><span><b>{v.first_name as string} {v.last_name as string}</b><small>{v.admission_number as string} · Roll {String(v.roll_number || "—")}</small></span><span>{Boolean(v.is_absent) ? "Absent" : `${String(v.obtained_marks)} · ${String(v.percentage)}%`}</span><span>{String(v.grade_label || "—")}</span><span><i className={Boolean(v.is_passing) ? "pass" : "fail"}>{Boolean(v.is_passing) ? "Pass" : "Not passing"}</i></span><span>{String(v.teacher_remarks || "—")}</span><span>{status === "published" && resultData.canPrint ? <a target="_blank" rel="noreferrer" href={`/api/examination-results/cards/${v.student_id}?assessmentId=${resultAssessment}`}>Print card</a> : "Locked"}</span></div>)}</div>
+              </>;
+            })()}
+          </div>
+        )}
         {tab === "marks" && (
           <div className="marks-workspace">
             <header>
