@@ -1024,6 +1024,7 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
       "manage_grading",
       1,
     ],
+    ["permission:marks.enter", "marks.enter", "examinations", "enter_marks", 1],
   ] as const;
   const statements = definitions.map((v) =>
     env.DB.prepare(
@@ -1040,7 +1041,7 @@ export async function ensureExaminationScheduleAccess(organizationId: string) {
     principal: definitions.map((v) => v[1]),
     school_administrator: definitions.map((v) => v[1]),
     examination_officer: definitions.map((v) => v[1]),
-    teacher: ["examinations.view", "events.view"],
+    teacher: ["examinations.view", "events.view", "marks.enter"],
     receptionist: ["events.view"],
     parent: ["examinations.view", "events.view"],
     student: ["examinations.view", "events.view"],

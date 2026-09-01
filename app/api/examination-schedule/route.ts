@@ -13,7 +13,7 @@ const date = /^\d{4}-\d{2}-\d{2}$/;
 const time = /^([01]\d|2[0-3]):[0-5]\d$/;
 const overlap = "NOT (ends_at<=?4 OR starts_at>=?5)";
 
-export async function GET() {
+export async function GET(request: Request) {
   const auth = await authorize("examinations.view");
   if (!auth)
     return Response.json(
@@ -28,6 +28,8 @@ export async function GET() {
     );
   const denied = await requireCampusAccess(auth, campusId, "examinations.view");
   if (denied) return denied;
+  const assessmentId =
+    new URL(request.url).searchParams.get("assessmentId")?.slice(0, 80) || "";
   const [
     entries,
     events,
@@ -103,6 +105,31 @@ export async function GET() {
       .bind(auth.organizationId, campusId)
       .all(),
   ]);
+  let markRoster: unknown[] = [];
+  if (assessmentId) {
+    const selected = assessments.results.find(
+      (v) => String(v.id) === assessmentId,
+    ) as Record<string, unknown> | undefined;
+    if (!selected)
+      return Response.json(
+        { error: "Assessment not found in this campus." },
+        { status: 404 },
+      );
+    markRoster = (
+      await env.DB.prepare(
+        "SELECT e.id enrollment_id,s.id student_id,s.admission_number,s.first_name,s.last_name,e.roll_number,m.obtained_marks,m.percentage,m.grade_label,m.grade_point,m.is_passing,m.is_absent,m.teacher_remarks FROM enrollments e JOIN students s ON s.id=e.student_id AND s.organization_id=e.organization_id LEFT JOIN assessment_marks m ON m.assessment_id=?1 AND m.student_id=s.id AND m.organization_id=e.organization_id WHERE e.organization_id=?2 AND e.campus_id=?3 AND e.academic_year_id=?4 AND e.class_id=?5 AND (?6='' OR e.section_id=?6) AND e.status='active' AND s.enrollment_status='active' ORDER BY CAST(e.roll_number AS INTEGER),s.first_name,s.last_name",
+      )
+        .bind(
+          assessmentId,
+          auth.organizationId,
+          campusId,
+          selected.academic_year_id,
+          selected.class_id,
+          selected.section_id || "",
+        )
+        .all()
+    ).results;
+  }
   return Response.json(
     {
       campusId,
@@ -118,11 +145,13 @@ export async function GET() {
       gradingSchemes: gradingSchemes.results,
       gradeBoundaries: gradeBoundaries.results,
       assessments: assessments.results,
+      markRoster,
       canManage: auth.permissions.has("examinations.manage"),
       canManageEvents: auth.permissions.has("events.manage"),
       canManageTypes: auth.permissions.has("examination_types.manage"),
       canManageAssessments: auth.permissions.has("assessments.manage"),
       canManageGrading: auth.permissions.has("grading.manage"),
+      canEnterMarks: auth.permissions.has("marks.enter"),
     },
     { headers: { "cache-control": "private, no-store" } },
   );
@@ -154,9 +183,11 @@ export async function POST(request: Request) {
       ? "examination_types.manage"
       : action.includes("grading") || action.includes("grade_boundary")
         ? "grading.manage"
-        : action.includes("assessment")
-          ? "assessments.manage"
-          : "examinations.manage";
+        : action.includes("marks")
+          ? "marks.enter"
+          : action.includes("assessment")
+            ? "assessments.manage"
+            : "examinations.manage";
   if (!auth.permissions.has(permission))
     return Response.json(
       { error: "You do not have permission for this action." },
@@ -164,6 +195,171 @@ export async function POST(request: Request) {
     );
   const denied = await requireCampusAccess(auth, campusId, permission);
   if (denied) return denied;
+  if (action === "save_marks") {
+    const assessmentId = clean(body?.assessmentId),
+      records = Array.isArray(body?.records)
+        ? (body.records as Record<string, unknown>[])
+        : [];
+    const assessment = await env.DB.prepare(
+      "SELECT * FROM assessments WHERE id=?1 AND organization_id=?2 AND campus_id=?3",
+    )
+      .bind(assessmentId, auth.organizationId, campusId)
+      .first<Record<string, unknown>>();
+    if (!assessment || !records.length || records.length > 300)
+      return Response.json(
+        { error: "Select a valid assessment with a class roster." },
+        { status: 400 },
+      );
+    const teacherRole = await env.DB.prepare(
+      "SELECT 1 ok FROM membership_roles mr JOIN roles r ON r.id=mr.role_id WHERE mr.membership_id=?1 AND r.key='teacher' LIMIT 1",
+    )
+      .bind(auth.membershipId)
+      .first();
+    if (teacherRole) {
+      const assigned = await env.DB.prepare(
+        "SELECT a.id FROM teacher_subject_assignments a JOIN staff st ON st.id=a.staff_id WHERE a.organization_id=?1 AND a.campus_id=?2 AND a.academic_year_id=?3 AND a.class_id=?4 AND a.subject_id=?5 AND (a.section_id IS NULL OR a.section_id=?6) AND a.status='active' AND lower(st.email)=lower(?7) LIMIT 1",
+      )
+        .bind(
+          auth.organizationId,
+          campusId,
+          assessment.academic_year_id,
+          assessment.class_id,
+          assessment.subject_id,
+          assessment.section_id || "",
+          auth.email,
+        )
+        .first();
+      if (!assigned)
+        return Response.json(
+          {
+            error:
+              "Teachers may enter marks only for their assigned class and subject.",
+          },
+          { status: 403 },
+        );
+    }
+    const normalized = records.map((v) => ({
+      studentId: clean(v.studentId),
+      enrollmentId: clean(v.enrollmentId),
+      absent: Boolean(v.isAbsent),
+      marks:
+        v.obtainedMarks === "" || v.obtainedMarks == null
+          ? null
+          : Number(v.obtainedMarks),
+      remarks: clean(v.teacherRemarks, 500) || null,
+    }));
+    const max = Number(assessment.maximum_marks);
+    if (
+      normalized.some(
+        (v) =>
+          !v.studentId ||
+          !v.enrollmentId ||
+          (!v.absent &&
+            (v.marks == null ||
+              !Number.isFinite(v.marks) ||
+              v.marks < 0 ||
+              v.marks > max)),
+      )
+    )
+      return Response.json(
+        {
+          error: `Enter marks between 0 and ${max}, or mark the student absent.`,
+        },
+        { status: 400 },
+      );
+    const placeholders = normalized.map(() => "?").join(","),
+      bindings = [
+        auth.organizationId,
+        campusId,
+        assessment.academic_year_id,
+        assessment.class_id,
+        assessment.section_id || "",
+        ...normalized.map((v) => v.enrollmentId),
+      ];
+    const owned = await env.DB.prepare(
+      `SELECT id,student_id FROM enrollments WHERE organization_id=?1 AND campus_id=?2 AND academic_year_id=?3 AND class_id=?4 AND (?5='' OR section_id=?5) AND status='active' AND id IN (${placeholders})`,
+    )
+      .bind(...bindings)
+      .all<{ id: string; student_id: string }>();
+    const valid = new Map(owned.results.map((v) => [v.id, v.student_id]));
+    if (
+      valid.size !== normalized.length ||
+      normalized.some((v) => valid.get(v.enrollmentId) !== v.studentId)
+    )
+      return Response.json(
+        {
+          error:
+            "One or more students do not belong to this assessment roster.",
+        },
+        { status: 400 },
+      );
+    const bands = assessment.grading_scheme_id
+      ? (
+          await env.DB.prepare(
+            "SELECT * FROM grade_boundaries WHERE organization_id=?1 AND grading_scheme_id=?2 ORDER BY minimum_percentage DESC",
+          )
+            .bind(auth.organizationId, assessment.grading_scheme_id)
+            .all<Record<string, unknown>>()
+        ).results
+      : [];
+    const statements = normalized.map((v) => {
+      const percentage = v.absent
+          ? null
+          : Math.round((Number(v.marks) / max) * 10000) / 100,
+        band =
+          percentage == null
+            ? undefined
+            : bands.find(
+                (b) =>
+                  percentage >= Number(b.minimum_percentage) &&
+                  percentage <= Number(b.maximum_percentage),
+              ),
+        passing = v.absent
+          ? 0
+          : band
+            ? Number(band.is_passing)
+            : Number(v.marks) >= Number(assessment.passing_marks)
+              ? 1
+              : 0;
+      return env.DB.prepare(
+        "INSERT INTO assessment_marks (id,organization_id,campus_id,assessment_id,student_id,enrollment_id,obtained_marks,percentage,grade_label,grade_point,is_passing,is_absent,teacher_remarks,entered_by) VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14) ON CONFLICT(assessment_id,student_id) DO UPDATE SET enrollment_id=excluded.enrollment_id,obtained_marks=excluded.obtained_marks,percentage=excluded.percentage,grade_label=excluded.grade_label,grade_point=excluded.grade_point,is_passing=excluded.is_passing,is_absent=excluded.is_absent,teacher_remarks=excluded.teacher_remarks,entered_by=excluded.entered_by,updated_at=unixepoch()*1000",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        assessmentId,
+        v.studentId,
+        v.enrollmentId,
+        v.absent ? null : v.marks,
+        percentage,
+        band?.grade_label || null,
+        band?.grade_point ?? null,
+        passing,
+        v.absent ? 1 : 0,
+        v.remarks,
+        auth.userId,
+      );
+    });
+    statements.push(
+      env.DB.prepare(
+        "UPDATE assessments SET status='marks_entered',updated_at=unixepoch()*1000 WHERE id=?1 AND organization_id=?2 AND campus_id=?3",
+      ).bind(assessmentId, auth.organizationId, campusId),
+    );
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'assessment.marks.save','assessment',?5,'success',?6)",
+      ).bind(
+        crypto.randomUUID(),
+        auth.organizationId,
+        campusId,
+        auth.userId,
+        assessmentId,
+        safeMetadata({ students: normalized.length }),
+      ),
+    );
+    await env.DB.batch(statements);
+    return Response.json({ ok: true, saved: normalized.length });
+  }
   if (action === "create_exam_type") {
     const name = clean(body?.name, 80),
       code = clean(body?.code, 20).toUpperCase(),

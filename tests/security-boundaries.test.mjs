@@ -736,7 +736,7 @@ test("examination types assessments and grading are protected and tenant scoped"
   ])
     assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
   assert.match(migration, /assessments_campus_date_idx/);
-  assert.match(panel, /PHASE 8A · EXAM TYPES, ASSESSMENTS & GRADING/);
+  assert.match(panel, /PHASE 8B · MARKS, RESULTS & TEACHER REMARKS/);
   assert.match(panel, /Grade configuration/);
   for (const table of [
     "examination_types",
@@ -745,4 +745,31 @@ test("examination types assessments and grading are protected and tenant scoped"
     "assessments",
   ])
     assert.match(backup, new RegExp(table));
+});
+
+test("marks entry result calculation and teacher remarks are protected and tenant scoped", async () => {
+  const route = await read("app/api/examination-schedule/route.ts"),
+    panel = await read("app/ExaminationSchedulePanel.tsx"),
+    migration = await read("drizzle/0027_assessment_marks_results.sql"),
+    schema = await read("db/schema.ts"),
+    authorization = await read("lib/authorization.ts"),
+    backup = await read("app/api/security/backups/route.ts");
+  assert.match(authorization, /"marks\.enter"/);
+  assert.match(route, /action === "save_marks"/);
+  assert.match(
+    route,
+    /Teachers may enter marks only for their assigned class and subject/,
+  );
+  assert.match(route, /students do not belong to this assessment roster/);
+  assert.match(route, /grade_boundaries WHERE organization_id=\?1/);
+  assert.match(route, /assessment\.marks\.save/);
+  assert.match(route, /ON CONFLICT\(assessment_id,student_id\)/);
+  assert.match(panel, /PHASE 8B · MARKS, RESULTS & TEACHER REMARKS/);
+  assert.match(panel, /Save marks and calculate results/);
+  assert.match(panel, /Teacher remarks/);
+  assert.match(schema, /assessmentMarks\s*=\s*sqliteTable/);
+  assert.match(migration, /CREATE TABLE `assessment_marks`/);
+  assert.match(migration, /assessment_marks_student_uq/);
+  assert.match(migration, /assessment_marks_scope_idx/);
+  assert.match(backup, /"assessment_marks"/);
 });

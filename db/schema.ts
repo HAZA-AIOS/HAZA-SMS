@@ -1592,6 +1592,54 @@ export const assessments = sqliteTable(
   ],
 );
 
+export const assessmentMarks = sqliteTable(
+  "assessment_marks",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id")
+      .notNull()
+      .references(() => campuses.id, { onDelete: "cascade" }),
+    assessmentId: text("assessment_id")
+      .notNull()
+      .references(() => assessments.id, { onDelete: "cascade" }),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => students.id, { onDelete: "cascade" }),
+    enrollmentId: text("enrollment_id")
+      .notNull()
+      .references(() => enrollments.id, { onDelete: "restrict" }),
+    obtainedMarks: real("obtained_marks"),
+    percentage: real("percentage"),
+    gradeLabel: text("grade_label"),
+    gradePoint: real("grade_point"),
+    isPassing: integer("is_passing", { mode: "boolean" }),
+    isAbsent: integer("is_absent", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    teacherRemarks: text("teacher_remarks"),
+    enteredBy: text("entered_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("assessment_marks_student_uq").on(t.assessmentId, t.studentId),
+    index("assessment_marks_scope_idx").on(
+      t.organizationId,
+      t.campusId,
+      t.assessmentId,
+    ),
+    index("assessment_marks_student_idx").on(
+      t.organizationId,
+      t.studentId,
+      t.assessmentId,
+    ),
+  ],
+);
+
 export const schoolEvents = sqliteTable(
   "school_events",
   {

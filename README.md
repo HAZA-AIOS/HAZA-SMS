@@ -30,6 +30,53 @@ The project combines polished day-to-day workflows with infrastructure that is u
 | Examinations        | Examination types, assessments, grading schemes, grade bands and examination timetable      |
 | Governance          | Role-based authorization, tenant/campus isolation, audit logs, backups and exports          |
 
+## How HAZA-SMS works
+
+HAZA-SMS follows the same journey as a real school. A school registers once, creates its campuses and academic structure, admits students, assigns teachers, runs daily operations, collects fees and produces results. The system keeps every step connected, so information entered once is reused safely throughout the school.
+
+```mermaid
+flowchart TD
+    A[School registers] --> B[Configure campuses and academic year]
+    B --> C[Add classes, subjects and staff]
+    C --> D[Admit and enroll students]
+    D --> E[Run attendance, timetable and fees]
+    E --> F[Create assessments and enter marks]
+    F --> G[Calculate grades and prepare results]
+    G --> H[Leadership reviews reports]
+```
+
+### A simple operating scenario
+
+Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
+
+1. The school administrator signs in and selects **Main Campus** from the campus menu.
+2. In **Academics**, the administrator creates the academic year, terms, classes, sections and subjects.
+3. In **Staff**, teachers are added and assigned to the classes and subjects they teach.
+4. In **Admissions**, an application is reviewed and approved. HAZA-SMS creates the student profile and active enrollment without re-entering the same information.
+5. Teachers use **Attendance** and **Timetable** only for their assigned work.
+6. The accountant assigns a fee structure, generates the monthly invoice and records payment. The receipt is immediately printable.
+7. The examination officer creates an examination type, grading scheme and assessment.
+8. The assigned teacher opens **Examinations → Marks entry**, selects the assessment, enters marks or marks a student absent, and adds a short teacher remark.
+9. HAZA-SMS calculates each percentage, grade, grade point and pass status from the school’s configured rules.
+10. The principal can review reports for one campus or the whole organization, while another registered school can never see Green Valley School’s information.
+
+### Which area should I open?
+
+| I want to…                     | Open…                      | What happens next                                                       |
+| ------------------------------ | -------------------------- | ----------------------------------------------------------------------- |
+| Register or configure a school | Configuration              | Add school details, campuses, academic years and institutional settings |
+| Admit a child                  | Admissions                 | Move from enquiry to application, approval, fee package and enrollment  |
+| Find or update a learner       | Students                   | Open the profile, family, documents and enrollment history              |
+| Set up teaching                | Academics / Staff          | Create the structure, subjects and teacher assignments                  |
+| Record who attended            | Attendance                 | Choose the date and class, then mark the loaded student roster          |
+| Build the weekly schedule      | Timetable                  | Configure timings and assign class, teacher, subject and room periods   |
+| Collect school fees            | Fees                       | Assign fees, create invoices, receive payment and print receipts        |
+| Prepare examinations           | Examinations               | Define types, grading rules, assessments and examination schedules      |
+| Enter student marks            | Examinations → Marks entry | Choose an assessment, complete the roster and save calculated results   |
+| Check accountability           | Security & Audit           | Review protected actions, actors, outcomes and backup history           |
+
+> **Important:** changing the selected campus changes the operational data shown on the dashboard. Organization-wide users may review multiple campuses; campus-scoped users only see campuses assigned to them. Permissions are checked again on the server whenever data is viewed or changed.
+
 ## Current capabilities
 
 - School registration, verified identity and organization selection
@@ -56,6 +103,7 @@ The project combines polished day-to-day workflows with infrastructure that is u
 - Cash and bank account summaries, independent expense approvals and CSV/print exports
 - Reusable examination types, class assessments and academic-year grading schemes
 - Validated, non-overlapping grade boundaries with pass/fail and grade-point configuration
+- Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
 
 ## Security architecture
 
@@ -122,6 +170,11 @@ Key controls include:
 - Overlap prevention for grading ranges
 - Existing examination timetable, rooms, invigilators and events retained
 - Audit entries for type, assessment, scheme and boundary creation
+- Marks rosters generated from active enrollment records
+- Assigned-teacher checks before marks can be saved
+- Automatic percentage, grade, grade-point and pass/fail calculation
+- Student absence tracking and contextual teacher remarks
+- Audited marks updates with organization and campus validation
 
 ## Repository structure
 

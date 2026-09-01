@@ -15,11 +15,13 @@ type Data = {
   gradingSchemes: Row[];
   gradeBoundaries: Row[];
   assessments: Row[];
+  markRoster: Row[];
   canManage: boolean;
   canManageEvents: boolean;
   canManageTypes: boolean;
   canManageAssessments: boolean;
   canManageGrading: boolean;
+  canEnterMarks: boolean;
 };
 const empty: Data = {
   campusId: "",
@@ -35,11 +37,13 @@ const empty: Data = {
   gradingSchemes: [],
   gradeBoundaries: [],
   assessments: [],
+  markRoster: [],
   canManage: false,
   canManageEvents: false,
   canManageTypes: false,
   canManageAssessments: false,
   canManageGrading: false,
+  canEnterMarks: false,
 };
 const nice = (v: unknown) =>
   new Date(`${String(v)}T00:00:00`).toLocaleDateString("en-GB", {
@@ -55,12 +59,16 @@ export default function ExaminationSchedulePanel() {
   const [data, setData] = useState<Data>(empty),
     [tab, setTab] = useState("assessments"),
     [busy, setBusy] = useState(true),
-    [message, setMessage] = useState("");
-  const load = async () => {
+    [message, setMessage] = useState(""),
+    [selectedAssessment, setSelectedAssessment] = useState("");
+  const load = async (assessmentId = selectedAssessment) => {
     setBusy(true);
     setMessage("");
     try {
-      const r = await fetch("/api/examination-schedule", { cache: "no-store" }),
+      const r = await fetch(
+          `/api/examination-schedule${assessmentId ? `?assessmentId=${encodeURIComponent(assessmentId)}` : ""}`,
+          { cache: "no-store" },
+        ),
         j = (await r.json().catch(() => ({
           error: "The server returned an empty response. Please try again.",
         }))) as Data & { error?: string };
@@ -74,7 +82,51 @@ export default function ExaminationSchedulePanel() {
   };
   useEffect(() => {
     void load();
+    // Initial campus load only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const openMarks = async (id: string) => {
+    setSelectedAssessment(id);
+    setTab("marks");
+    await load(id);
+  };
+  const editMark = (studentId: string, field: string, value: unknown) =>
+    setData((current) => ({
+      ...current,
+      markRoster: current.markRoster.map((row) =>
+        row.student_id === studentId ? { ...row, [field]: value } : row,
+      ),
+    }));
+  const saveMarks = async () => {
+    setMessage("");
+    const r = await fetch("/api/examination-schedule", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "save_marks",
+          campusId: data.campusId,
+          assessmentId: selectedAssessment,
+          records: data.markRoster.map((v) => ({
+            studentId: v.student_id,
+            enrollmentId: v.enrollment_id,
+            obtainedMarks: v.obtained_marks ?? "",
+            isAbsent: Boolean(v.is_absent),
+            teacherRemarks: v.teacher_remarks ?? "",
+          })),
+        }),
+      }),
+      j = (await r
+        .json()
+        .catch(() => ({
+          error: "The server returned an empty response. Please try again.",
+        }))) as { error?: string };
+    if (!r.ok) {
+      setMessage(j.error || "Unable to save marks.");
+      return;
+    }
+    setMessage(`Saved marks for ${data.markRoster.length} students.`);
+    await load(selectedAssessment);
+  };
   const send = async (e: FormEvent<HTMLFormElement>, action: string) => {
     e.preventDefault();
     setMessage("");
@@ -128,9 +180,9 @@ export default function ExaminationSchedulePanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 8A · EXAM TYPES, ASSESSMENTS & GRADING
+            PHASE 8B · MARKS, RESULTS & TEACHER REMARKS
           </span>
-          <h1>Examinations and assessment configuration</h1>
+          <h1>Examinations, marks and calculated results</h1>
           <p>
             Define examination types, assessment plans and transparent grading
             rules while retaining campus timetables and events.
@@ -166,6 +218,7 @@ export default function ExaminationSchedulePanel() {
       <section className="exam-workspace">
         <nav>
           {[
+            ["marks", "Marks entry"],
             ["assessments", "Assessments"],
             ["exam-types", "Exam types"],
             ["grading", "Grade configuration"],
@@ -184,6 +237,170 @@ export default function ExaminationSchedulePanel() {
             </button>
           ))}
         </nav>
+        {tab === "marks" && (
+          <div className="marks-workspace">
+            <header>
+              <div>
+                <h2>Marks entry and teacher remarks</h2>
+                <p>
+                  Choose an assessment, enter each student’s marks, and let
+                  HAZA-SMS calculate percentages, grades and pass status.
+                </p>
+              </div>
+              <select
+                value={selectedAssessment}
+                onChange={(e) => void openMarks(e.target.value)}
+              >
+                <option value="">Select assessment</option>
+                {data.assessments.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.title as string} · {v.class_name as string} ·{" "}
+                    {v.subject_name as string}
+                  </option>
+                ))}
+              </select>
+            </header>
+            {!selectedAssessment ? (
+              <div className="academic-empty">
+                <span>✍️</span>
+                <h3>Select an assessment to begin</h3>
+                <p>
+                  The correct enrolled students will be loaded automatically.
+                </p>
+              </div>
+            ) : data.markRoster.length ? (
+              <>
+                <div className="marks-table-wrap">
+                  <table className="marks-table">
+                    <thead>
+                      <tr>
+                        <th>Student</th>
+                        <th>Roll no.</th>
+                        <th>Marks</th>
+                        <th>Absent</th>
+                        <th>Result</th>
+                        <th>Teacher remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.markRoster.map((v) => {
+                        const assessment = data.assessments.find(
+                            (a) => a.id === selectedAssessment,
+                          ),
+                          max = Number(assessment?.maximum_marks || 100),
+                          marks =
+                            v.obtained_marks == null
+                              ? ""
+                              : String(v.obtained_marks),
+                          percentage = Boolean(v.is_absent)
+                            ? null
+                            : marks === ""
+                              ? null
+                              : Math.round((Number(marks) / max) * 10000) / 100;
+                        return (
+                          <tr key={v.id || String(v.student_id)}>
+                            <td>
+                              <b>
+                                {v.first_name as string} {v.last_name as string}
+                              </b>
+                              <small>{v.admission_number as string}</small>
+                            </td>
+                            <td>{(v.roll_number as string) || "—"}</td>
+                            <td>
+                              <div className="mark-input">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={max}
+                                  step="0.01"
+                                  value={marks}
+                                  disabled={Boolean(v.is_absent)}
+                                  onChange={(e) =>
+                                    editMark(
+                                      String(v.student_id),
+                                      "obtained_marks",
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                                <span>/ {max}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <input
+                                className="marks-check"
+                                type="checkbox"
+                                checked={Boolean(v.is_absent)}
+                                onChange={(e) =>
+                                  editMark(
+                                    String(v.student_id),
+                                    "is_absent",
+                                    e.target.checked ? 1 : 0,
+                                  )
+                                }
+                              />
+                            </td>
+                            <td>
+                              {Boolean(v.is_absent) ? (
+                                <span className="result-pill absent">
+                                  Absent
+                                </span>
+                              ) : v.grade_label ? (
+                                <span
+                                  className={`result-pill ${Boolean(v.is_passing) ? "pass" : "fail"}`}
+                                >
+                                  {v.grade_label as string} ·{" "}
+                                  {v.percentage as number}%
+                                </span>
+                              ) : percentage == null ? (
+                                <span className="result-pill">Pending</span>
+                              ) : (
+                                <span className="result-pill">
+                                  {percentage}%
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              <input
+                                value={String(v.teacher_remarks || "")}
+                                onChange={(e) =>
+                                  editMark(
+                                    String(v.student_id),
+                                    "teacher_remarks",
+                                    e.target.value,
+                                  )
+                                }
+                                placeholder="Progress note or support needed"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <footer>
+                  <span>{data.markRoster.length} enrolled students</span>
+                  <button
+                    disabled={!data.canEnterMarks}
+                    onClick={() => void saveMarks()}
+                  >
+                    Save marks and calculate results
+                  </button>
+                </footer>
+              </>
+            ) : (
+              <div className="academic-empty">
+                <span>👥</span>
+                <h3>No eligible students</h3>
+                <p>
+                  Students must have an active enrollment matching this
+                  assessment’s year, campus, class and section.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
         {tab === "assessments" &&
           (data.assessments.length ? (
             <div className="assessment-grid">
@@ -227,6 +444,11 @@ export default function ExaminationSchedulePanel() {
                     <span>
                       {(v.grading_scheme_name as string) || "No grading scheme"}
                     </span>
+                    {data.canEnterMarks && (
+                      <button onClick={() => void openMarks(v.id)}>
+                        Enter marks
+                      </button>
+                    )}
                   </footer>
                 </article>
               ))}
