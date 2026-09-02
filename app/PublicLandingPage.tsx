@@ -28,9 +28,10 @@ const courses = [
 ];
 
 const teamGroups = [
-  ["/school/school-office.webp", "School Leadership", "Direction, planning and a safe, purposeful learning culture."],
-  ["/school/classroom-learning.webp", "Teaching Faculty", "Dedicated educators guiding every child with care and clear learning goals."],
-  ["/school/student-achievement.webp", "Student Support Team", "Helping students grow in confidence, character, participation and responsibility."],
+  ["/team/shahid-hussain-director.png", "Shahid Hussain", "Director"],
+  ["/team/amna-rasool-principal.png", "Amna Rasool", "Principal"],
+  ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal"],
+  ["/team/musswar-hussain-it-director.jpg", "Musswar Hussain", "IT Director"],
 ];
 
 export default function PublicLandingPage({ signInPath }: { signInPath: string }) {
@@ -101,7 +102,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
         <span className="section-label">OUR FACULTY</span>
         <h2>Meet the <em>Educators</em></h2>
         <p className="section-lead">Passionate, qualified and dedicated to nurturing every student’s potential—the team behind The Mentor School.</p>
-        <div className="team-grid">{teamGroups.map(([image,title,text])=><article key={title}><img src={image} alt={title} /><div><h3>{title}</h3><p>{text}</p></div></article>)}</div>
+        <div className="team-grid">{teamGroups.map(([image,name,designation],index)=><article key={name} className={`team-card team-card-${index + 1}`}><div className="team-portrait"><img src={image} alt={`${name}, ${designation} at The Mentor School`} /></div><div className="team-identity"><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{designation}</p><i aria-hidden="true" /></div></article>)}</div>
       </section>
 
       <section className="landing-section parent-section">
