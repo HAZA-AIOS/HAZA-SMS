@@ -21,10 +21,10 @@ const advantages = [
 ];
 
 const courses = [
-  ["English", "IXL UK", "Language, comprehension, writing and confident communication."],
-  ["Mathematics", "California", "Visual reasoning, problem-solving and strong number sense."],
-  ["Science", "CGP UK", "Curiosity-led science from early concepts to practical understanding."],
-  ["Computing", "Digital skills", "Safe, creative and productive use of modern technology."],
+  ["English", "UK English", "British subject content builds authentic language, comprehension, writing and confident communication."],
+  ["Mathematics", "California Mathematics", "A deep, guided programme connecting mathematics with science, social studies and technology."],
+  ["Science", "UK KS1 · KS2 · KS3", "Accessible, attractive science content that encourages curiosity, participation and practical understanding."],
+  ["Computing", "Code Studio", "Block-based coding, digital skills and responsible AI research designed for confident new learners."],
 ];
 
 const teamGroups = [
@@ -37,27 +37,33 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
   return (
     <main className="landing-page">
       <header className="landing-nav">
-        <a href="#home" className="landing-brand" aria-label="The Mentor School home">
-          <img src="/tms-original-logo-transparent.png" alt="The Mentor School original logo" />
-          <span><b>The Mentor <em>School</em></b></span>
-        </a>
-        <nav aria-label="Main navigation">
-          <a href="#home">Home</a><a href="#why-us">Our Approach</a><a href="#advantage">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">Gallery</a><a href="#team">Our Team</a><a href="#campus">Contact</a>
-        </nav>
-        <a className="portal-link" href={signInPath}>Dashboard</a><a className="nav-cta" href="#enroll">Enroll Now</a>
+        <div className="landing-nav-inner">
+          <a href="#home" className="landing-brand" aria-label="The Mentor School home">
+            <img src="/tms-original-logo-transparent.png" alt="The Mentor School original logo" />
+            <span><b>The Mentor <em>School</em></b></span>
+          </a>
+          <nav aria-label="Main navigation">
+            <a href="#home">Home</a><a href="#why-us">Our Approach</a><a href="#advantage">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">Gallery</a><a href="#team">Our Team</a><a href="#campus">Contact</a>
+          </nav>
+          <a className="portal-link" href={signInPath}>Dashboard</a><a className="nav-cta" href="#enroll">Enroll Now</a>
+        </div>
       </header>
 
       <section className="landing-hero" id="home">
-        <img className="hero-photo" src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" />
-        <div className="hero-shade" />
-        <div className="hero-copy">
-          <span className="landing-kicker"><i /> BAG-FREE · AI-ENHANCED EDUCATION</span>
-          <h1>A Bag-Free School.<br />Where <em>Learning Is Light.</em><br />The Future Is <strong>Bright.</strong></h1>
-          <p>The Mentor School is a bag-free school where students carry only a light folder. With minimal, research-based homework and an international-standard curriculum, we prepare students for a global future.</p>
-          <div className="hero-actions"><a href="#enroll">Enroll your child</a><a className="outline" href="#why-us">Explore our approach</a></div>
-          <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>Global</b><small>Curriculum outlook</small></span></div>
+        <div className="hero-shell">
+          <div className="hero-copy">
+            <span className="landing-kicker"><i /> BAG-FREE · AI-ENHANCED EDUCATION</span>
+            <h1>A Bag-Free School.<br />Where <em>Learning Is Light.</em><br />The Future Is <strong>Bright.</strong></h1>
+            <p>The Mentor School is a bag-free school where students carry only a light folder. With minimal homework twice a week, research-based AI assignments and an international-standard curriculum, students learn deeply without carrying the traditional burden.</p>
+            <div className="hero-actions"><a href="#enroll">Enroll your child</a><a className="outline" href="#why-us">Explore our approach</a></div>
+            <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>Global</b><small>Curriculum outlook</small></span></div>
+          </div>
+          <div className="hero-visual">
+            <div className="hero-orbit" />
+            <img className="hero-photo" src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" />
+            <aside className="hero-panel"><span>WHY THE MENTOR SCHOOL?</span><h2>A lighter school day. A brighter future.</h2><ul><li>✓ No heavy bags</li><li>✓ Minimal homework</li><li>✓ Conceptual learning</li><li>✓ AI-enhanced education</li><li>✓ Balanced school life</li></ul></aside>
+          </div>
         </div>
-        <aside className="hero-panel"><span>WHY THE MENTOR SCHOOL?</span><h2>A lighter school day. A brighter future.</h2><ul><li>✓ No heavy bags</li><li>✓ Minimal homework</li><li>✓ Conceptual learning</li><li>✓ AI-enhanced education</li><li>✓ Global curriculum</li></ul></aside>
       </section>
 
       <section className="landing-section intro" id="why-us">
@@ -110,14 +116,14 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section campus-section" id="campus">
         <div className="campus-image"><img src="/school/school-exterior.webp" alt="The Mentor School campus in Adda Machiwal" /></div>
-        <div className="campus-copy"><span className="section-label">WELCOME TO OUR SCHOOL</span><h2>Visit Our <em>Campus</em></h2><p>See our learning environment, meet the team and discover whether The Mentor School is right for your child.</p><ul><li><b>Address</b><span>1 KM Chak No. 557/E.B Road, Adda Machiwal, Vehari</span></li><li><b>Phone</b><span>0301 0763122</span></li><li><b>Admissions</b><span>Reception 1 through Grade 8</span></li></ul><a href="#enroll">Plan your visit →</a></div>
+        <div className="campus-copy"><span className="section-label">WELCOME TO OUR SCHOOL</span><h2>Visit Our <em>Campus</em></h2><p>See our learning environment, meet the team and discover whether The Mentor School is right for your child.</p><ul><li><b>Address</b><span>1 KM, Chak No. 557/E.B Road, Adda Machiwal, 61070, Tehsil & District Vehari, Punjab, Pakistan</span></li><li><b>Phone & WhatsApp</b><a href="https://wa.me/923010763122">0301 0763122</a></li><li><b>Email</b><a href="mailto:thementorschool.info@gmail.com">thementorschool.info@gmail.com</a></li><li><b>Website</b><a href="https://www.thementorschools.com">www.thementorschools.com</a></li></ul><div className="campus-links"><a href="#enroll">Plan your visit →</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer">YouTube</a></div></div>
       </section>
 
       <section className="landing-section future-section"><span className="section-label">EDUCATION FOR LIFE</span><h2>Built for a <em>Global Future</em></h2><p>Strong roots. Open minds. Skills for a changing world.</p><div><article><b>Values</b><span>Respect, responsibility and character</span></article><article><b>Knowledge</b><span>Clear foundations across every subject</span></article><article><b>Skills</b><span>Communication, technology and problem-solving</span></article></div></section>
 
       <section className="landing-section enroll-section" id="enroll"><div className="enroll-glow"/><span className="section-label">START THEIR JOURNEY</span><h2>Enroll Your Child <em>Today</em></h2><p>Give your child a lighter school day and a brighter path forward.</p><div><a href={signInPath}>Begin online admission</a><a className="outline" href="tel:+923010763122">Call 0301 0763122</a></div></section>
 
-      <footer className="landing-footer"><div className="footer-brand"><img src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div><b>The Mentor School</b><small>Education for life</small></div></div><p>A modern, bag-free school serving families in Adda Machiwal, Vehari.</p><nav><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="#campus">Contact</a></nav><small>© {new Date().getFullYear()} The Mentor School. All rights reserved.</small></footer>
+      <footer className="landing-footer"><div className="footer-brand"><img src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div><b>The Mentor School</b><small>Education for life</small></div></div><p><a href="mailto:thementorschool.info@gmail.com">thementorschool.info@gmail.com</a><br/><a href="tel:+923010763122">0301 0763122</a> · Adda Machiwal, Vehari</p><nav><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer">YouTube</a></nav><small>© {new Date().getFullYear()} The Mentor School. All rights reserved.</small></footer>
     </main>
   );
 }
