@@ -598,6 +598,266 @@
   }
 }
 
+/* Full-width landing revision, richer cards and accessible scroll motion. */
+.landing-brand img {
+  width: 34px;
+  height: 39px;
+}
+
+.landing-nav,
+.landing-nav-inner {
+  height: 52px;
+}
+
+.landing-hero {
+  padding: 0;
+  background:
+    radial-gradient(circle at 78% 38%, #78101f32 0, transparent 31%),
+    radial-gradient(circle at 88% 72%, #d59d001f 0, transparent 24%),
+    linear-gradient(115deg, #070807, #0d080a 64%, #080808);
+}
+
+.hero-shell {
+  display: block;
+  width: 100%;
+  min-height: 530px;
+  margin: 0;
+  padding: clamp(55px, 7vw, 90px) max(calc((100vw - 1160px) / 2), var(--landing-gutter));
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, transparent 0 63%, #ff171708 63% 64%, transparent 64%),
+    linear-gradient(0deg, #ffffff05 1px, transparent 1px);
+  background-size: auto, 100% 70px;
+  box-shadow: none;
+}
+
+.hero-copy {
+  width: min(820px, 100%);
+}
+
+.hero-copy h1 {
+  max-width: 820px;
+  font-size: clamp(48px, 6vw, 82px);
+}
+
+.hero-copy > p {
+  max-width: 720px;
+}
+
+.landing-section {
+  width: 100%;
+}
+
+.learning-grid article,
+.values-grid article,
+.course-grid article,
+.advantage-grid article {
+  overflow: hidden;
+}
+
+.learning-grid article > img,
+.values-grid article > img,
+.course-grid article > img,
+.advantage-grid article > img {
+  display: block;
+  width: calc(100% + 56px);
+  height: 150px;
+  margin: -38px -28px 25px;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(.82) brightness(.72);
+  transition: transform .45s ease, filter .45s ease;
+}
+
+.values-grid article > img,
+.course-grid article > img {
+  width: calc(100% + 48px);
+  margin: -25px -24px 22px;
+}
+
+.advantage-grid article > img {
+  position: relative;
+  inset: auto;
+  width: calc(100% + 52px);
+  height: 145px;
+  margin: 24px -26px -26px;
+  opacity: 1;
+}
+
+.learning-grid article:hover > img,
+.values-grid article:hover > img,
+.course-grid article:hover > img,
+.advantage-grid article:hover > img {
+  transform: scale(1.04);
+  filter: saturate(1) brightness(.85);
+}
+
+.team-portrait {
+  width: min(220px, 100%);
+  height: 220px;
+  aspect-ratio: auto;
+  margin: 0 auto;
+  flex: 0 0 220px;
+}
+
+.team-grid .team-portrait img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.team-socials {
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.team-socials a {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #52544f;
+  border-radius: 50%;
+  background: #181a17;
+  color: #fff;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 900;
+  transition: .2s ease;
+}
+
+.team-socials a:hover {
+  border-color: var(--lp-gold);
+  background: var(--lp-red);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.curriculum-section {
+  display: block;
+  text-align: center;
+}
+
+.curriculum-section > div:first-child {
+  max-width: 760px;
+  margin: 0 auto 42px;
+}
+
+.grade-level-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  text-align: left;
+}
+
+.grade-level-grid article {
+  position: relative;
+  padding: 28px 24px;
+  border: 1px solid #343634;
+  border-radius: 14px;
+  background: linear-gradient(150deg, #151715, #0b0c0b);
+}
+
+.grade-level-grid article::before {
+  position: absolute;
+  top: 0;
+  right: 24px;
+  left: 24px;
+  height: 2px;
+  content: "";
+  background: linear-gradient(90deg, var(--lp-red), var(--lp-gold));
+}
+
+.grade-level-grid article > span {
+  color: var(--lp-red);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .14em;
+}
+
+.grade-level-grid h3 {
+  margin: 12px 0 5px;
+  color: #fff;
+  font-size: 21px;
+}
+
+.grade-level-grid h4 {
+  margin: 0 0 14px;
+  color: var(--lp-gold);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.grade-level-grid p {
+  min-height: 112px;
+  margin: 0;
+  color: var(--lp-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.grade-level-grid ul {
+  display: grid;
+  gap: 7px;
+  margin: 20px 0 0;
+  padding: 17px 0 0;
+  border-top: 1px solid #ffffff12;
+  list-style: none;
+}
+
+.grade-level-grid li {
+  color: #d6d9d3;
+  font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+  .grade-level-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-nav,
+  .landing-nav-inner {
+    height: 56px;
+  }
+
+  .landing-brand img {
+    width: 31px;
+    height: 35px;
+  }
+
+  .hero-shell {
+    min-height: 510px;
+    padding: 46px 20px 54px;
+  }
+
+  .grade-level-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .grade-level-grid p {
+    min-height: 0;
+  }
+
+  .team-portrait {
+    width: 220px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-aos] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 /* Phase 6C — examination timetable and events */
 .exam-summary {
   display: grid;

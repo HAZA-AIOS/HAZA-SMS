@@ -1,14 +1,20 @@
+"use client";
+
+import { useEffect } from "react";
+import AOS from "aos";
+import "aos/dist/aos.css";
+
 const learning = [
-  ["▣", "Bag-Free Learning", "All learning materials are provided at school. Students carry only a light folder—no heavy bags."],
-  ["◷", "Minimal Homework", "Learning is completed during school hours. Homework is given only twice a week and is research-based."],
-  ["⌁", "AI-Enhanced Education", "Students use visual learning and purposeful AI tools to understand concepts that simple teaching cannot."],
+  ["▣", "Bag-Free Learning", "All learning materials are provided at school. Students carry only a light folder—no heavy bags.", "/school/classroom-environment.webp"],
+  ["◷", "Minimal Homework", "Learning is completed during school hours. Homework is given only twice a week and is research-based.", "/school/student-assessment.webp"],
+  ["⌁", "AI-Enhanced Education", "Students use visual learning and purposeful AI tools to understand concepts that simple teaching cannot.", "/school/classroom-learning.webp"],
 ];
 
 const values = [
-  ["▣", "Bag-Free Learning", "Students carry only a light folder. All materials are provided at school—no heavy bags or physical strain."],
-  ["⌁", "AI-Enhanced Education", "We use AI technology and visual learning to prepare students for a future built on intelligence."],
-  ["◎", "Global Curriculum", "An international-standard model means our students can move anywhere and never feel behind."],
-  ["♡", "Stress-Free Growth", "Minimal homework, research-based learning and a nurturing environment where wellbeing comes first."],
+  ["▣", "Bag-Free Learning", "Students carry only a light folder. All materials are provided at school—no heavy bags or physical strain.", "/school/classroom-environment.webp"],
+  ["⌁", "AI-Enhanced Education", "We use AI technology and visual learning to prepare students for a future built on intelligence.", "/school/student-achievement.webp"],
+  ["◎", "Global Curriculum", "An international-standard model means our students can move anywhere and never feel behind.", "/school/examination-day.webp"],
+  ["♡", "Stress-Free Growth", "Minimal homework, research-based learning and a nurturing environment where wellbeing comes first.", "/school/outdoor-activities.webp"],
 ];
 
 const advantages = [
@@ -21,10 +27,17 @@ const advantages = [
 ];
 
 const courses = [
-  ["English", "UK English", "British subject content builds authentic language, comprehension, writing and confident communication."],
-  ["Mathematics", "California Mathematics", "A deep, guided programme connecting mathematics with science, social studies and technology."],
-  ["Science", "UK KS1 · KS2 · KS3", "Accessible, attractive science content that encourages curiosity, participation and practical understanding."],
-  ["Computing", "Code Studio", "Block-based coding, digital skills and responsible AI research designed for confident new learners."],
+  ["English", "UK English", "British subject content builds authentic language, comprehension, writing and confident communication.", "/school/classroom-learning.webp"],
+  ["Mathematics", "California Mathematics", "A deep, guided programme connecting mathematics with science, social studies and technology.", "/school/student-assessment.webp"],
+  ["Science", "UK KS1 · KS2 · KS3", "Accessible, attractive science content that encourages curiosity, participation and practical understanding.", "/school/outdoor-activities.webp"],
+  ["Computing", "Code Studio", "Block-based coding, digital skills and responsible AI research designed for confident new learners.", "/school/student-achievement.webp"],
+];
+
+const gradeLevels = [
+  ["Reception 1–2", "Discover & communicate", "Play-based language, phonics, early number sense, motor development and confidence-building routines.", ["Early literacy", "Early numeracy", "Creative expression"]],
+  ["Grades 1–2", "Build strong foundations", "UK English, California Mathematics and UK KS1 Science taught through visual, guided and practical learning.", ["Reading & writing", "Number fluency", "KS1 discovery"]],
+  ["Grades 3–5", "Connect knowledge", "Students deepen comprehension, mathematical reasoning and UK KS2 Science while beginning Code Studio projects and AI research.", ["Independent study", "Integrated projects", "Block coding"]],
+  ["Grades 6–8", "Analyse & create", "UK KS3 Science, advanced mathematics, communication and technology projects prepare learners for secondary study and a global future.", ["Critical thinking", "Applied STEM", "Digital fluency"]],
 ];
 
 const teamGroups = [
@@ -35,6 +48,11 @@ const teamGroups = [
 ];
 
 export default function PublicLandingPage({ signInPath }: { signInPath: string }) {
+  useEffect(() => {
+    AOS.init({ duration: 700, easing: "ease-out-cubic", once: true, offset: 70 });
+    return () => AOS.refreshHard();
+  }, []);
+
   return (
     <main className="landing-page">
       <header className="landing-nav">
@@ -52,34 +70,29 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-hero" id="home">
         <div className="hero-shell">
-          <div className="hero-copy">
+          <div className="hero-copy" data-aos="fade-up">
             <span className="landing-kicker"><i /> BAG-FREE · AI-ENHANCED EDUCATION</span>
             <h1>A Bag-Free School.<br />Where <em>Learning Is Light.</em><br />The Future Is <strong>Bright.</strong></h1>
             <p>The Mentor School is a bag-free school where students carry only a light folder. With minimal homework twice a week, research-based AI assignments and an international-standard curriculum, students learn deeply without carrying the traditional burden.</p>
             <div className="hero-actions"><a href="#enroll">Enroll your child</a><a className="outline" href="#why-us">Explore our approach</a></div>
             <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>Global</b><small>Curriculum outlook</small></span></div>
           </div>
-          <div className="hero-visual">
-            <div className="hero-orbit" />
-            <img className="hero-photo" src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" />
-            <aside className="hero-panel"><span>WHY THE MENTOR SCHOOL?</span><h2>A lighter school day. A brighter future.</h2><ul><li>✓ No heavy bags</li><li>✓ Minimal homework</li><li>✓ Conceptual learning</li><li>✓ AI-enhanced education</li><li>✓ Balanced school life</li></ul></aside>
-          </div>
         </div>
       </section>
 
       <section className="landing-section intro" id="why-us">
         <span className="section-label">OUR APPROACH</span><h2>A Smarter Way to <strong>Learn</strong></h2>
-        <div className="learning-grid">{learning.map(([icon,title,text])=><article key={title}><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
+        <div className="learning-grid">{learning.map(([icon,title,text,image], index)=><article key={title} data-aos="fade-up" data-aos-delay={index * 90}><img src={image} alt="" /><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
       <section className="landing-section values-section">
         <span className="section-label">OUR CORE VALUES</span><h2>What We <em>Stand For</em></h2><p className="section-lead">Four principles that shape everything we do at The Mentor School.</p>
-        <div className="values-grid">{values.map(([icon,title,text])=><article key={title}><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
+        <div className="values-grid">{values.map(([icon,title,text,image], index)=><article key={title} data-aos="fade-up" data-aos-delay={index * 80}><img src={image} alt="" /><span>{icon}</span><h3>{title}</h3><p>{text}</p></article>)}</div>
       </section>
 
       <section className="landing-section advantage-section" id="advantage">
         <span className="section-label">WHY TMS</span><h2>The TMS <em>Advantage</em></h2>
-        <div className="advantage-grid">{advantages.map(([n,title,text],i)=><article key={title} className={i===2||i===4?"photo-card":""}><b>{n}</b><h3>{title}</h3><p>{text}</p>{i===2&&<img src="/school/campus-ground.webp" alt="The Mentor School green campus ground" />}{i===4&&<img src="/school/school-exterior.webp" alt="The Mentor School campus exterior" />}</article>)}</div>
+        <div className="advantage-grid">{advantages.map(([n,title,text],i)=><article key={title} className="photo-card" data-aos="fade-up" data-aos-delay={(i % 3) * 80}><b>{n}</b><h3>{title}</h3><p>{text}</p><img src={["/school/classroom-environment.webp","/school/campus-walkway.webp","/school/campus-ground.webp","/school/student-assessment.webp","/school/school-exterior.webp","/school/sports-team.webp"][i]} alt="" /></article>)}</div>
       </section>
 
       <section className="landing-section thrive-section">
@@ -89,7 +102,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section courses-section" id="curriculum">
         <span className="section-label">BUILT FOR THE WORLD</span><h2>International-Standard <em>Courses</em></h2><p className="section-lead">Trusted learning approaches, thoughtfully adapted for our students.</p>
-        <div className="course-grid">{courses.map(([title,badge,text])=><article key={title}><span>{badge}</span><h3>{title}</h3><p>{text}</p><a href="#enroll">Explore learning →</a></article>)}</div>
+        <div className="course-grid">{courses.map(([title,badge,text,image], index)=><article key={title} data-aos="fade-up" data-aos-delay={index * 80}><img src={image} alt="" /><span>{badge}</span><h3>{title}</h3><p>{text}</p><a href="#enroll">Explore learning →</a></article>)}</div>
       </section>
 
       <section className="landing-section life-section" id="life">
@@ -102,7 +115,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
         <span className="section-label">OUR FACULTY</span>
         <h2>Meet the <em>Educators</em></h2>
         <p className="section-lead">Passionate, qualified and dedicated to nurturing every student’s potential—the team behind The Mentor School.</p>
-        <div className="team-grid">{teamGroups.map(([image,name,designation],index)=><article key={name} className={`team-card team-card-${index + 1}`}><div className="team-portrait"><img src={image} alt={`${name}, ${designation} at The Mentor School`} /></div><div className="team-identity"><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{designation}</p><i aria-hidden="true" /></div></article>)}</div>
+        <div className="team-grid">{teamGroups.map(([image,name,designation],index)=><article key={name} className={`team-card team-card-${index + 1}`} data-aos="zoom-in" data-aos-delay={index * 90}><div className="team-portrait"><img src={image} alt={`${name}, ${designation} at The Mentor School`} /></div><div className="team-identity"><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{designation}</p><div className="team-socials"><a href="https://www.thementorschools.com" aria-label="The Mentor School website">W</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer" aria-label="The Mentor School on Facebook">f</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer" aria-label="The Mentor School on YouTube">▶</a></div></div></article>)}</div>
       </section>
 
       <section className="landing-section parent-section">
@@ -112,7 +125,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
 
       <section className="landing-section curriculum-section">
         <div><span className="section-label">A CONNECTED JOURNEY</span><h2>Our <em>Curriculum</em> by Grade Level</h2><p>From Reception to Grade 8, each stage strengthens the skills needed for what comes next.</p></div>
-        <div className="grade-track"><span><b>Reception 1–2</b><small>Play, language and early number sense</small></span><i /><span><b>Grades 1–2</b><small>Core foundations and confident expression</small></span><i /><span><b>Grades 3–5</b><small>Knowledge, reasoning and independence</small></span><i /><span><b>Grades 6–8</b><small>Analysis, application and future readiness</small></span></div>
+        <div className="grade-level-grid">{gradeLevels.map(([level,title,description,skills], index)=><article key={level as string} data-aos="fade-up" data-aos-delay={index * 80}><span>STAGE {index + 1}</span><h3>{level as string}</h3><h4>{title as string}</h4><p>{description as string}</p><ul>{(skills as string[]).map(skill=><li key={skill}>✓ {skill}</li>)}</ul></article>)}</div>
       </section>
 
       <section className="landing-section campus-section" id="campus">
