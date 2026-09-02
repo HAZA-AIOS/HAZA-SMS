@@ -858,6 +858,340 @@
   }
 }
 
+/* Reference-led hero frame and faculty profile cards. */
+.landing-page {
+  background: #080908;
+}
+
+.landing-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom-color: #ffffff12;
+  background: #0b0c0bea;
+}
+
+.landing-nav-inner {
+  width: min(1220px, calc(100% - 40px));
+}
+
+.landing-brand img {
+  width: 32px;
+  height: 37px;
+}
+
+.landing-brand b {
+  font-size: 15px;
+}
+
+.landing-hero {
+  padding: clamp(18px, 3vw, 38px);
+  background:
+    radial-gradient(circle at 12% 10%, #ff17172f, transparent 30%),
+    radial-gradient(circle at 88% 15%, #e0b6002c, transparent 31%),
+    linear-gradient(135deg, #1a090e, #080908 44%, #151004);
+}
+
+.hero-shell {
+  display: grid;
+  grid-template-columns: minmax(0, .92fr) minmax(400px, 1.08fr);
+  gap: clamp(32px, 5vw, 70px);
+  width: min(1280px, 100%);
+  min-height: 620px;
+  margin: 0 auto;
+  padding: clamp(48px, 6vw, 78px) clamp(34px, 6vw, 78px) 110px;
+  overflow: hidden;
+  border: 1px solid #ffffff33;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 70% 42%, #79112648, transparent 34%),
+    linear-gradient(135deg, #101210, #090a09 58%, #171008);
+  box-shadow: 0 22px 80px #000a, inset 0 0 0 5px #ffffff08;
+}
+
+.hero-copy {
+  align-self: center;
+  width: 100%;
+}
+
+.hero-copy h1 {
+  max-width: 650px;
+  font-size: clamp(48px, 5vw, 74px);
+}
+
+.hero-copy > p {
+  max-width: 620px;
+}
+
+.hero-visual {
+  position: relative;
+  align-self: center;
+  min-height: 455px;
+}
+
+.hero-image-primary,
+.hero-image-secondary {
+  position: absolute;
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid #ffffff2e;
+  background: #1b1d1a;
+  box-shadow: 0 25px 65px #000a;
+}
+
+.hero-image-primary {
+  top: 8px;
+  right: 0;
+  width: 62%;
+  height: 390px;
+  border-radius: 82px 18px 82px 18px;
+}
+
+.hero-image-secondary {
+  top: 65px;
+  left: 0;
+  width: 47%;
+  height: 285px;
+  border-radius: 18px 68px 18px 68px;
+}
+
+.hero-image-primary img,
+.hero-image-secondary img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(.92) brightness(.85);
+}
+
+.hero-rating {
+  position: absolute;
+  z-index: 4;
+  bottom: 12px;
+  left: 17%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 285px;
+  padding: 14px 18px;
+  border: 1px solid #d4b00073;
+  border-radius: 12px;
+  background: #0a0b0aeb;
+  box-shadow: 0 16px 38px #000a;
+  backdrop-filter: blur(14px);
+}
+
+.hero-rating img {
+  width: 38px;
+  height: 43px;
+  object-fit: contain;
+}
+
+.hero-rating span {
+  display: grid;
+}
+
+.hero-rating b {
+  color: #fff;
+  font-size: 14px;
+}
+
+.hero-rating small {
+  color: var(--lp-gold);
+  font-size: 11px;
+}
+
+.hero-shell > .hero-proof {
+  position: absolute;
+  right: clamp(34px, 6vw, 78px);
+  bottom: 28px;
+  left: clamp(34px, 6vw, 78px);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 20px 0 0;
+}
+
+.hero-shell > .hero-proof span {
+  padding: 0 20px;
+  border-right: 1px solid #ffffff1b;
+}
+
+.hero-shell > .hero-proof span:first-child {
+  padding-left: 0;
+}
+
+.hero-shell > .hero-proof span:last-child {
+  border-right: 0;
+}
+
+.team-section {
+  padding-top: 118px;
+}
+
+.team-grid {
+  gap: 24px;
+  padding-top: 58px;
+}
+
+.team-grid .team-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 450px;
+  padding: 0;
+  overflow: visible;
+  border: 1px solid #3b3d39;
+  border-radius: 26px;
+  background: #131513;
+  box-shadow: 0 22px 55px #0007;
+}
+
+.team-grid .team-card::before,
+.team-grid .team-card::after {
+  display: none;
+}
+
+.team-portrait {
+  position: relative;
+  z-index: 3;
+  width: 154px;
+  height: 154px;
+  flex: 0 0 154px;
+  margin: -58px auto 0;
+  padding: 6px;
+  border: 3px solid var(--lp-gold);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--lp-red), var(--lp-gold));
+  box-shadow: 0 13px 30px #0009;
+}
+
+.team-grid .team-portrait img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.team-grid .team-identity {
+  position: static;
+  flex: 1;
+  padding: 22px 25px 27px;
+  text-align: center;
+}
+
+.team-grid .team-identity > span {
+  display: none;
+}
+
+.team-grid .team-identity h3 {
+  margin: 0 0 6px;
+  font-size: 21px;
+  text-transform: uppercase;
+}
+
+.team-grid .team-identity p {
+  color: var(--lp-gold);
+  font-size: 11px;
+}
+
+.team-grid .team-identity small {
+  display: block;
+  margin-top: 23px;
+  color: #b9bdb7;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.team-card > .team-socials {
+  display: flex;
+  flex: 0 0 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  border-radius: 0 0 25px 25px;
+  background: linear-gradient(90deg, #c8101c, #ff1717 54%, #c99f00);
+}
+
+.team-card > .team-socials a {
+  width: 31px;
+  height: 31px;
+  border-color: #ffffff70;
+  background: #fff;
+  color: #151615;
+}
+
+.team-card > .team-socials a:hover {
+  border-color: #fff;
+  background: #171817;
+  color: #fff;
+}
+
+@media (max-width: 980px) {
+  .hero-shell {
+    grid-template-columns: 1fr;
+    padding-bottom: 125px;
+  }
+
+  .hero-visual {
+    min-height: 430px;
+  }
+}
+
+@media (max-width: 700px) {
+  .landing-hero {
+    padding: 12px;
+  }
+
+  .hero-shell {
+    min-height: 0;
+    padding: 42px 22px 150px;
+    border-radius: 18px;
+  }
+
+  .hero-visual {
+    min-height: 355px;
+  }
+
+  .hero-image-primary {
+    width: 68%;
+    height: 310px;
+  }
+
+  .hero-image-secondary {
+    width: 52%;
+    height: 220px;
+  }
+
+  .hero-rating {
+    bottom: 0;
+    left: 5%;
+    min-width: 250px;
+  }
+
+  .hero-shell > .hero-proof {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 16px;
+    padding-top: 14px;
+  }
+
+  .hero-shell > .hero-proof span:nth-child(2) {
+    border-right: 0;
+  }
+
+  .team-grid {
+    padding-top: 48px;
+    gap: 86px;
+  }
+
+  .team-grid .team-card,
+  .team-grid .team-card:last-child {
+    min-height: 420px;
+  }
+}
+
 /* Phase 6C — examination timetable and events */
 .exam-summary {
   display: grid;

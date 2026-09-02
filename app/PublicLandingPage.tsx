@@ -41,10 +41,10 @@ const gradeLevels = [
 ];
 
 const teamGroups = [
-  ["/team/shahid-hussain-director.png", "Shahid Hussain", "Director"],
-  ["/team/amna-rasool-principal.png", "Amna Rasool", "Principal"],
-  ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal"],
-  ["/team/musswar-hussain-it-director.jpg", "Musswar Hussain", "IT Director"],
+  ["/team/shahid-hussain-director.png", "Shahid Hussain", "Director", "Provides strategic direction and supports a safe, purposeful school culture."],
+  ["/team/amna-rasool-principal.png", "Amna Rasool", "Principal", "Leads academic quality, student development and the daily learning experience."],
+  ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Supports teachers and students through organised, caring academic leadership."],
+  ["/team/musswar-hussain-it-director.jpg", "Musswar Hussain", "IT Director", "Leads digital learning, school systems, coding and responsible AI integration."],
 ];
 
 export default function PublicLandingPage({ signInPath }: { signInPath: string }) {
@@ -75,8 +75,13 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
             <h1>A Bag-Free School.<br />Where <em>Learning Is Light.</em><br />The Future Is <strong>Bright.</strong></h1>
             <p>The Mentor School is a bag-free school where students carry only a light folder. With minimal homework twice a week, research-based AI assignments and an international-standard curriculum, students learn deeply without carrying the traditional burden.</p>
             <div className="hero-actions"><a href="#enroll">Enroll your child</a><a className="outline" href="#why-us">Explore our approach</a></div>
-            <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>Global</b><small>Curriculum outlook</small></span></div>
           </div>
+          <div className="hero-visual" data-aos="fade-left">
+            <figure className="hero-image-primary"><img src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" /></figure>
+            <figure className="hero-image-secondary"><img src="/school/student-achievement.webp" alt="A student achievement at The Mentor School" /></figure>
+            <div className="hero-rating"><img src="/tms-original-logo-transparent.png" alt="" /><span><b>Education for life</b><small>Bag-free · visual · future-ready</small></span></div>
+          </div>
+          <div className="hero-proof"><span><b>R1–Grade 8</b><small>Complete learning journey</small></span><span><b>Bag-free</b><small>Purposeful school days</small></span><span><b>AI-ready</b><small>Research-led assignments</small></span><span><b>Global</b><small>International curriculum</small></span></div>
         </div>
       </section>
 
@@ -115,7 +120,7 @@ export default function PublicLandingPage({ signInPath }: { signInPath: string }
         <span className="section-label">OUR FACULTY</span>
         <h2>Meet the <em>Educators</em></h2>
         <p className="section-lead">Passionate, qualified and dedicated to nurturing every student’s potential—the team behind The Mentor School.</p>
-        <div className="team-grid">{teamGroups.map(([image,name,designation],index)=><article key={name} className={`team-card team-card-${index + 1}`} data-aos="zoom-in" data-aos-delay={index * 90}><div className="team-portrait"><img src={image} alt={`${name}, ${designation} at The Mentor School`} /></div><div className="team-identity"><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{designation}</p><div className="team-socials"><a href="https://www.thementorschools.com" aria-label="The Mentor School website">W</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer" aria-label="The Mentor School on Facebook">f</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer" aria-label="The Mentor School on YouTube">▶</a></div></div></article>)}</div>
+        <div className="team-grid">{teamGroups.map(([image,name,designation,bio],index)=><article key={name} className={`team-card team-card-${index + 1}`} data-aos="zoom-in" data-aos-delay={index * 90}><div className="team-portrait"><img src={image} alt={`${name}, ${designation} at The Mentor School`} /></div><div className="team-identity"><span>{String(index + 1).padStart(2, "0")}</span><h3>{name}</h3><p>{designation}</p><small>{bio}</small></div><div className="team-socials"><a href="https://www.thementorschools.com" aria-label="The Mentor School website">W</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer" aria-label="The Mentor School on Facebook">f</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer" aria-label="The Mentor School on YouTube">▶</a></div></article>)}</div>
       </section>
 
       <section className="landing-section parent-section">
