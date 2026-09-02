@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type Row = Record<string, unknown> & { id: string; name: string };
 type Data = {
@@ -106,7 +107,7 @@ export default function TimetablePanel() {
       </div>
     );
   return (
-    <div className="foundation-page timetable-page">
+    <div className={cn("foundation-page timetable-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">

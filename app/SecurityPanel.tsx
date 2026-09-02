@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 export type SecurityData={
   logs:{id:string;action:string;entity_type:string;entity_id:string|null;outcome:string;created_at:number;actor_name:string|null;campus_name:string|null}[];
@@ -14,7 +15,7 @@ export default function SecurityPanel({data}:{data:SecurityData}){
   const [logs,setLogs]=useState(data.logs),[busy,setBusy]=useState(false),[message,setMessage]=useState("");
   async function filter(event:FormEvent<HTMLFormElement>){event.preventDefault();setBusy(true);const query=new URLSearchParams(new FormData(event.currentTarget) as never);const response=await fetch(`/api/security/audit?${query}`);const result=await response.json();setBusy(false);if(response.ok)setLogs(result.logs);else setMessage(result.error??"Could not load audit history.");}
   async function backup(){setBusy(true);setMessage("");const response=await fetch("/api/security/backups",{method:"POST"});const result=await response.json().catch(()=>({}));if(!response.ok){setMessage(result.error??"Backup could not be created.");setBusy(false);return;}window.location.reload();}
-  return <div className="security-page">
+  return <div className={cn("security-page",moduleSurface)}>
     <div className="access-heading"><div><span className="eyebrow">PHASE 0E · PROTECTION</span><h1>Audit, Security & Recovery</h1><p>Organization-isolated activity monitoring, defensive controls and recoverable snapshots.</p></div><span className="phase-badge complete">0E Active</span></div>
     <div className="security-stats"><article><span>🧾</span><strong>{data.summary.events24h}</strong><small>events in 24 hours</small></article><article><span>🛡️</span><strong>{data.summary.failed24h}</strong><small>failed operations</small></article><article><span>🔐</span><strong>{data.summary.sensitive24h}</strong><small>sensitive actions</small></article><article><span>💾</span><strong>{date(data.summary.lastBackupAt)}</strong><small>last backup</small></article></div>
     <div className="config-tabs"><button className={tab==="audit"?"active":""} onClick={()=>setTab("audit")}>🧾 Audit history</button><button className={tab==="security"?"active":""} onClick={()=>setTab("security")}>🛡️ Security controls</button><button className={tab==="backup"?"active":""} onClick={()=>setTab("backup")}>💾 Backup & recovery</button></div>

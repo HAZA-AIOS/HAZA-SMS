@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type Row = Record<string, unknown> & {
   id: string;
@@ -135,7 +136,7 @@ export default function AcademicsPanel({ data }: { data: AcademicsData }) {
   };
   const activeTab = tabSetup[tab];
   return (
-    <div className="academics-page foundation-page">
+    <div className={cn("academics-page foundation-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">PHASE 4B · ACADEMIC STRUCTURE</span>

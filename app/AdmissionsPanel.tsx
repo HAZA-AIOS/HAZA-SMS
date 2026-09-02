@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useState } from "react";
 import AdmissionReportsPanel from "./AdmissionReportsPanel";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type Enquiry={id:string;enquiry_number:string;child_first_name:string;child_last_name:string|null;guardian_name:string;primary_phone:string;source:string|null;status:string;priority:string;next_follow_up_on:string|null;created_at:number;campus_name:string;class_name:string|null};
 type Application={id:string;application_number:string;enquiry_id:string|null;child_first_name:string;child_last_name:string|null;guardian_name:string;primary_phone:string;status:string;submitted_on:string|null;created_at:number;campus_name:string;class_name:string|null};
@@ -25,7 +26,7 @@ export default function AdmissionsPanel({data:initial}: {data:AdmissionsData}){
   async function decide(action:"approve"|"reject"){if(!detail)return;const notes=window.prompt(action==="approve"?"Approval notes (optional):":"Reason for rejection:",String(detail.application.decision_notes??""));if(notes===null)return;setBusy(true);const response=await fetch(`/api/admissions/${detail.application.id}/decision`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action,notes})}),body=await response.json();setBusy(false);setMessage(body.error??`Application ${body.status}.`);if(response.ok){await openApplication(String(detail.application.id));await reload();}}
   async function enroll(event:FormEvent<HTMLFormElement>){event.preventDefault();if(!detail||!window.confirm("Create the student, guardian and enrollment records now?"))return;setBusy(true);const payload:Record<string,unknown>=Object.fromEntries(new FormData(event.currentTarget).entries());payload.action="enroll";const response=await fetch(`/api/admissions/${detail.application.id}/decision`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)}),body=await response.json();setBusy(false);setMessage(body.error??`Student created with admission number ${body.admissionNumber}.`);if(response.ok){await openApplication(String(detail.application.id));await reload();}}
   const s=data.summary;
-  return <div className="admissions-page">
+  return <div className={cn("admissions-page",moduleSurface)}>
     <div className="access-heading"><div><span className="eyebrow">PHASE 2D · ADMISSIONS MANAGEMENT</span><h1>Admissions Workspace</h1><p>Manage enquiries, applications, printable records, decisions and admission reporting.</p></div><button className="student-add" onClick={()=>setFormOpen(v=>!v)}>＋ New enquiry</button></div>
     <div className="admission-stats"><article><span>📨</span><strong>{s.total}</strong><small>Total enquiries</small></article><article><span>✨</span><strong>{s.new_count}</strong><small>New leads</small></article><article><span>☎️</span><strong>{s.contacted_count}</strong><small>Contacted</small></article><article><span>⏰</span><strong>{s.followups_due}</strong><small>Follow-ups due</small></article><article><span>📝</span><strong>{s.converted_count}</strong><small>Applications started</small></article></div>
     {message&&<p className="access-message">{message}</p>}

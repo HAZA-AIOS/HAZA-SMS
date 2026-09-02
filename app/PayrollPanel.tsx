@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 type R = Record<string, unknown>;
 export type PayrollData = {
   components: R[];
@@ -92,7 +93,7 @@ export default function PayrollPanel({ data: initial }: { data: PayrollData }) {
     ),
     period = data.periods.find((v) => s(v.id) === selected);
   return (
-    <div className="payroll-page">
+    <div className={cn("payroll-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">PHASE 3D · FINANCIAL OPERATIONS</span>

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type Row=Record<string,unknown>&{id?:string};
 type Data={academicYears:Row[];campuses:Row[];classes:Row[];sections:Row[];recent:Row[];session:Row|null;roster:Row[];history:Row[];canManage:boolean;canCorrect:boolean};
@@ -16,7 +17,7 @@ export default function StudentAttendancePanel(){
   function setAll(status:string){setRows(current=>current.map(row=>({...row,attendance_status:status})))}
   function updateRow(studentId:unknown,field:string,value:string){setRows(current=>current.map(row=>row.student_id===studentId?{...row,[field]:value}:row));}
   async function save(){setBusy(true);setMessage("");const response=await fetch("/api/student-attendance",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({...filters,correctionReason,records:rows.map(row=>({studentId:row.student_id,enrollmentId:row.enrollment_id,status:row.attendance_status,remarks:row.remarks}))})}),json=await response.json();setBusy(false);if(!response.ok){setMessage(json.error||"Attendance could not be saved.");return;}setMessage("Attendance register saved successfully.");setCorrectionReason("");await load();}
-  return <div className="student-attendance-page foundation-page">
+  return <div className={cn("student-attendance-page foundation-page",moduleSurface)}>
     <div className="phase-heading"><div><span className="eyebrow">PHASE 5B · ATTENDANCE INSIGHTS</span><h1>Student attendance</h1><p>Manage daily registers, monthly performance, parent visibility, corrections and absence alerts.</p></div><span className="phase-badge complete">School & campus protected</span></div>
     <nav className="attendance-view-tabs"><button className={view==="register"?"active":""} onClick={()=>setView("register")}>Daily register</button><button className={view==="reports"?"active":""} onClick={()=>setView("reports")}>Reports & corrections</button></nav>
     {view==="register"&&<>

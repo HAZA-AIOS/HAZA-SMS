@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages -- The CSV export is a file download endpoint, not an application page. */
 import { FormEvent, useState, type ReactNode } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type StudentRow={id:string;admission_number:string;first_name:string;last_name:string|null;preferred_name:string|null;gender:string|null;date_of_birth:string|null;enrollment_status:string;admitted_on:string|null;campus_name:string;class_name:string|null;section_name:string|null};
 type Guardian={id:string;first_name:string;last_name:string|null;primary_phone:string;alternate_phone:string|null;email:string|null;occupation:string|null;relationship:string;is_primary:number;lives_with_student:number;legal_guardian:number;pickup_authorized:number;receives_academic:number;receives_financial:number;family_code:string|null;family_name:string|null;linked_children:string|null};
@@ -24,7 +25,7 @@ export default function StudentDirectoryPanel({data}:{data:StudentDirectoryData}
   async function bulkImport(mode:"validate"|"commit"){if(!importFile)return;setBusy(true);setMessage("");const form=new FormData();form.set("file",importFile);form.set("mode",mode);const response=await fetch("/api/students/import",{method:"POST",body:form}),result=await response.json().catch(()=>({}));setBusy(false);if(!response.ok){setMessage(result.error??"Student import could not be processed.");return;}if(mode==="commit"&&result.ok){window.location.reload();return;}setImportResult(result);}
   const pages=Math.max(1,Math.ceil(total/data.pageSize)),s=profile?.student;
   const input=(name:string,label:string,wide=false)=>{const db=name.replace(/[A-Z]/g,m=>`_${m.toLowerCase()}`);return <label className={wide?"profile-wide":""}>{label}<input name={name} defaultValue={s?.[db]??""}/></label>};
-  return <div className="students-page">
+  return <div className={cn("students-page",moduleSurface)}>
     <div className="access-heading"><div><span className="eyebrow">PHASE 1E · STUDENT INFORMATION SYSTEM</span><h1>Student Directory & Profiles</h1><p>Validated student records with secure bulk import, export and comprehensive profiles.</p></div><div className="student-heading-actions"><button className="student-secondary" onClick={()=>setBulkOpen(v=>!v)}>⇅ Bulk tools</button><button className="student-add" onClick={()=>setAddOpen(v=>!v)}>＋ Add student</button></div></div>
     <div className="student-stats"><article><span>🎓</span><strong>{data.summary.total}</strong><small>Total students</small></article><article><span>✅</span><strong>{data.summary.active}</strong><small>Active</small></article><article><span>📝</span><strong>{data.summary.applicants}</strong><small>Applicants</small></article><article><span>📦</span><strong>{data.summary.archived}</strong><small>Archived</small></article></div>
     {message&&<p className="access-message">{message}</p>}

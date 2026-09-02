@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 type Row = {
   staff_id: string;
   employee_number: string;
@@ -151,7 +152,7 @@ export default function StaffAttendancePanel({
     [rows],
   );
   return (
-    <div className="attendance-page">
+    <div className={cn("attendance-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">PHASE 3C · WORKFORCE OPERATIONS</span>

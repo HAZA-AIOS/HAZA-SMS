@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 export type AccessData={
   users:{id:string;name:string;email:string;status:string;roles:string|null}[];
@@ -20,7 +21,7 @@ export default function AccessControlPanel({data}: {data:AccessData}){
     if(!response.ok){setMessage(result.error??"Request failed.");setBusy(false);return;}
     window.location.reload();
   }
-  return <div className="access-page">
+  return <div className={cn("access-page",moduleSurface)}>
     <div className="access-heading"><div><span className="eyebrow">PHASE 0C · ACCESS CONTROL</span><h1>Users, Roles & Permissions</h1><p>Organization-scoped access enforced by the server on every protected operation.</p></div><span className="phase-badge complete">0C Active</span></div>
     <div className="access-stats"><article><span>👥</span><strong>{data.users.length}</strong><small>Users</small></article><article><span>🛡️</span><strong>{data.roles.length}</strong><small>Roles</small></article><article><span>🔑</span><strong>{data.permissions.length}</strong><small>Permissions</small></article><article><span>🏢</span><strong>{data.campuses.length}</strong><small>Campuses</small></article></div>
     <div className="access-tabs" role="tablist"><button className={tab==="users"?"active":""} onClick={()=>setTab("users")}>Users</button><button className={tab==="roles"?"active":""} onClick={()=>setTab("roles")}>Roles</button><button className={tab==="permissions"?"active":""} onClick={()=>setTab("permissions")}>Permissions</button></div>

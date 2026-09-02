@@ -25,6 +25,7 @@ import TimetablePanel from "./TimetablePanel";
 import ExaminationSchedulePanel from "./ExaminationSchedulePanel";
 import FeesPanel from "./FeesPanel";
 import type { CampusChoice } from "../lib/authorization";
+import { cn } from "./ui/TailwindPrimitives";
 
 const navigation = [
   ["🏠", "Home"],
@@ -116,10 +117,10 @@ export default function DashboardShell({
     if (response.ok) window.location.reload();
   }
   return (
-    <main className="app-shell">
-      <header className={`topbar ${collapsed ? "sidebar-is-collapsed" : ""}`}>
+    <main className="min-h-screen bg-slate-100 text-slate-900">
+      <header className={cn("fixed inset-x-0 top-0 z-40 flex h-[72px] items-center gap-3 border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur transition-[left] duration-200 lg:left-[260px] lg:px-6", collapsed && "lg:left-[76px]")}>
         <button
-          className="menu-button"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-lg text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
           type="button"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={() => setCollapsed((v) => !v)}
@@ -128,7 +129,7 @@ export default function DashboardShell({
         </button>
         {activeView !== "Home" && (
           <button
-            className="dashboard-back"
+            className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 sm:flex"
             type="button"
             onClick={() => setActiveView("Home")}
             aria-label="Back to dashboard"
@@ -137,27 +138,28 @@ export default function DashboardShell({
             <b>Dashboard</b>
           </button>
         )}
-        <div className="topbar-greeting">
-          <strong>{activeView}</strong>
-          <small>Manage your school with clarity and confidence.</small>
+        <div className="min-w-0 flex-1">
+          <strong className="block truncate text-base font-extrabold text-slate-950 sm:text-lg">{activeView}</strong>
+          <small className="hidden truncate text-xs text-slate-500 sm:block">Manage your school with clarity and confidence.</small>
         </div>
-        <div className="campus-control">
+        <div className="relative hidden md:block">
           <button
-            className="campus-switcher"
+            className="flex min-w-44 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
             type="button"
             aria-expanded={campusOpen}
             onClick={() => setCampusOpen((v) => !v)}
           >
-            <span className="campus-name">🏫 {campusName}</span>
-            <span className={`chevron ${campusOpen ? "open" : ""}`}>⌄</span>
+            <span className="truncate">🏫 {campusName}</span>
+            <span className={cn("transition-transform", campusOpen && "rotate-180")}>⌄</span>
           </button>
           {campusOpen && (
-            <div className="campus-menu" role="menu">
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-56 gap-1 rounded-xl border border-slate-200 bg-white p-2 shadow-xl" role="menu">
               {organizationWide && (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => chooseCampus("all")}
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-slate-100"
                 >
                   🏢 All campuses
                 </button>
@@ -168,6 +170,7 @@ export default function DashboardShell({
                   role="menuitem"
                   key={campus.id}
                   onClick={() => chooseCampus(campus.id)}
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-slate-100"
                 >
                   🏫 {campus.name}
                   {campus.id === activeCampusId ? " ✓" : ""}
@@ -176,24 +179,25 @@ export default function DashboardShell({
             </div>
           )}
         </div>
-        <div className="topbar-actions">
-          <label className="search-box">
+        <div className="flex items-center gap-2">
+          <label className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 xl:flex">
             <span aria-hidden="true">🔎</span>
             <input
               aria-label="Find students or employees"
               placeholder="Find students or employees"
+              className="w-56 bg-transparent text-sm outline-none placeholder:text-slate-400"
             />
           </label>
           <button
-            className="help-button notification-button"
+            className="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white transition hover:bg-slate-50"
             type="button"
             aria-label="Notifications"
           >
             🔔
-            <i />
+            <i className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
           </button>
           <a
-            className="avatar"
+            className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-red-600 to-red-500 text-sm font-black text-white shadow-sm"
             href="/signout-with-chatgpt?return_to=/"
             aria-label="Sign out"
             title="Sign out"
@@ -202,28 +206,29 @@ export default function DashboardShell({
           </a>
         </div>
       </header>
-      <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-        <div className="sidebar-brand">
+      <aside className={cn("fixed inset-y-0 left-0 z-50 hidden w-[260px] flex-col overflow-hidden bg-[#090b0a] text-white shadow-2xl transition-[width] duration-200 lg:flex", collapsed && "w-[76px]")}>
+        <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-white/10 px-4">
           <img
             src="/tms-original-logo-transparent.png"
             alt="The Mentor School logo"
+            className="h-11 w-11 shrink-0 object-contain"
           />
-          <span>
-            <strong>{schoolName}</strong>
-            <small>School Management</small>
+          <span className={cn("min-w-0 flex-1 transition-opacity", collapsed && "pointer-events-none opacity-0")}>
+            <strong className="block truncate text-sm font-extrabold">{schoolName}</strong>
+            <small className="block truncate text-[11px] uppercase tracking-widest text-zinc-500">School Management</small>
           </span>
           <button
-            className="sidebar-collapse"
+            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
           >
             {collapsed ? "›" : "‹"}
           </button>
         </div>
-        <nav aria-label="Main navigation">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
           {navigation.map(([icon, label]) => (
             <button
-              className={activeView === label ? "nav-item active" : "nav-item"}
+              className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-400 transition hover:bg-white/8 hover:text-white", activeView === label && "bg-red-600 text-white shadow-lg shadow-red-950/30")}
               type="button"
               key={label}
               title={label}
@@ -250,24 +255,24 @@ export default function DashboardShell({
                   setActiveView(label);
               }}
             >
-              <span className="nav-icon" aria-hidden="true">
+              <span className="grid w-6 shrink-0 place-items-center text-base" aria-hidden="true">
                 {icon}
               </span>
-              <span className="nav-label">{label}</span>
+              <span className={cn("truncate transition-opacity", collapsed && "pointer-events-none opacity-0")}>{label}</span>
             </button>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <span>✨</span>
-          <strong>Build better schools</strong>
-          <p>Your secure digital campus is growing.</p>
-          <button onClick={() => setActiveView("Configuration")}>
+        <div className={cn("m-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition-opacity", collapsed && "pointer-events-none opacity-0")}>
+          <span className="text-xl">✨</span>
+          <strong className="mt-2 block text-sm">Build better schools</strong>
+          <p className="my-2 text-xs leading-relaxed text-zinc-500">Your secure digital campus is growing.</p>
+          <button className="text-xs font-bold text-yellow-400 hover:text-yellow-300" onClick={() => setActiveView("Configuration")}>
             Continue setup
           </button>
         </div>
       </aside>
       <section
-        className={`empty-workspace ${collapsed ? "sidebar-collapsed" : ""}`}
+        className={cn("min-h-screen px-4 pb-8 pt-[92px] transition-[margin] duration-200 sm:px-6 lg:ml-[260px] lg:px-8", collapsed && "lg:ml-[76px]")}
         aria-label="Workspace"
       >
         {activeView === "Home" ? (
@@ -311,17 +316,17 @@ export default function DashboardShell({
         ) : activeView === "Security & Audit" && securityData ? (
           <SecurityPanel data={securityData} />
         ) : (
-          <div className="foundation-page">
-            <div className="phase-heading">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-5">
               <div>
-                <span className="eyebrow">PROTECTED WORKSPACE</span>
-                <h1>{schoolName}</h1>
-                <p>
+                <span className="text-xs font-black uppercase tracking-[.18em] text-red-600">PROTECTED WORKSPACE</span>
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">{schoolName}</h1>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
                   Signed in securely as {userName}. This section is not
                   available for your role.
                 </p>
               </div>
-              <span className="phase-badge complete">Authenticated</span>
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-200">Authenticated</span>
             </div>
           </div>
         )}

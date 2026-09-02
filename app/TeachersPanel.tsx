@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 export type TeachersData = {
   assignments: Array<Record<string, unknown>>;
   classTeachers: Array<Record<string, unknown>>;
@@ -112,7 +113,7 @@ export default function TeachersPanel({
       (v) => !campus || !v.campus_id || v.campus_id === campus,
     );
   return (
-    <div className="teachers-page">
+    <div className={cn("teachers-page",moduleSurface)}>
       <div className="access-heading">
         <div>
           <span className="eyebrow">PHASE 3B · ACADEMIC STAFFING</span>

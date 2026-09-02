@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 export type ConfigurationData={
   school:{id:string;name:string;abbreviation:string|null;institution_type:string;tagline:string|null;address:string|null;email:string|null;phone:string|null;website:string|null;timezone:string;currency:string;date_input_format:string;date_display_format:string};
@@ -26,7 +27,7 @@ export default function ConfigurationPanel({data}:{data:ConfigurationData}){
     if(!response.ok){setMessage(result.error??"Upload failed.");setBusy(false);return;} window.location.reload();
   }
   const schoolAssets=data.assets.filter(a=>!a.campus_id);
-  return <div className="config-page">
+  return <div className={cn("config-page",moduleSurface)}>
     <div className="access-heading"><div><span className="eyebrow">PHASE 0D · CONFIGURATION</span><h1>School, Campus & Academic Year</h1><p>Organization defaults with controlled campus overrides and audited changes.</p></div><span className="phase-badge complete">0D Active</span></div>
     <div className="config-tabs"><button className={tab==="school"?"active":""} onClick={()=>setTab("school")}>🏫 School Profile</button><button className={tab==="campuses"?"active":""} onClick={()=>setTab("campuses")}>🏢 Campuses <b>{data.campuses.length}</b></button><button className={tab==="years"?"active":""} onClick={()=>setTab("years")}>🗓️ Academic Years <b>{data.academicYears.length}</b></button></div>
     {message&&<p className="access-message">{message}</p>}

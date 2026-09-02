@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 type Row = Record<string, unknown> & { id: string; name?: string };
 type ResultData = { campusId: string; assessments: Row[]; roster: Row[]; canApprove: boolean; canPublish: boolean; canPrint: boolean };
 type Data = {
@@ -197,7 +198,7 @@ export default function ExaminationSchedulePanel() {
   const year =
     data.academicYears.find((v) => v.is_current) || data.academicYears[0];
   return (
-    <div className="foundation-page exam-schedule-page">
+    <div className={cn("foundation-page exam-schedule-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">

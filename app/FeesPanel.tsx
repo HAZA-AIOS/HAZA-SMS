@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useEffect, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 type Row = Record<string, unknown> & { id: string; name?: string };
 type Data = {
   campusId: string;
@@ -156,7 +157,7 @@ export default function FeesPanel() {
       </div>
     );
   return (
-    <div className="foundation-page fees-page">
+    <div className={cn("foundation-page fees-page",moduleSurface)}>
       <div className="phase-heading">
         <div>
           <span className="eyebrow">

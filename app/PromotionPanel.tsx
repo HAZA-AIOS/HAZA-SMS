@@ -1,5 +1,6 @@
 "use client";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
 type Row=Record<string,unknown>&{id:string};
 type Data={academicYears:Row[];campuses:Row[];classes:Row[];sections:Row[];rules:Row[];batches:Row[];decisions:Row[];canManage:boolean;canApply:boolean};
@@ -14,7 +15,7 @@ export default function PromotionPanel(){
   async function openBatch(id:string){setBatchId(id);setTab("batches");await load(id);}
   const selectedBatch=data.batches.find(b=>b.id===batchId);
   const rulesByCampus=useMemo(()=>new Map(data.rules.map(rule=>[`${rule.campus_id}:${rule.source_class_id}`,rule])),[data.rules]);
-  return <div className="promotion-page foundation-page">
+  return <div className={cn("promotion-page foundation-page",moduleSurface)}>
     <div className="phase-heading"><div><span className="eyebrow">PHASE 4D · STUDENT PROGRESSION</span><h1>Promotions and enrollment history</h1><p>Preview, review and apply secure year-end student progression without losing previous enrollment records.</p></div><span className="phase-badge complete">Campus protected</span></div>
     <section className="promotion-stats"><article><span>🧭</span><b>{data.rules.length}</b><small>Promotion rules</small></article><article><span>📝</span><b>{data.batches.filter(b=>b.status==="draft").length}</b><small>Draft batches</small></article><article><span>✅</span><b>{data.batches.filter(b=>b.status==="applied").length}</b><small>Applied batches</small></article><article><span>👥</span><b>{data.batches.reduce((n,b)=>n+Number(b.student_count||0),0)}</b><small>Students reviewed</small></article></section>
     {message&&<p className="promotion-message">{message}</p>}
