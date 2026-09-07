@@ -8,7 +8,7 @@
 
 HAZA-SMS is a multi-tenant School Management System for independent schools and school groups. Each registered school receives an isolated workspace, may operate multiple campuses, and sees only its own academic, operational, staff, student and financial records.
 
-**Live application:** [The Mentor School SMS](https://mentor-school-sms.mussawarhussain.chatgpt.site/)
+**Live application:** [www.thementorschools.com](https://www.thementorschools.com/)
 
 ## A school operating system, not just a dashboard
 
@@ -28,6 +28,7 @@ The project combines polished day-to-day workflows with infrastructure that is u
 | Scheduling          | Seasonal timings, periods, class/teacher timetables, conflicts, substitutions and events    |
 | Finance             | Fee plans, concessions, invoices, receipts, late fees, expenses, accounts and approvals     |
 | Examinations        | Examination types, assessments, grading schemes, grade bands and examination timetable      |
+| Public experience    | Branded school landing page, campus teams, downloads, news and events                        |
 | Governance          | Role-based authorization, tenant/campus isolation, audit logs, backups and exports          |
 
 ## How HAZA-SMS works
@@ -104,6 +105,8 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Reusable examination types, class assessments and academic-year grading schemes
 - Validated, non-overlapping grade boundaries with pass/fail and grade-point configuration
 - Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
+- Public landing page with Main Campus and Hadi Campus presentation
+- Dashboard-managed Downloads and News & Events with publish controls
 
 ## Security architecture
 
@@ -227,31 +230,21 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 6. Merge the completed phase into `main`.
 7. Publish and verify the Sites deployment.
 
-## Screenshots
+## Current product experience
 
-### School management dashboard
+### Public landing page
 
-![HAZA-SMS school management dashboard](docs/screenshots/dashboard-overview.png)
+The public website at [www.thementorschools.com](https://www.thementorschools.com/) presents The Mentor School’s educational approach, curriculum, campus information, leadership teams, published downloads, and News & Events. The original school branding and campus-specific content are maintained in the repository.
 
-### Academic configuration
+### Authenticated dashboard
 
-![HAZA-SMS academic configuration](docs/screenshots/academic-configuration.png)
+The dashboard uses a compact, dark, responsive interface across Students, Staff, Attendance, Payroll, Configuration, Access Control, Security & Audit, Academics, Promotions, Timetable, Examinations, Fees, Downloads, and News & Events. Shared interface primitives keep cards, controls, status indicators, spacing, and typography consistent across modules.
 
-### Classes and grade mapping
+### Code and data flow
 
-![HAZA-SMS classes and grade mapping](docs/screenshots/classes-and-grades.png)
+Public content is managed from protected dashboard screens. Authorized staff can create announcements and upload downloadable resources; only published records appear on the landing page. Application routes enforce role, organization, and campus boundaries before accessing Cloudflare D1 records or R2 objects.
 
-### Fees and financial control
-
-![HAZA-SMS fees and financial control](docs/screenshots/fees-financial-control.png)
-
-### Server-side finance permissions
-
-![HAZA-SMS finance permission implementation](docs/screenshots/code-finance-permissions.png)
-
-### Financial approval enforcement
-
-![HAZA-SMS financial approval implementation](docs/screenshots/code-financial-approval.png)
+The previous screenshot gallery was removed because it represented an obsolete interface. New screenshots should be added only when they match the current production design.
 
 ## Roadmap
 
