@@ -26,6 +26,7 @@ import ExaminationSchedulePanel from "./ExaminationSchedulePanel";
 import FeesPanel from "./FeesPanel";
 import type { CampusChoice } from "../lib/authorization";
 import { cn } from "./ui/TailwindPrimitives";
+import PublicContentPanel, { type PublicContentData } from "./PublicContentPanel";
 
 const navigation = [
   ["🏠", "Home"],
@@ -49,6 +50,8 @@ const navigation = [
   ["🧾", "Accounts"],
   ["🪙", "Expenses"],
   ["💬", "Messages"],
+  ["⬇️", "Downloads"],
+  ["📰", "News & Events"],
   ["🖨️", "Reports"],
 ] as const;
 
@@ -73,6 +76,7 @@ export default function DashboardShell({
   staffAttendanceData,
   payrollData,
   academicsData,
+  publicContentData,
 }: {
   schoolName: string;
   activeCampusId: string | null;
@@ -94,6 +98,7 @@ export default function DashboardShell({
   staffAttendanceData: StaffAttendanceData | null;
   payrollData: PayrollData | null;
   academicsData: AcademicsData | null;
+  publicContentData: PublicContentData | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -251,6 +256,8 @@ export default function DashboardShell({
                   (label === "Examinations" && canViewExaminations) ||
                   (label === "Fees" && canViewFees) ||
                   label === "Configuration" ||
+                  (label === "Downloads" && !!publicContentData) ||
+                  (label === "News & Events" && !!publicContentData) ||
                   label === "Access Control" ||
                   label === "Security & Audit"
                 ) {
@@ -305,6 +312,10 @@ export default function DashboardShell({
           <ExaminationSchedulePanel />
         ) : activeView === "Fees" && canViewFees ? (
           <FeesPanel />
+        ) : activeView === "Downloads" && publicContentData ? (
+          <PublicContentPanel data={publicContentData} initialTab="downloads" />
+        ) : activeView === "News & Events" && publicContentData ? (
+          <PublicContentPanel data={publicContentData} initialTab="news" />
         ) : activeView === "Configuration" && configurationData ? (
           <ConfigurationPanel data={configurationData} />
         ) : activeView === "Access Control" && accessData ? (

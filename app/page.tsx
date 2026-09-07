@@ -14,6 +14,7 @@ import type { TeachersData } from "./TeachersPanel";
 import type { StaffAttendanceData } from "./StaffAttendancePanel";
 import type { PayrollData } from "./PayrollPanel";
 import type { AcademicsData } from "./AcademicsPanel";
+import type { PublicContentData } from "./PublicContentPanel";
 import {
   acceptPendingInvitation,
   authorize,
@@ -30,6 +31,30 @@ import {
 } from "../lib/authorization";
 
 export const dynamic = "force-dynamic";
+
+type PublicLandingData = {
+  downloads: Array<{ id:string; title:string; description:string|null; original_name:string; size_bytes:number; campus_name:string|null; published_at:number|null }>;
+  newsEvents: Array<{ id:string; kind:string; title:string; summary:string; event_starts_at:number|null; location:string|null; campus_name:string|null; published_at:number|null }>;
+};
+
+async function loadPublicLandingData(): Promise<PublicLandingData> {
+  const organization = await env.DB.prepare("SELECT id FROM organizations WHERE status='active' ORDER BY created_at LIMIT 1").first<{id:string}>();
+  if (!organization) return { downloads: [], newsEvents: [] };
+  const [downloads, newsEvents] = await Promise.all([
+    env.DB.prepare("SELECT d.id,d.title,d.description,d.published_at,a.original_name,a.size_bytes,c.name campus_name FROM public_downloads d JOIN storage_assets a ON a.id=d.asset_id LEFT JOIN campuses c ON c.id=d.campus_id WHERE d.organization_id=?1 AND d.status='published' ORDER BY d.published_at DESC LIMIT 12").bind(organization.id).all<PublicLandingData["downloads"][number]>(),
+    env.DB.prepare("SELECT n.id,n.kind,n.title,n.summary,n.event_starts_at,n.location,n.published_at,c.name campus_name FROM public_news_events n LEFT JOIN campuses c ON c.id=n.campus_id WHERE n.organization_id=?1 AND n.status='published' ORDER BY CASE WHEN n.kind='event' AND n.event_starts_at>=?2 THEN 0 ELSE 1 END,COALESCE(n.event_starts_at,n.published_at) DESC LIMIT 12").bind(organization.id,Date.now()).all<PublicLandingData["newsEvents"][number]>(),
+  ]);
+  return { downloads: downloads.results, newsEvents: newsEvents.results };
+}
+
+async function loadPublicContentData(organizationId:string): Promise<PublicContentData> {
+  const [campuses, downloads, newsEvents] = await Promise.all([
+    env.DB.prepare("SELECT id,name FROM campuses WHERE organization_id=?1 AND status='active' ORDER BY is_main DESC,name").bind(organizationId).all<PublicContentData["campuses"][number]>(),
+    env.DB.prepare("SELECT d.id,d.title,d.description,d.status,a.original_name,a.size_bytes,c.name campus_name FROM public_downloads d JOIN storage_assets a ON a.id=d.asset_id LEFT JOIN campuses c ON c.id=d.campus_id WHERE d.organization_id=?1 ORDER BY d.published_at DESC,d.created_at DESC").bind(organizationId).all<PublicContentData["downloads"][number]>(),
+    env.DB.prepare("SELECT n.id,n.kind,n.title,n.summary,n.event_starts_at,n.location,n.status,c.name campus_name FROM public_news_events n LEFT JOIN campuses c ON c.id=n.campus_id WHERE n.organization_id=?1 ORDER BY COALESCE(n.event_starts_at,n.published_at) DESC").bind(organizationId).all<PublicContentData["newsEvents"][number]>(),
+  ]);
+  return { campuses: campuses.results, downloads: downloads.results, newsEvents: newsEvents.results, canManage: true };
+}
 
 async function loadAccessData(organizationId: string): Promise<AccessData> {
   const [users, roles, permissions, campuses] = await Promise.all([
@@ -606,12 +631,14 @@ export default async function Home({
 }) {
   const { portal } = await searchParams;
   const dashboardPath = "/?portal=dashboard";
-  if (portal !== "dashboard")
-    return <PublicLandingPage signInPath={dashboardPath} />;
+  if (portal !== "dashboard") {
+    const publicData = await loadPublicLandingData();
+    return <PublicLandingPage signInPath={dashboardPath} {...publicData} />;
+  }
 
   const user = await getChatGPTUser();
   if (!user)
-    return <PublicLandingPage signInPath={chatGPTSignInPath(dashboardPath)} />;
+    return <PublicLandingPage signInPath={chatGPTSignInPath(dashboardPath)} {...await loadPublicLandingData()} />;
   await acceptPendingInvitation(user.email, user.displayName);
   const access = await authorize();
   if (!access) {
@@ -672,6 +699,7 @@ export default async function Home({
     staffAttendanceData,
     payrollData,
     academicsData,
+    publicContentData,
   ] = await Promise.all([
     canViewAccess
       ? loadAccessData(refreshedAccess.organizationId)
@@ -719,6 +747,9 @@ export default async function Home({
           refreshedAccess.permissions,
         )
       : Promise.resolve(null),
+    refreshedAccess.permissions.has("settings.edit")
+      ? loadPublicContentData(refreshedAccess.organizationId)
+      : Promise.resolve(null),
   ]);
   if (staffAttendanceData) {
     staffAttendanceData.canManage = refreshedAccess.permissions.has(
@@ -752,6 +783,7 @@ export default async function Home({
       staffAttendanceData={staffAttendanceData}
       payrollData={payrollData}
       academicsData={academicsData}
+      publicContentData={publicContentData}
     />
   );
 }
