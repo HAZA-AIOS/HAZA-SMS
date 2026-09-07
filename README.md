@@ -107,6 +107,7 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
 - Public landing page with Main Campus and Hadi Campus presentation
 - Dashboard-managed Downloads and News & Events with publish controls
+- Resumable multipart R2 uploads for public download files up to 5 GB
 
 ## Security architecture
 
@@ -242,7 +243,7 @@ The dashboard uses a compact, dark, responsive interface across Students, Staff,
 
 ### Code and data flow
 
-Public content is managed from protected dashboard screens. Authorized staff can create announcements and upload downloadable resources; only published records appear on the landing page. Application routes enforce role, organization, and campus boundaries before accessing Cloudflare D1 records or R2 objects.
+Public content is managed from protected dashboard screens. Authorized staff can create announcements and upload downloadable resources; only published records appear on the landing page. Large files are split into 10 MB parts, streamed to R2, verified after assembly, and published only after the complete object is safely stored. Application routes enforce role, organization, and campus boundaries before accessing Cloudflare D1 records or R2 objects.
 
 The previous screenshot gallery was removed because it represented an obsolete interface. New screenshots should be added only when they match the current production design.
 
