@@ -5,8 +5,12 @@ export const metadata: Metadata = {
   title: "The Mentor School | Education for Life",
   description: "A modern, bag-free school in Adda Machiwal, Vehari—combining strong values, personal attention and international-standard learning.",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/tms-original-logo-transparent.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/tms-original-logo-transparent.png",
   },
 };
 
