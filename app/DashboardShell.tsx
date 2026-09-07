@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import AccessControlPanel, { type AccessData } from "./AccessControlPanel";
 import ConfigurationPanel, {
   type ConfigurationData,
@@ -96,6 +96,7 @@ export default function DashboardShell({
   academicsData: AcademicsData | null;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [campusOpen, setCampusOpen] = useState(false);
   const [activeView, setActiveView] = useState("Home");
   const initials = userName
@@ -117,19 +118,19 @@ export default function DashboardShell({
     if (response.ok) window.location.reload();
   }
   return (
-    <main className="min-h-screen bg-slate-100 text-slate-900">
-      <header className={cn("fixed inset-x-0 top-0 z-40 flex h-[72px] items-center gap-3 border-b border-slate-200 bg-white/95 px-4 shadow-sm backdrop-blur transition-[left] duration-200 lg:left-[260px] lg:px-6", collapsed && "lg:left-[76px]")}>
+    <main className="tms-dashboard min-h-screen bg-[#07091a] text-slate-100" style={{"--dashboard-sidebar-width":collapsed?"72px":"232px"} as CSSProperties}>
+      <header className="dashboard-header fixed inset-x-0 top-0 z-40 flex h-16 items-center gap-3 border-b border-violet-400/15 bg-[#171234]/95 px-4 shadow-[0_12px_35px_rgba(3,4,15,.3)] backdrop-blur-xl transition-[left] duration-200 lg:px-6">
         <button
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-slate-200 bg-white text-lg text-slate-700 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-lg text-white/80 transition hover:border-violet-400/40 hover:bg-violet-500/15 hover:text-white"
           type="button"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={() => { if (window.innerWidth < 1024) setMobileOpen(true); else setCollapsed((v) => !v); }}
         >
           ☰
         </button>
         {activeView !== "Home" && (
           <button
-            className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 sm:flex"
+            className="hidden items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/65 transition hover:bg-white/5 hover:text-white sm:flex"
             type="button"
             onClick={() => setActiveView("Home")}
             aria-label="Back to dashboard"
@@ -139,12 +140,12 @@ export default function DashboardShell({
           </button>
         )}
         <div className="min-w-0 flex-1">
-          <strong className="block truncate text-base font-extrabold text-slate-950 sm:text-lg">{activeView}</strong>
-          <small className="hidden truncate text-xs text-slate-500 sm:block">Manage your school with clarity and confidence.</small>
+          <strong className="block truncate text-base font-semibold text-white sm:text-lg">{activeView}</strong>
+          <small className="hidden truncate text-xs text-violet-200/55 sm:block">Manage your school with clarity and confidence.</small>
         </div>
         <div className="relative hidden md:block">
           <button
-            className="flex min-w-44 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+            className="flex min-w-44 items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-medium text-white/80 transition hover:border-violet-400/40 hover:bg-violet-500/10"
             type="button"
             aria-expanded={campusOpen}
             onClick={() => setCampusOpen((v) => !v)}
@@ -153,13 +154,13 @@ export default function DashboardShell({
             <span className={cn("transition-transform", campusOpen && "rotate-180")}>⌄</span>
           </button>
           {campusOpen && (
-            <div className="absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-56 gap-1 rounded-xl border border-slate-200 bg-white p-2 shadow-xl" role="menu">
+            <div className="absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-56 gap-1 rounded-xl border border-white/10 bg-[#11142d] p-2 text-white shadow-2xl" role="menu">
               {organizationWide && (
                 <button
                   type="button"
                   role="menuitem"
                   onClick={() => chooseCampus("all")}
-                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-slate-100"
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-violet-500/15"
                 >
                   🏢 All campuses
                 </button>
@@ -170,7 +171,7 @@ export default function DashboardShell({
                   role="menuitem"
                   key={campus.id}
                   onClick={() => chooseCampus(campus.id)}
-                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-slate-100"
+                  className="rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-violet-500/15"
                 >
                   🏫 {campus.name}
                   {campus.id === activeCampusId ? " ✓" : ""}
@@ -180,24 +181,24 @@ export default function DashboardShell({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <label className="hidden h-10 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 xl:flex">
+          <label className="hidden h-10 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 xl:flex">
             <span aria-hidden="true">🔎</span>
             <input
               aria-label="Find students or employees"
               placeholder="Find students or employees"
-              className="w-56 bg-transparent text-sm outline-none placeholder:text-slate-400"
+              className="w-56 bg-transparent text-sm text-white outline-none placeholder:text-white/35"
             />
           </label>
           <button
-            className="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white transition hover:bg-slate-50"
+            className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-violet-500/15"
             type="button"
             aria-label="Notifications"
           >
             🔔
-            <i className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+            <i className="absolute right-2 top-2 h-2 w-2 rounded-full bg-fuchsia-500 ring-2 ring-[#080a1c]" />
           </button>
           <a
-            className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-red-600 to-red-500 text-sm font-black text-white shadow-sm"
+            className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-sm font-bold text-white shadow-[0_8px_24px_rgba(168,85,247,.3)]"
             href="/signout-with-chatgpt?return_to=/"
             aria-label="Sign out"
             title="Sign out"
@@ -206,29 +207,30 @@ export default function DashboardShell({
           </a>
         </div>
       </header>
-      <aside className={cn("fixed inset-y-0 left-0 z-50 hidden w-[260px] flex-col overflow-hidden bg-[#090b0a] text-white shadow-2xl transition-[width] duration-200 lg:flex", collapsed && "w-[76px]")}>
-        <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-white/10 px-4">
+      {mobileOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden" onClick={()=>setMobileOpen(false)} />}
+      <aside className={cn("dashboard-sidebar fixed inset-y-0 left-0 z-50 flex w-[232px] -translate-x-full flex-col overflow-hidden border-r border-white/10 bg-[#090b20] text-white shadow-2xl transition-[width,transform] duration-200 lg:translate-x-0", mobileOpen && "translate-x-0") }>
+        <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/10 px-3.5">
           <img
             src="/tms-original-logo-transparent.png"
             alt="The Mentor School logo"
-            className="h-11 w-11 shrink-0 object-contain"
+            className="h-8 w-8 shrink-0 object-contain"
           />
-          <span className={cn("min-w-0 flex-1 transition-opacity", collapsed && "pointer-events-none opacity-0")}>
-            <strong className="block truncate text-sm font-extrabold">{schoolName}</strong>
-            <small className="block truncate text-[11px] uppercase tracking-widest text-zinc-500">School Management</small>
+          <span className={cn("min-w-0 flex-1 transition-opacity", collapsed && "hidden")}>
+            <strong className="block truncate text-sm font-semibold">{schoolName}</strong>
+            <small className="block truncate text-[11px] uppercase tracking-[.16em] text-violet-200/45">School Management</small>
           </span>
           <button
-            className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-white/10 text-zinc-400 hover:bg-white/10 hover:text-white"
-            onClick={() => setCollapsed((v) => !v)}
+            className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-white/10 text-white/45 hover:bg-white/10 hover:text-white",collapsed&&"hidden")}
+            onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false); else setCollapsed((v) => !v); }}
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
           >
             {collapsed ? "›" : "‹"}
           </button>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Main navigation">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3" aria-label="Main navigation">
           {navigation.map(([icon, label]) => (
             <button
-              className={cn("flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold text-zinc-400 transition hover:bg-white/8 hover:text-white", activeView === label && "bg-red-600 text-white shadow-lg shadow-red-950/30")}
+              className={cn("flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-white/55 transition hover:bg-white/6 hover:text-white", activeView === label && "bg-gradient-to-r from-violet-600/90 to-fuchsia-600/80 text-white shadow-lg shadow-violet-950/40", collapsed&&"lg:mx-auto lg:h-11 lg:w-11 lg:justify-center lg:p-0")}
               type="button"
               key={label}
               title={label}
@@ -251,28 +253,22 @@ export default function DashboardShell({
                   label === "Configuration" ||
                   label === "Access Control" ||
                   label === "Security & Audit"
-                )
+                ) {
                   setActiveView(label);
+                  setMobileOpen(false);
+                }
               }}
             >
-              <span className="grid w-6 shrink-0 place-items-center text-base" aria-hidden="true">
+              <span className="grid h-7 w-7 shrink-0 place-items-center text-xl leading-none" aria-hidden="true">
                 {icon}
               </span>
-              <span className={cn("truncate transition-opacity", collapsed && "pointer-events-none opacity-0")}>{label}</span>
+              <span className={cn("truncate transition-opacity", collapsed && "hidden")}>{label}</span>
             </button>
           ))}
         </nav>
-        <div className={cn("m-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition-opacity", collapsed && "pointer-events-none opacity-0")}>
-          <span className="text-xl">✨</span>
-          <strong className="mt-2 block text-sm">Build better schools</strong>
-          <p className="my-2 text-xs leading-relaxed text-zinc-500">Your secure digital campus is growing.</p>
-          <button className="text-xs font-bold text-yellow-400 hover:text-yellow-300" onClick={() => setActiveView("Configuration")}>
-            Continue setup
-          </button>
-        </div>
       </aside>
       <section
-        className={cn("min-h-screen px-4 pb-8 pt-[92px] transition-[margin] duration-200 sm:px-6 lg:ml-[260px] lg:px-8", collapsed && "lg:ml-[76px]")}
+        className="dashboard-workspace min-h-screen px-4 pb-8 pt-20 transition-[margin] duration-200 sm:px-5 lg:px-6"
         aria-label="Workspace"
       >
         {activeView === "Home" ? (
