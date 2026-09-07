@@ -2476,6 +2476,72 @@ export const storageAssets = sqliteTable(
   ],
 );
 
+export const publicDownloads = sqliteTable(
+  "public_downloads",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "set null",
+    }),
+    assetId: text("asset_id")
+      .notNull()
+      .references(() => storageAssets.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    status: text("status").notNull().default("published"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("public_downloads_org_status_idx").on(
+      t.organizationId,
+      t.status,
+      t.publishedAt,
+    ),
+    index("public_downloads_campus_idx").on(t.campusId),
+  ],
+);
+
+export const publicNewsEvents = sqliteTable(
+  "public_news_events",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, {
+      onDelete: "set null",
+    }),
+    kind: text("kind").notNull().default("news"),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    eventStartsAt: integer("event_starts_at", { mode: "timestamp_ms" }),
+    eventEndsAt: integer("event_ends_at", { mode: "timestamp_ms" }),
+    location: text("location"),
+    status: text("status").notNull().default("published"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("public_news_events_org_status_idx").on(
+      t.organizationId,
+      t.status,
+      t.publishedAt,
+    ),
+    index("public_news_events_campus_idx").on(t.campusId),
+    index("public_news_events_start_idx").on(t.eventStartsAt),
+  ],
+);
+
 export const studentDocuments = sqliteTable(
   "student_documents",
   {
