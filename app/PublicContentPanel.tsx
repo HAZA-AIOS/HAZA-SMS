@@ -42,7 +42,7 @@ export default function PublicContentPanel({ data: initial, initialTab }: { data
     const file = form.get("file");
     if (!(file instanceof File) || file.size < 1) { setMessage("Choose a file to upload."); return; }
     setBusy(true); setMessage(""); setUploadProgress(0);
-    let uploadId = "", key = "", metadata = "";
+    let uploadId = "", key = "";
     try {
       const initiateResponse = await fetch("/api/public-content/downloads/multipart", {
         method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
@@ -52,7 +52,7 @@ export default function PublicContentPanel({ data: initial, initialTab }: { data
       });
       const initiated = await initiateResponse.json();
       if (!initiateResponse.ok) throw new Error(initiated.error ?? "Could not start upload.");
-      uploadId = initiated.uploadId; key = initiated.key; metadata = initiated.metadata;
+      uploadId = initiated.uploadId; key = initiated.key;
       const parts: UploadedPart[] = [];
       const totalParts = Math.ceil(file.size / MULTIPART_CHUNK_SIZE);
       for (let partNumber = 1; partNumber <= totalParts; partNumber += 1) {
@@ -65,7 +65,7 @@ export default function PublicContentPanel({ data: initial, initialTab }: { data
         setUploadProgress(Math.round((partNumber / totalParts) * 100));
       }
       const completeResponse = await fetch("/api/public-content/downloads/multipart", {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "complete", uploadId, key, metadata, parts }),
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "complete", uploadId, key, parts }),
       });
       const completed = await completeResponse.json();
       if (!completeResponse.ok) throw new Error(completed.error ?? "Could not finish upload.");
