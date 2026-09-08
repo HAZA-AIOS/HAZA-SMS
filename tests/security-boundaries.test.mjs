@@ -862,3 +862,23 @@ test("communications notifications and direct messages are protected and tenant 
   assert.match(schema, /directMessages\s*=\s*sqliteTable/);
   assert.match(schema, /userNotifications\s*=\s*sqliteTable/);
 });
+
+test("parent and student portals expose only linked or self student records", async () => {
+  const route = await read("app/api/portal/route.ts");
+  const panel = await read("app/PortalPanel.tsx");
+  const authorization = await read("lib/authorization.ts");
+  assert.match(authorization, /"portal\.view"/);
+  assert.match(authorization, /"portal\.family"/);
+  assert.match(authorization, /"portal\.student"/);
+  assert.match(route, /authorize\("portal\.view"\)/);
+  assert.match(route, /lower\(g\.email\)=lower\(\?2\)/);
+  assert.match(route, /lower\(email\)=lower\(\?2\)/);
+  assert.match(route, /links\.results\.some\(v=>v\.id===requested\)/);
+  assert.match(route, /m\.student_id=\?2 AND a\.status='published'/);
+  assert.match(route, /a\.status='published' AND a\.class_id=\?2/);
+  assert.match(route, /i\.organization_id=\?1 AND i\.student_id=\?2|organization_id=\?1 AND student_id=\?2/);
+  assert.match(panel, /Parent Portal/);
+  assert.match(panel, /Student Portal/);
+  assert.match(panel, /Published examination results/);
+  assert.match(panel, /Fee account/);
+});

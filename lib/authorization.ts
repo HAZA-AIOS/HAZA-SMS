@@ -1122,6 +1122,26 @@ export async function ensureCommunicationAccess(organizationId: string) {
   await env.DB.batch(statements);
 }
 
+export async function ensurePortalAccess(organizationId: string) {
+  if (!env.DB) return;
+  const definitions = [
+    ["permission:portal.view", "portal.view", "portals", "view", 0],
+    ["permission:portal.family", "portal.family", "portals", "view_family", 1],
+    ["permission:portal.student", "portal.student", "portals", "view_self", 1],
+  ] as const;
+  const statements = definitions.map((v) => env.DB.prepare("INSERT OR IGNORE INTO permissions (id,code,module,action,sensitive) VALUES (?1,?2,?3,?4,?5)").bind(...v));
+  const superRole = await env.DB.prepare("SELECT id FROM roles WHERE organization_id=?1 AND key='super_administrator' LIMIT 1").bind(organizationId).first<{ id: string }>();
+  const grants: Record<string, string[]> = {
+    super_administrator: definitions.map((v) => v[1]), principal: definitions.map((v) => v[1]), school_administrator: definitions.map((v) => v[1]),
+    parent: ["portal.view", "portal.family"], student: ["portal.view", "portal.student"], read_only_auditor: ["portal.view"],
+  };
+  for (const [key, codes] of Object.entries(grants)) for (const code of codes) {
+    const roleId = key === "super_administrator" ? superRole?.id : `role:${organizationId}:${key}`;
+    if (roleId) statements.push(env.DB.prepare("INSERT OR IGNORE INTO role_permissions (role_id,permission_id) SELECT ?1,id FROM permissions WHERE code=?2").bind(roleId, code));
+  }
+  await env.DB.batch(statements);
+}
+
 export async function ensureFeeAccess(organizationId: string) {
   if (!env.DB) return;
   const definitions = [
