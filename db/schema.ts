@@ -2542,6 +2542,67 @@ export const publicNewsEvents = sqliteTable(
   ],
 );
 
+export const learningResources = sqliteTable(
+  "learning_resources",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, { onDelete: "set null" }),
+    academicYearId: text("academic_year_id").references(() => academicYears.id, { onDelete: "set null" }),
+    classId: text("class_id").references(() => classes.id, { onDelete: "set null" }),
+    sectionId: text("section_id").references(() => sections.id, { onDelete: "set null" }),
+    subjectId: text("subject_id").references(() => subjects.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    description: text("description"),
+    resourceType: text("resource_type").notNull().default("link"),
+    externalUrl: text("external_url"),
+    assetId: text("asset_id").references(() => storageAssets.id, { onDelete: "set null" }),
+    status: text("status").notNull().default("draft"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by").notNull().references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("learning_resources_org_status_idx").on(t.organizationId, t.status, t.publishedAt),
+    index("learning_resources_target_idx").on(t.organizationId, t.campusId, t.classId, t.subjectId),
+  ],
+);
+
+export const assignments = sqliteTable(
+  "assignments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").notNull().references(() => campuses.id, { onDelete: "cascade" }),
+    academicYearId: text("academic_year_id").notNull().references(() => academicYears.id),
+    classId: text("class_id").notNull().references(() => classes.id),
+    sectionId: text("section_id").references(() => sections.id, { onDelete: "set null" }),
+    subjectId: text("subject_id").notNull().references(() => subjects.id),
+    title: text("title").notNull(),
+    instructions: text("instructions"),
+    assignedOn: text("assigned_on").notNull(),
+    dueAt: integer("due_at", { mode: "timestamp_ms" }),
+    maxPoints: real("max_points").notNull().default(100),
+    status: text("status").notNull().default("draft"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by").notNull().references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("assignments_org_status_due_idx").on(t.organizationId, t.status, t.dueAt),
+    index("assignments_target_idx").on(t.organizationId, t.campusId, t.classId, t.sectionId, t.subjectId),
+  ],
+);
+
+export const assignmentResources = sqliteTable(
+  "assignment_resources",
+  {
+    assignmentId: text("assignment_id").notNull().references(() => assignments.id, { onDelete: "cascade" }),
+    resourceId: text("resource_id").notNull().references(() => learningResources.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.assignmentId, t.resourceId] }), index("assignment_resources_resource_idx").on(t.resourceId)],
+);
+
 export const studentDocuments = sqliteTable(
   "student_documents",
   {

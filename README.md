@@ -8,7 +8,27 @@
 
 HAZA-SMS is a multi-tenant School Management System for independent schools and school groups. Each registered school receives an isolated workspace, may operate multiple campuses, and sees only its own academic, operational, staff, student and financial records.
 
-**Live application:** [www.thementorschools.com](https://www.thementorschools.com/)
+**Live application:** [The Mentor School SMS](https://mentor-school-sms.mussawarhussain.chatgpt.site/)
+
+## Product experience
+
+### Public landing page
+
+The public website presents The Mentor School to prospective and current families. It includes the school’s approach, curriculum, campus life, Main Campus leadership, a separate Hadi Campus section, contact and enrollment calls to action, published downloads, and school news and events.
+
+Public content is connected to the protected management system: authorized staff can upload a document or publish an update in the dashboard, and only published items are exposed on the landing page. Visitors never receive access to the underlying administration workspace.
+
+### School management dashboard
+
+The authenticated dashboard is a responsive, campus-aware operating workspace. Its dark TMS interface keeps navigation, summaries, forms, tables, approval states and activity history visually consistent across student records, staff operations, attendance, payroll, academics, timetable, examinations, fees, configuration, access control, security, downloads, and news management.
+
+The active campus controls the operational data shown throughout the system. Every sensitive request is checked again on the server, so interface visibility is never treated as authorization.
+
+### Code and engineering
+
+HAZA-SMS is written in TypeScript with React and Vinext and runs on Cloudflare Workers. Structured records use Cloudflare D1 with version-controlled Drizzle migrations; protected files use tenant-scoped Cloudflare R2 paths. Server routes combine identity, organization membership, campus scope, granular permissions, request validation, rate limiting, and audit history.
+
+The repository includes production application code, database migrations, protected API routes, responsive interface modules, and automated tests for tenant and campus boundaries. The build and test workflow verifies the same Worker-compatible output that is prepared for deployment.
 
 ## A school operating system, not just a dashboard
 
@@ -28,7 +48,6 @@ The project combines polished day-to-day workflows with infrastructure that is u
 | Scheduling          | Seasonal timings, periods, class/teacher timetables, conflicts, substitutions and events    |
 | Finance             | Fee plans, concessions, invoices, receipts, late fees, expenses, accounts and approvals     |
 | Examinations        | Examination types, assessments, grading schemes, grade bands and examination timetable      |
-| Public experience    | Branded school landing page, campus teams, downloads, news and events                        |
 | Governance          | Role-based authorization, tenant/campus isolation, audit logs, backups and exports          |
 
 ## How HAZA-SMS works
@@ -107,9 +126,10 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
 - Campus-filtered examination analytics with class, subject, grade and student performance comparisons
 - Promotion-ready rankings, support indicators and controlled CSV performance exports
-- Public landing page with Main Campus and Hadi Campus presentation
-- Dashboard-managed Downloads and News & Events with publish controls
-- Resumable multipart R2 uploads for public download files up to 5 GB
+- Campus-targeted learning resources with draft and publication controls
+- Class and section assignments with subjects, due dates, points and supporting resources
+- Public downloads managed from the dashboard with protected R2 storage
+- Public news and events managed from the dashboard and displayed on the landing page
 
 ## Security architecture
 
@@ -233,54 +253,6 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 6. Merge the completed phase into `main`.
 7. Publish and verify the Sites deployment.
 
-## Current application screenshots
-
-The screenshots below show the current production design of The Mentor School public website and authenticated school-management dashboard.
-
-### Public landing page
-
-#### Landing hero and navigation
-
-![The Mentor School public landing page hero](docs/screenshots/Screenshot%202026-09-07%20212419.png)
-
-#### Learning approach
-
-![The Mentor School learning approach](docs/screenshots/Screenshot%202026-09-07%20212449.png)
-
-#### International-standard curriculum
-
-![The Mentor School curriculum](docs/screenshots/Screenshot%202026-09-07%20212534.png)
-
-### School management dashboard
-
-#### Dashboard home
-
-![The Mentor School SMS dashboard home](docs/screenshots/Screenshot%202026-09-07%20212139.png)
-
-#### Student directory
-
-![The Mentor School SMS student directory](docs/screenshots/Screenshot%202026-09-07%20212227.png)
-
-#### Access control
-
-![The Mentor School SMS access control](docs/screenshots/Screenshot%202026-09-07%20212303.png)
-
-#### Fees and financial governance
-
-![The Mentor School SMS fees dashboard](docs/screenshots/Screenshot%202026-09-07%20212353.png)
-
-### Code and security implementation
-
-The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, server-side RBAC, campus isolation, audit controls, and version-controlled database migrations.
-
-#### Server-side finance permissions
-
-![HAZA-SMS finance permission implementation](docs/screenshots/code-finance-permissions.png)
-
-#### Financial approval enforcement
-
-![HAZA-SMS financial approval implementation](docs/screenshots/code-financial-approval.png)
-
 ## Roadmap
 
 | Milestone                                                                         | Status      |
@@ -294,7 +266,8 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 6 — Timetables, substitutions and events                                    | Complete    |
 | Phase 7 — Fees and financial controls                                             | Complete    |
 | Phase 8 — Examinations and results                                                | Complete — 8A–8D |
-| Phases 9–14 — Learning, communication, portals, operations, analytics and rollout | Planned     |
+| Phase 9 — Learning resources and assignments                                      | In progress |
+| Phases 10–14 — Communication, portals, operations, analytics and rollout           | Planned     |
 
 The next product milestone, **Phase 9**, adds learning resources and assignment workflows. Later phases add communications, parent/student portals and broader role-aware analytics without replacing the foundations already built.
 

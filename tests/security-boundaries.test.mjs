@@ -812,3 +812,27 @@ test("examination performance analysis is filtered, tenant scoped and exportable
   assert.match(panel, /Class and section comparison/);
   assert.match(examination, /PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS/);
 });
+
+test("learning resources and assignments are persistent, permission checked and campus scoped", async () => {
+  const route = await read("app/api/learning/route.ts");
+  const panel = await read("app/LearningPanel.tsx");
+  const schema = await read("db/schema.ts");
+  const migration = await read("drizzle/0030_learning_resources_assignments.sql");
+  const authorization = await read("lib/authorization.ts");
+  const backup = await read("app/api/security/backups/route.ts");
+  for (const permission of ["learning.view", "resources.manage", "assignments.manage"]) assert.match(authorization, new RegExp(permission.replace(".", "\\.")));
+  assert.match(route, /authorize\("learning\.view"\)/);
+  assert.match(route, /canAccessCampus\(auth, campusId\)/);
+  assert.match(route, /cl\.organization_id=\?5 AND cl\.campus_id=\?6/);
+  assert.match(route, /learning\.resource\.create/);
+  assert.match(route, /learning\.assignment\.create/);
+  assert.match(panel, /PHASE 9 · LEARNING DELIVERY/);
+  assert.match(panel, /Resource library/);
+  assert.match(panel, /Assignment register/);
+  assert.match(schema, /learningResources\s*=\s*sqliteTable/);
+  assert.match(schema, /assignments\s*=\s*sqliteTable/);
+  for (const table of ["learning_resources", "assignments", "assignment_resources"]) {
+    assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
+    assert.match(backup, new RegExp(table));
+  }
+});
