@@ -230,21 +230,53 @@ The `drizzle/` directory contains the ordered D1 schema history. New database wo
 6. Merge the completed phase into `main`.
 7. Publish and verify the Sites deployment.
 
-## Current product experience
+## Current application screenshots
+
+The screenshots below show the current production design of The Mentor School public website and authenticated school-management dashboard.
 
 ### Public landing page
 
-The public website at [www.thementorschools.com](https://www.thementorschools.com/) presents The Mentor School’s educational approach, curriculum, campus information, leadership teams, published downloads, and News & Events. The original school branding and campus-specific content are maintained in the repository.
+#### Landing hero and navigation
 
-### Authenticated dashboard
+![The Mentor School public landing page hero](docs/screenshots/Screenshot%202026-09-07%20212419.png)
 
-The dashboard uses a compact, dark, responsive interface across Students, Staff, Attendance, Payroll, Configuration, Access Control, Security & Audit, Academics, Promotions, Timetable, Examinations, Fees, Downloads, and News & Events. Shared interface primitives keep cards, controls, status indicators, spacing, and typography consistent across modules.
+#### Learning approach
 
-### Code and data flow
+![The Mentor School learning approach](docs/screenshots/Screenshot%202026-09-07%20212449.png)
 
-Public content is managed from protected dashboard screens. Authorized staff can create announcements and upload downloadable resources; only published records appear on the landing page. Application routes enforce role, organization, and campus boundaries before accessing Cloudflare D1 records or R2 objects.
+#### International-standard curriculum
 
-The previous screenshot gallery was removed because it represented an obsolete interface. New screenshots should be added only when they match the current production design.
+![The Mentor School curriculum](docs/screenshots/Screenshot%202026-09-07%20212534.png)
+
+### School management dashboard
+
+#### Dashboard home
+
+![The Mentor School SMS dashboard home](docs/screenshots/Screenshot%202026-09-07%20212139.png)
+
+#### Student directory
+
+![The Mentor School SMS student directory](docs/screenshots/Screenshot%202026-09-07%20212227.png)
+
+#### Access control
+
+![The Mentor School SMS access control](docs/screenshots/Screenshot%202026-09-07%20212303.png)
+
+#### Fees and financial governance
+
+![The Mentor School SMS fees dashboard](docs/screenshots/Screenshot%202026-09-07%20212353.png)
+
+### Code and security implementation
+
+The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, server-side RBAC, campus isolation, audit controls, and version-controlled database migrations.
+
+#### Server-side finance permissions
+
+![HAZA-SMS finance permission implementation](docs/screenshots/code-finance-permissions.png)
+
+#### Financial approval enforcement
+
+![HAZA-SMS financial approval implementation](docs/screenshots/code-financial-approval.png)
 
 ## Roadmap
 
