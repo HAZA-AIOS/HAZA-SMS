@@ -113,6 +113,7 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Secure direct messages, in-app notifications, read tracking and delivery preferences
 - Parent portal with linked-child switching, attendance, fees, results, learning and school updates
 - Student self-service portal with published assignments, resources, results and notifications
+- Campus-scoped operations centre for library, assets, transport, visitors, service requests, official documents, medical, discipline and school events
 - Public landing page with Main Campus and Hadi Campus presentation
 - Dashboard-managed Downloads and News & Events with publish controls
 - Resumable multipart R2 uploads for public download files up to 5 GB
@@ -300,12 +301,13 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 6 — Timetables, substitutions and events                                    | Complete    |
 | Phase 7 — Fees and financial controls                                             | Complete    |
 | Phase 8 — Examinations and results                                                | Complete — 8A–8D |
-| Phase 9 — Learning resources and assignments                                      | In progress |
-| Phase 10 — Communication and notifications                                        | In progress |
-| Phase 11 — Parent and student portals                                              | In progress |
-| Phases 12–14 — Operations, analytics and rollout                                   | Planned     |
+| Phase 9 — Learning resources and assignments                                      | Complete    |
+| Phase 10 — Communication and notifications                                        | Complete    |
+| Phase 11 — Parent and student portals                                              | Complete    |
+| Phase 12 — Operations and Asset Management                                         | Complete    |
+| Phases 13–14 — Analytics and rollout                                               | Planned     |
 
-The next product milestone, **Phase 9**, adds learning resources and assignment workflows. Later phases add communications, parent/student portals and broader role-aware analytics without replacing the foundations already built.
+The next product milestone, **Phase 13**, adds leadership analytics and reporting without replacing the foundations already built.
 
 ## The long-term vision
 

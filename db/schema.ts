@@ -2766,6 +2766,35 @@ export const communicationAnnouncements = sqliteTable(
   ],
 );
 
+export const operationRecords = sqliteTable(
+  "operation_records",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, { onDelete: "set null" }),
+    category: text("category").notNull(),
+    title: text("title").notNull(),
+    referenceCode: text("reference_code"),
+    personName: text("person_name"),
+    assignedTo: text("assigned_to"),
+    status: text("status").notNull().default("open"),
+    priority: text("priority").notNull().default("normal"),
+    dueOn: text("due_on"),
+    quantity: integer("quantity"),
+    amount: real("amount"),
+    notes: text("notes"),
+    detailsJson: text("details_json").notNull().default("{}"),
+    createdBy: text("created_by").notNull().references(() => users.id),
+    closedAt: integer("closed_at", { mode: "timestamp_ms" }),
+    ...ts,
+  },
+  (t) => [
+    index("operation_records_org_category_status_idx").on(t.organizationId, t.category, t.status),
+    index("operation_records_org_campus_idx").on(t.organizationId, t.campusId),
+    index("operation_records_due_idx").on(t.organizationId, t.dueOn),
+  ],
+);
+
 export const directMessages = sqliteTable(
   "direct_messages",
   {

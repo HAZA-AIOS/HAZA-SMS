@@ -882,3 +882,25 @@ test("parent and student portals expose only linked or self student records", as
   assert.match(panel, /Published examination results/);
   assert.match(panel, /Fee account/);
 });
+
+test("operations and asset records are permission protected campus scoped and audited", async () => {
+  const route = await read("app/api/operations/route.ts");
+  const panel = await read("app/OperationsPanel.tsx");
+  const schema = await read("db/schema.ts");
+  const migration = await read("drizzle/0032_operations_asset_management.sql");
+  const authorization = await read("lib/authorization.ts");
+  const backup = await read("app/api/security/backups/route.ts");
+  assert.match(authorization, /"operations\.view"/);
+  assert.match(authorization, /"operations\.manage"/);
+  assert.match(route, /authorize\("operations\.view"\)/);
+  assert.match(route, /authorize\("operations\.manage"\)/);
+  assert.match(route, /canAccessCampus\(auth, campusId\)/);
+  assert.match(route, /r\.organization_id=\?1/);
+  assert.match(route, /operations\.record\.create/);
+  assert.match(route, /operations\.record\.status/);
+  for (const section of ["Library", "Inventory & Assets", "Transport", "Visitors", "Complaints & Requests", "Certificates & Letters", "Medical", "Discipline", "School Events"]) assert.match(panel, new RegExp(section.replace("&", "&")));
+  assert.match(panel, /PHASE 12 · OPERATIONS & ASSET MANAGEMENT/);
+  assert.match(schema, /operationRecords\s*=\s*sqliteTable/);
+  assert.match(migration, /CREATE TABLE `operation_records`/);
+  assert.match(backup, /"operation_records"/);
+});

@@ -30,6 +30,7 @@ import {
   ensureLearningAccess,
   ensureCommunicationAccess,
   ensurePortalAccess,
+  ensureOperationsAccess,
   ensureFeeAccess,
 } from "../lib/authorization";
 
@@ -665,6 +666,7 @@ export default async function Home({
   await ensureLearningAccess(access.organizationId);
   await ensureCommunicationAccess(access.organizationId);
   await ensurePortalAccess(access.organizationId);
+  await ensureOperationsAccess(access.organizationId);
   await ensureFeeAccess(access.organizationId);
   const refreshedAccess = (await authorize())!;
   const canViewAccess =
@@ -780,6 +782,7 @@ export default async function Home({
       canViewLearning={refreshedAccess.permissions.has("learning.view")}
       canViewCommunications={refreshedAccess.permissions.has("communications.view")}
       canViewPortal={refreshedAccess.permissions.has("portal.view")}
+      canViewOperations={refreshedAccess.permissions.has("operations.view")}
       canViewFees={refreshedAccess.permissions.has("fees.view")}
       userName={user.displayName}
       accessData={accessData}
