@@ -1142,6 +1142,34 @@ export async function ensurePortalAccess(organizationId: string) {
   await env.DB.batch(statements);
 }
 
+export async function ensureOperationsAccess(organizationId: string) {
+  if (!env.DB) return;
+  const definitions = [
+    ["permission:operations.view", "operations.view", "operations", "view", 1],
+    ["permission:operations.manage", "operations.manage", "operations", "manage", 1],
+  ] as const;
+  const statements = definitions.map((v) => env.DB.prepare(
+    "INSERT OR IGNORE INTO permissions (id,code,module,action,sensitive) VALUES (?1,?2,?3,?4,?5)",
+  ).bind(...v));
+  const grants: Record<string, string[]> = {
+    principal: ["operations.view", "operations.manage"],
+    school_administrator: ["operations.view", "operations.manage"],
+    receptionist: ["operations.view", "operations.manage"],
+    librarian: ["operations.view", "operations.manage"],
+    accountant: ["operations.view"],
+    teacher: ["operations.view"],
+    examination_officer: ["operations.view"],
+    read_only_auditor: ["operations.view"],
+  };
+  const superRole = await env.DB.prepare("SELECT id FROM roles WHERE organization_id=?1 AND key='super_administrator' LIMIT 1").bind(organizationId).first<{id:string}>();
+  if (superRole?.id) grants.super_administrator = definitions.map((v) => v[1]);
+  for (const [roleKey, codes] of Object.entries(grants)) for (const code of codes) {
+    const roleId = roleKey === "super_administrator" ? superRole?.id : `role:${organizationId}:${roleKey}`;
+    if (roleId) statements.push(env.DB.prepare("INSERT OR IGNORE INTO role_permissions (role_id,permission_id) SELECT ?1,id FROM permissions WHERE code=?2").bind(roleId, code));
+  }
+  await env.DB.batch(statements);
+}
+
 export async function ensureFeeAccess(organizationId: string) {
   if (!env.DB) return;
   const definitions = [
