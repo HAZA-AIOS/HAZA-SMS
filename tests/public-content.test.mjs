@@ -20,6 +20,9 @@ test("public content management is protected and tenant scoped", async () => {
   assert.match(multipart, /resumeMultipartUpload/);
   assert.match(multipart, /MAX_FILE_SIZE = 5 \* 1024 \* 1024 \* 1024/);
   assert.match(multipart, /object\.size !== metadata\.size/);
+  assert.match(multipart, /pendingKey\(key, uploadId\)/);
+  assert.match(multipart, /contentLength !== expectedLength/);
+  assert.match(multipart, /parts\.length !== metadata\.totalParts/);
 });
 
 test("only published resources are exposed on the public website", async () => {
