@@ -1100,6 +1100,28 @@ export async function ensureLearningAccess(organizationId: string) {
   await env.DB.batch(statements);
 }
 
+export async function ensureCommunicationAccess(organizationId: string) {
+  if (!env.DB) return;
+  const definitions = [
+    ["permission:communications.view", "communications.view", "communications", "view", 0],
+    ["permission:communications.send", "communications.send", "communications", "send_messages", 1],
+    ["permission:announcements.manage", "announcements.manage", "communications", "manage_announcements", 1],
+    ["permission:notifications.manage", "notifications.manage", "communications", "manage_notifications", 1],
+  ] as const;
+  const statements = definitions.map((v) => env.DB.prepare("INSERT OR IGNORE INTO permissions (id,code,module,action,sensitive) VALUES (?1,?2,?3,?4,?5)").bind(...v));
+  const superRole = await env.DB.prepare("SELECT id FROM roles WHERE organization_id=?1 AND key='super_administrator' LIMIT 1").bind(organizationId).first<{ id: string }>();
+  const grants: Record<string, string[]> = {
+    super_administrator: definitions.map((v) => v[1]), principal: definitions.map((v) => v[1]), school_administrator: definitions.map((v) => v[1]),
+    teacher: ["communications.view", "communications.send"], receptionist: ["communications.view", "communications.send"], accountant: ["communications.view", "communications.send"],
+    examination_officer: ["communications.view", "communications.send"], librarian: ["communications.view", "communications.send"], parent: ["communications.view", "communications.send"], student: ["communications.view", "communications.send"], read_only_auditor: ["communications.view"],
+  };
+  for (const [key, codes] of Object.entries(grants)) for (const code of codes) {
+    const roleId = key === "super_administrator" ? superRole?.id : `role:${organizationId}:${key}`;
+    if (roleId) statements.push(env.DB.prepare("INSERT OR IGNORE INTO role_permissions (role_id,permission_id) SELECT ?1,id FROM permissions WHERE code=?2").bind(roleId, code));
+  }
+  await env.DB.batch(statements);
+}
+
 export async function ensureFeeAccess(organizationId: string) {
   if (!env.DB) return;
   const definitions = [
