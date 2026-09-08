@@ -107,6 +107,7 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
 - Public landing page with Main Campus and Hadi Campus presentation
 - Dashboard-managed Downloads and News & Events with publish controls
+- Resumable multipart R2 uploads for public download files up to 5 GB
 
 ## Security architecture
 

@@ -5,17 +5,24 @@ import { readFile } from "node:fs/promises";
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("public content management is protected and tenant scoped", async () => {
-  const [downloads, news] = await Promise.all([
+  const [downloads, multipart, news] = await Promise.all([
     read("app/api/public-content/downloads/route.ts"),
+    read("app/api/public-content/downloads/multipart/route.ts"),
     read("app/api/public-content/news-events/route.ts"),
   ]);
-  for (const source of [downloads, news]) {
+  for (const source of [downloads, multipart, news]) {
     assert.match(source, /authorize\("settings\.edit"\)/);
     assert.match(source, /requireSameOrigin\(request\)/);
     assert.match(source, /organizationId/);
   }
-  assert.match(downloads, /25 \* 1024 \* 1024/);
   assert.match(downloads, /organizations\/\$\{auth\.organizationId\}\/public-downloads/);
+  assert.match(multipart, /createMultipartUpload/);
+  assert.match(multipart, /resumeMultipartUpload/);
+  assert.match(multipart, /MAX_FILE_SIZE = 5 \* 1024 \* 1024 \* 1024/);
+  assert.match(multipart, /object\.size !== metadata\.size/);
+  assert.match(multipart, /pendingKey\(key, uploadId\)/);
+  assert.match(multipart, /contentLength !== expectedLength/);
+  assert.match(multipart, /parts\.length !== metadata\.totalParts/);
 });
 
 test("only published resources are exposed on the public website", async () => {
