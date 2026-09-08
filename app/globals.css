@@ -1060,6 +1060,45 @@
   height: 8px;
   accent-color: #8b5cf6;
 }
+
+/* Phase 8D — examination performance analysis */
+.analytics-workspace { display:grid; gap:14px; padding:16px; }
+.analytics-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
+.analytics-heading h2,.analytics-heading p,.analytics-card h3,.analytics-card p { margin:0; }
+.analytics-heading p,.analytics-card p { margin-top:4px; color:#9b93bc; font-size:13px; }
+.analytics-export,.analytics-filters button { border:1px solid #8749e9; border-radius:9px; background:linear-gradient(135deg,#7838e8,#bf13d6); color:#fff; padding:10px 14px; font-size:13px; font-weight:700; text-decoration:none; white-space:nowrap; }
+.analytics-filters { display:grid; grid-template-columns:repeat(5,minmax(130px,1fr)) auto; gap:10px; align-items:end; padding:14px; border:1px solid #282347; border-radius:14px; background:#0d1123; }
+.analytics-filters label { display:grid; gap:6px; color:#aaa3c5; font-size:12px; font-weight:650; }
+.analytics-filters select { min-width:0; height:38px; border:1px solid #312a55; border-radius:8px; background:#0a0e1e; color:#f5f2ff; padding:0 10px; }
+.analytics-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.analytics-kpis article { display:flex; align-items:center; gap:12px; min-height:88px; padding:14px; border:1px solid #282347; border-radius:14px; background:#0d1123; }
+.analytics-kpis article>span { display:grid; place-items:center; width:42px; height:42px; border:1px solid #47327b; border-radius:11px; background:#201944; font-size:20px; }
+.analytics-kpis div { display:grid; gap:3px; }.analytics-kpis small { color:#9890b8; }.analytics-kpis b { font-size:20px; color:#fff; }
+.analytics-grid { display:grid; grid-template-columns:1.35fr 1fr; gap:14px; }.analytics-grid.lower { grid-template-columns:1.45fr 1fr; }
+.analytics-card { overflow:hidden; border:1px solid #282347; border-radius:14px; background:#0d1123; }
+.analytics-card>header { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; padding:15px 16px; border-bottom:1px solid #282347; background:#12162d; }
+.analytics-card>header>span { border:1px solid #443573; border-radius:999px; background:#211a43; color:#c7b8ff; padding:5px 9px; font-size:11px; font-weight:700; white-space:nowrap; }
+.performance-bars { display:grid; gap:12px; padding:16px; }
+.performance-bars>div { display:grid; grid-template-columns:minmax(145px,1fr) minmax(120px,2fr) 52px; gap:12px; align-items:center; }
+.performance-bars>div>div { display:grid; }.performance-bars small,.support-list small,.analytics-table small { color:#938bac; font-size:11px; }
+.performance-bars>div>span { overflow:hidden; height:8px; border-radius:99px; background:#24203c; }.performance-bars i { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#7553ff,#d51ee0); }
+.performance-bars strong { text-align:right; font-size:12px; }
+.grade-distribution { display:flex; align-items:end; justify-content:space-around; gap:8px; min-height:260px; padding:18px 14px 14px; }
+.grade-distribution>div { display:grid; grid-template-rows:auto 150px auto auto; gap:5px; min-width:34px; text-align:center; }
+.grade-distribution>div>span { display:flex; align-items:end; justify-content:center; border-radius:7px; background:#171a31; }
+.grade-distribution i { width:20px; border-radius:6px 6px 3px 3px; background:linear-gradient(180deg,#cf20df,#714dff); }
+.grade-distribution small { color:#9188ad; font-size:10px; }
+.analytics-table { overflow:auto; }.analytics-table>div { display:grid; grid-template-columns:2fr repeat(3,1fr); min-width:560px; border-bottom:1px solid #24203e; }
+.analytics-table.ranking>div { grid-template-columns:60px 2fr repeat(5,minmax(80px,1fr)); min-width:840px; }
+.analytics-table>div>span { padding:11px 13px; }.analytics-table .head { background:#171b36; color:#bbb1e8; font-size:10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+.analytics-table b,.analytics-table small { display:block; }.analytics-table .positive { color:#48d597; }.analytics-table .negative { color:#ff7282; }
+.support-list { display:grid; }.support-list>div { display:grid; grid-template-columns:32px 1fr auto; gap:10px; align-items:center; padding:11px 14px; border-bottom:1px solid #24203e; }
+.support-list>div>span { display:grid; place-items:center; width:30px; height:30px; border-radius:8px; background:#211a43; color:#c8b7ff; font-size:11px; font-weight:800; }
+.support-list b,.support-list small { display:block; }.support-list strong { color:#ffba62; font-size:12px; }.support-list>p { padding:18px; }
+.analytics-message,.analytics-loading { padding:16px; border-radius:12px; background:#21153c; color:#decfff; }
+@media (max-width:1100px) { .analytics-filters { grid-template-columns:repeat(3,1fr); }.analytics-grid,.analytics-grid.lower { grid-template-columns:1fr; } }
+@media (max-width:760px) { .analytics-heading { flex-direction:column; }.analytics-kpis,.analytics-filters { grid-template-columns:1fr 1fr; }.analytics-export { width:100%; text-align:center; } }
+@media (max-width:520px) { .analytics-kpis,.analytics-filters { grid-template-columns:1fr; }.analytics-workspace { padding:11px; }.performance-bars>div { grid-template-columns:1fr 50px; }.performance-bars>div>span { grid-column:1/-1; grid-row:2; } }
 * {
   box-sizing: border-box;
 }
