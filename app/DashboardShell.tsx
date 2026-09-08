@@ -28,6 +28,7 @@ import type { CampusChoice } from "../lib/authorization";
 import { cn } from "./ui/TailwindPrimitives";
 import PublicContentPanel, { type PublicContentData } from "./PublicContentPanel";
 import LearningPanel from "./LearningPanel";
+import CommunicationsPanel from "./CommunicationsPanel";
 
 const navigation = [
   ["🏠", "Home"],
@@ -51,7 +52,7 @@ const navigation = [
   ["🫆", "Biometrics"],
   ["🧾", "Accounts"],
   ["🪙", "Expenses"],
-  ["💬", "Messages"],
+  ["💬", "Communication"],
   ["⬇️", "Downloads"],
   ["📰", "News & Events"],
   ["🖨️", "Reports"],
@@ -68,6 +69,7 @@ export default function DashboardShell({
   canViewTimetable,
   canViewExaminations,
   canViewLearning,
+  canViewCommunications,
   canViewFees,
   accessData,
   configurationData,
@@ -91,6 +93,7 @@ export default function DashboardShell({
   canViewTimetable: boolean;
   canViewExaminations: boolean;
   canViewLearning: boolean;
+  canViewCommunications: boolean;
   canViewFees: boolean;
   accessData: AccessData | null;
   configurationData: ConfigurationData | null;
@@ -259,6 +262,7 @@ export default function DashboardShell({
                   (label === "Timetable" && canViewTimetable) ||
                   (label === "Examinations" && canViewExaminations) ||
                   (label === "Learning" && canViewLearning) ||
+                  (label === "Communication" && canViewCommunications) ||
                   (label === "Fees" && canViewFees) ||
                   label === "Configuration" ||
                   (label === "Downloads" && !!publicContentData) ||
@@ -317,6 +321,8 @@ export default function DashboardShell({
           <ExaminationSchedulePanel />
         ) : activeView === "Learning" && canViewLearning ? (
           <LearningPanel />
+        ) : activeView === "Communication" && canViewCommunications ? (
+          <CommunicationsPanel />
         ) : activeView === "Fees" && canViewFees ? (
           <FeesPanel />
         ) : activeView === "Downloads" && publicContentData ? (

@@ -836,3 +836,29 @@ test("learning resources and assignments are persistent, permission checked and 
     assert.match(backup, new RegExp(table));
   }
 });
+
+test("communications notifications and direct messages are protected and tenant scoped", async () => {
+  const route = await read("app/api/communications/route.ts");
+  const panel = await read("app/CommunicationsPanel.tsx");
+  const schema = await read("db/schema.ts");
+  const migration = await read("drizzle/0031_communication_notifications.sql");
+  const authorization = await read("lib/authorization.ts");
+  const backup = await read("app/api/security/backups/route.ts");
+  for (const permission of ["communications.view", "communications.send", "announcements.manage", "notifications.manage"]) assert.match(authorization, new RegExp(permission.replace(".", "\\.")));
+  assert.match(route, /authorize\("communications\.view"\)/);
+  assert.match(route, /om\.organization_id=\?2/);
+  assert.match(route, /recipient_user_id=\?3/);
+  assert.match(route, /communications\.announcement\.create/);
+  assert.match(route, /communications\.message\.send/);
+  assert.match(panel, /PHASE 10 · COMMUNICATION &amp; NOTIFICATIONS/);
+  assert.match(panel, /Announcement register/);
+  assert.match(panel, /Inbox &amp; sent/);
+  assert.match(panel, /Notification centre/);
+  for (const table of ["communication_announcements", "direct_messages", "user_notifications"]) {
+    assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
+    assert.match(backup, new RegExp(table));
+  }
+  assert.match(schema, /communicationAnnouncements\s*=\s*sqliteTable/);
+  assert.match(schema, /directMessages\s*=\s*sqliteTable/);
+  assert.match(schema, /userNotifications\s*=\s*sqliteTable/);
+});

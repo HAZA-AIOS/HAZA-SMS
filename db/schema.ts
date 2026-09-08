@@ -2743,6 +2743,71 @@ export const notificationPreferences = sqliteTable(
   ],
 );
 
+export const communicationAnnouncements = sqliteTable(
+  "communication_announcements",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    priority: text("priority").notNull().default("normal"),
+    audience: text("audience").notNull().default("all"),
+    status: text("status").notNull().default("draft"),
+    scheduledAt: integer("scheduled_at", { mode: "timestamp_ms" }),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+    createdBy: text("created_by").notNull().references(() => users.id),
+    ...ts,
+  },
+  (t) => [
+    index("communication_announcements_org_status_idx").on(t.organizationId, t.status, t.publishedAt),
+    index("communication_announcements_campus_idx").on(t.organizationId, t.campusId),
+  ],
+);
+
+export const directMessages = sqliteTable(
+  "direct_messages",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, { onDelete: "set null" }),
+    senderUserId: text("sender_user_id").notNull().references(() => users.id),
+    recipientUserId: text("recipient_user_id").notNull().references(() => users.id),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    readAt: integer("read_at", { mode: "timestamp_ms" }),
+    archivedBySender: integer("archived_by_sender", { mode: "boolean" }).notNull().default(false),
+    archivedByRecipient: integer("archived_by_recipient", { mode: "boolean" }).notNull().default(false),
+    ...ts,
+  },
+  (t) => [
+    index("direct_messages_inbox_idx").on(t.organizationId, t.recipientUserId, t.readAt, t.createdAt),
+    index("direct_messages_sent_idx").on(t.organizationId, t.senderUserId, t.createdAt),
+  ],
+);
+
+export const userNotifications = sqliteTable(
+  "user_notifications",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    campusId: text("campus_id").references(() => campuses.id, { onDelete: "set null" }),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    eventCode: text("event_code").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    entityType: text("entity_type"),
+    entityId: text("entity_id"),
+    readAt: integer("read_at", { mode: "timestamp_ms" }),
+    ...ts,
+  },
+  (t) => [
+    index("user_notifications_user_read_idx").on(t.organizationId, t.userId, t.readAt, t.createdAt),
+    index("user_notifications_entity_idx").on(t.organizationId, t.entityType, t.entityId),
+  ],
+);
+
 export const settingRevisions = sqliteTable(
   "setting_revisions",
   {
