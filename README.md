@@ -305,9 +305,10 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 10 — Communication and notifications                                        | Complete    |
 | Phase 11 — Parent and student portals                                              | Complete    |
 | Phase 12 — Operations and Asset Management                                         | Complete    |
-| Phases 13–14 — Analytics and rollout                                               | Planned     |
+| Phase 13 — Advanced Analytics and Reporting                                       | Complete    |
+| Phase 14 — Production Rollout                                                     | Planned     |
 
-The next product milestone, **Phase 13**, adds leadership analytics and reporting without replacing the foundations already built.
+The next product milestone, **Phase 14**, completes production readiness, rollout controls and final operational verification.
 
 ## The long-term vision
 
