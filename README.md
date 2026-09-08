@@ -107,6 +107,8 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Roster-based marks entry, absence handling, automatic percentage/grade calculation and teacher remarks
 - Campus-filtered examination analytics with class, subject, grade and student performance comparisons
 - Promotion-ready rankings, support indicators and controlled CSV performance exports
+- Campus-targeted learning resources with draft and publication controls
+- Class and section assignments with subjects, due dates, points and supporting resources
 - Public landing page with Main Campus and Hadi Campus presentation
 - Dashboard-managed Downloads and News & Events with publish controls
 - Resumable multipart R2 uploads for public download files up to 5 GB
@@ -294,7 +296,8 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 6 — Timetables, substitutions and events                                    | Complete    |
 | Phase 7 — Fees and financial controls                                             | Complete    |
 | Phase 8 — Examinations and results                                                | Complete — 8A–8D |
-| Phases 9–14 — Learning, communication, portals, operations, analytics and rollout | Planned     |
+| Phase 9 — Learning resources and assignments                                      | In progress |
+| Phases 10–14 — Communication, portals, operations, analytics and rollout           | Planned     |
 
 The next product milestone, **Phase 9**, adds learning resources and assignment workflows. Later phases add communications, parent/student portals and broader role-aware analytics without replacing the foundations already built.
 

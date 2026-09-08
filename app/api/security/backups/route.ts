@@ -27,6 +27,8 @@ const tenantTables = [
   "assessments",
   "assessment_marks",
   "result_publications",
+  "learning_resources",
+  "assignments",
   "fee_categories",
   "fee_structures",
   "fee_structure_items",
@@ -144,6 +146,10 @@ export async function POST(request: Request) {
     (snapshot.manifest as { tables: string[] }).tables.push(
       "student_guardians",
     );
+    tables.assignment_resources = (
+      await env.DB.prepare("SELECT ar.* FROM assignment_resources ar JOIN assignments a ON a.id=ar.assignment_id WHERE a.organization_id=?1").bind(auth.organizationId).all()
+    ).results;
+    (snapshot.manifest as { tables: string[] }).tables.push("assignment_resources");
     const body = JSON.stringify(snapshot),
       bytes = new TextEncoder().encode(body).byteLength;
     await env.BUCKET.put(key, body, {

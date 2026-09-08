@@ -27,6 +27,7 @@ import {
   ensureStudentAccess,
   ensureTimetableAccess,
   ensureExaminationScheduleAccess,
+  ensureLearningAccess,
   ensureFeeAccess,
 } from "../lib/authorization";
 
@@ -659,6 +660,7 @@ export default async function Home({
   await ensureStaffAccess(access.organizationId);
   await ensureTimetableAccess(access.organizationId);
   await ensureExaminationScheduleAccess(access.organizationId);
+  await ensureLearningAccess(access.organizationId);
   await ensureFeeAccess(access.organizationId);
   const refreshedAccess = (await authorize())!;
   const canViewAccess =
@@ -771,6 +773,7 @@ export default async function Home({
       )}
       canViewTimetable={refreshedAccess.permissions.has("timetable.view")}
       canViewExaminations={refreshedAccess.permissions.has("examinations.view")}
+      canViewLearning={refreshedAccess.permissions.has("learning.view")}
       canViewFees={refreshedAccess.permissions.has("fees.view")}
       userName={user.displayName}
       accessData={accessData}
