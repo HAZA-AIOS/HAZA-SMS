@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { cn, moduleSurface } from "./ui/TailwindPrimitives";
+import ExaminationPerformancePanel from "./ExaminationPerformancePanel";
 type Row = Record<string, unknown> & { id: string; name?: string };
 type ResultData = { campusId: string; assessments: Row[]; roster: Row[]; canApprove: boolean; canPublish: boolean; canPrint: boolean };
 type Data = {
@@ -60,7 +61,7 @@ const clock = (v: unknown) => {
 };
 export default function ExaminationSchedulePanel() {
   const [data, setData] = useState<Data>(empty),
-    [tab, setTab] = useState("assessments"),
+    [tab, setTab] = useState("analytics"),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState(""),
     [selectedAssessment, setSelectedAssessment] = useState(""),
@@ -202,9 +203,9 @@ export default function ExaminationSchedulePanel() {
       <div className="phase-heading">
         <div>
           <span className="eyebrow">
-            PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS
+            PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS
           </span>
-          <h1>Controlled examinations and published results</h1>
+          <h1>Examinations, results and performance analysis</h1>
           <p>
             Define examination types, assessment plans and transparent grading
             rules while retaining campus timetables and events.
@@ -240,6 +241,7 @@ export default function ExaminationSchedulePanel() {
       <section className="exam-workspace">
         <nav>
           {[
+            ["analytics", "Performance analysis"],
             ["marks", "Marks entry"],
             ["results", "Approval & result cards"],
             ["assessments", "Assessments"],
@@ -260,6 +262,7 @@ export default function ExaminationSchedulePanel() {
             </button>
           ))}
         </nav>
+        {tab === "analytics" && <ExaminationPerformancePanel />}
         {tab === "results" && (
           <div className="results-workspace">
             <header className="results-header">

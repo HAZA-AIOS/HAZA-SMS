@@ -736,7 +736,7 @@ test("examination types assessments and grading are protected and tenant scoped"
   ])
     assert.match(migration, new RegExp("CREATE TABLE `" + table + "`"));
   assert.match(migration, /assessments_campus_date_idx/);
-  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
+  assert.match(panel, /PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS/);
   assert.match(panel, /Grade configuration/);
   for (const table of [
     "examination_types",
@@ -764,7 +764,7 @@ test("marks entry result calculation and teacher remarks are protected and tenan
   assert.match(route, /grade_boundaries WHERE organization_id=\?1/);
   assert.match(route, /assessment\.marks\.save/);
   assert.match(route, /ON CONFLICT\(assessment_id,student_id\)/);
-  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
+  assert.match(panel, /PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS/);
   assert.match(panel, /Save marks and calculate results/);
   assert.match(panel, /Teacher remarks/);
   assert.match(schema, /assessmentMarks\s*=\s*sqliteTable/);
@@ -786,7 +786,7 @@ test("result approval publication and printable cards are protected and tenant s
   assert.match(card, /status='published'/);
   assert.match(card, /result\.card\.print/);
   assert.match(card, /content-security-policy/);
-  assert.match(panel, /PHASE 8C · RESULT APPROVAL, PUBLICATION & RESULT CARDS/);
+  assert.match(panel, /PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS/);
   assert.match(panel, /Submit for approval/);
   assert.match(panel, /Publish results/);
   assert.match(panel, /Print card/);
@@ -795,4 +795,20 @@ test("result approval publication and printable cards are protected and tenant s
   assert.match(migration, /CREATE TABLE `result_publications`/);
   assert.match(migration, /assessments_publication_idx/);
   assert.match(backup, /"result_publications"/);
+});
+
+test("examination performance analysis is filtered, tenant scoped and exportable", async () => {
+  const route = await read("app/api/examination-performance/route.ts");
+  const panel = await read("app/ExaminationPerformancePanel.tsx");
+  const examination = await read("app/ExaminationSchedulePanel.tsx");
+  assert.match(route, /authorize\("examinations\.view"\)/);
+  assert.match(route, /requireCampusAccess\(auth, campusId, "examinations\.performance\.view"\)/);
+  assert.match(route, /a\.organization_id=\?1 AND a\.campus_id=\?2/);
+  assert.match(route, /academicYearId/);
+  assert.match(route, /rank\(\) OVER/);
+  assert.match(route, /format"\) === "csv"/);
+  assert.match(panel, /Students needing support/);
+  assert.match(panel, /Student performance ranking/);
+  assert.match(panel, /Class and section comparison/);
+  assert.match(examination, /PHASE 8D · EXAMINATION PERFORMANCE ANALYSIS/);
 });
