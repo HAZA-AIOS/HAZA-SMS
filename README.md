@@ -306,9 +306,9 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 11 — Parent and student portals                                              | Complete    |
 | Phase 12 — Operations and Asset Management                                         | Complete    |
 | Phase 13 — Advanced Analytics and Reporting                                       | Complete    |
-| Phase 14 — Production Rollout                                                     | Planned     |
+| Phase 14 — Production Readiness and Rollout                                       | Complete    |
 
-The next product milestone, **Phase 14**, completes production readiness, rollout controls and final operational verification.
+Phase 14 adds a live production health endpoint, administrator rollout gates, recovery-safe error handling, security headers and a documented deployment and rollback procedure. Operational details are maintained in [`docs/PRODUCTION_ROLLOUT.md`](docs/PRODUCTION_ROLLOUT.md).
 
 ## The long-term vision
 
