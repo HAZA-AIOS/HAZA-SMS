@@ -31,6 +31,7 @@ import LearningPanel from "./LearningPanel";
 import CommunicationsPanel from "./CommunicationsPanel";
 import PortalPanel from "./PortalPanel";
 import OperationsPanel from "./OperationsPanel";
+import AnalyticsPanel from "./AnalyticsPanel";
 
 const navigation = [
   ["🏠", "Home"],
@@ -57,6 +58,7 @@ const navigation = [
   ["💬", "Communication"],
   ["👨‍👩‍👧", "My Portal"],
   ["🧭", "Operations"],
+  ["📊", "Analytics"],
   ["⬇️", "Downloads"],
   ["📰", "News & Events"],
   ["🖨️", "Reports"],
@@ -76,6 +78,7 @@ export default function DashboardShell({
   canViewCommunications,
   canViewPortal,
   canViewOperations,
+  canViewAnalytics,
   canViewFees,
   accessData,
   configurationData,
@@ -102,6 +105,7 @@ export default function DashboardShell({
   canViewCommunications: boolean;
   canViewPortal: boolean;
   canViewOperations: boolean;
+  canViewAnalytics: boolean;
   canViewFees: boolean;
   accessData: AccessData | null;
   configurationData: ConfigurationData | null;
@@ -273,6 +277,7 @@ export default function DashboardShell({
                   (label === "Communication" && canViewCommunications) ||
                   (label === "My Portal" && canViewPortal) ||
                   (label === "Operations" && canViewOperations) ||
+                  (label === "Analytics" && canViewAnalytics) ||
                   (label === "Fees" && canViewFees) ||
                   label === "Configuration" ||
                   (label === "Downloads" && !!publicContentData) ||
@@ -337,6 +342,8 @@ export default function DashboardShell({
           <PortalPanel />
         ) : activeView === "Operations" && canViewOperations ? (
           <OperationsPanel />
+        ) : activeView === "Analytics" && canViewAnalytics ? (
+          <AnalyticsPanel />
         ) : activeView === "Fees" && canViewFees ? (
           <FeesPanel />
         ) : activeView === "Downloads" && publicContentData ? (

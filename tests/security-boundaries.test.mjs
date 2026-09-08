@@ -904,3 +904,4 @@ test("operations and asset records are permission protected campus scoped and au
   assert.match(migration, /CREATE TABLE `operation_records`/);
   assert.match(backup, /"operation_records"/);
 });
+test("advanced analytics is permission protected campus scoped and export controlled",async()=>{const route=await read("app/api/analytics/route.ts"),panel=await read("app/AnalyticsPanel.tsx"),auth=await read("lib/authorization.ts");assert.match(auth,/"analytics\.view"/);assert.match(auth,/"analytics\.export"/);assert.match(route,/authorize\("analytics\.view"\)/);assert.match(route,/\?2 IS NULL OR campus_id=\?2/);assert.match(route,/auth\.permissions\.has\("analytics\.export"\)/);assert.match(panel,/PHASE 13 · ADVANCED ANALYTICS & REPORTING/);assert.match(panel,/Leadership Intelligence/);assert.match(panel,/Enrollment by class/);assert.match(panel,/Financial collection/);assert.match(panel,/Operational health/)});
