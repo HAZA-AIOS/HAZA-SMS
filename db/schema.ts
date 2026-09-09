@@ -2950,3 +2950,5 @@ export const backupRuns = sqliteTable(
     index("backup_runs_org_status_idx").on(t.organizationId, t.status),
   ],
 );
+
+export { publicVisitCounts } from "./public-visits";

@@ -36,10 +36,12 @@ test("only published resources are exposed on the public website", async () => {
   assert.match(download, /content-disposition/);
 });
 
-test("landing page separates campus teams and has no team social strip", async () => {
+test("landing page groups the school team and has no team social strip", async () => {
   const landing = await read("app/PublicLandingPage.tsx");
-  assert.match(landing, /The Mentor School · Main Campus/);
-  assert.match(landing, /The Mentor School · Hadi Campus/);
+  assert.match(landing, /Management Team/);
+  assert.match(landing, /Administration Team/);
+  assert.match(landing, /Teaching Team/);
+  assert.match(landing, /Technical Team/);
   assert.doesNotMatch(landing, /team-socials/);
   assert.match(landing, /id="downloads"/);
   assert.match(landing, /id="news-events"/);

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import AOS from "aos";
+import VisitorCounter from "./VisitorCounter";
 import "aos/dist/aos.css";
 
 const learning = [
@@ -41,10 +42,26 @@ const gradeLevels = [
 ];
 
 const teamGroups = [
-  ["/team/shahid-hussain-director.webp", "Shahid Hussain", "Director", "Provides strategic direction and supports a safe, purposeful school culture."],
-  ["/team/amna-rasool-principal.webp", "Amna Rasool", "Principal", "Leads academic quality, student development and the daily learning experience."],
-  ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Supports teachers and students through organised, caring academic leadership."],
-  ["/team/musswar-hussain-it-director.jpg", "Musswar Hussain", "IT Director", "Leads digital learning, school systems, coding and responsible AI integration."],
+  { title: "Management Team", members: [
+    ["/team/shahid-hussain-director.webp", "Shahid Hussain", "Director", ""],
+    ["/team/musswar-hussain-it-director.jpg", "Mussawar Hussain", "IT Director", ""],
+  ]},
+  { title: "Administration Team", members: [
+    ["/team/amna-rasool-principal.webp", "Amna Rasool", "Principal", "Main Campus"],
+    ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Main Campus"],
+    ["/team/mishal-maryam.jpeg", "Mishal Maryam", "Principal", "Hadi Campus"],
+    ["/team/tahreem-tariq.jpeg", "Tahreem Tariq", "Admin", "Hadi Campus"],
+  ]},
+  { title: "Teaching Team", members: [
+    ["/team/pakeeza-arshaad.jpeg", "Pakeeza Arshaad", "Primary Teacher", "Hadi Campus"],
+    ["/team/sajida-parveen.jpeg", "Sajida Parveen", "Math Teacher", "Main Campus"],
+    ["", "Rimsha Taj", "Reception Teacher", "Main Campus"],
+  ]},
+  { title: "Technical Team", members: [
+    ["", "Muhammad Sajid", "Supervisor", ""],
+    ["", "Muhammad Javid", "Electrician", ""],
+    ["", "Muhammad Nadeem", "Plumbing Maintenance Technician", ""],
+  ]},
 ];
 
 type PublicDownload = { id:string; title:string; description:string|null; original_name:string; size_bytes:number; campus_name:string|null; published_at:number|null };
@@ -126,10 +143,18 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#080908] px-5 py-24 text-center lg:px-[max(calc((100vw-1140px)/2),30px)] lg:py-28" id="team">
         <span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">OUR FACULTY</span>
-        <h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Meet the <em className="not-italic text-red-500">Educators</em></h2>
-        <h3 className="mb-20 mt-8 text-2xl font-black uppercase tracking-wide text-white">The Mentor School · Main Campus</h3>
-        <div className="mx-auto grid max-w-[1140px] grid-cols-1 gap-x-6 gap-y-24 sm:grid-cols-2 lg:grid-cols-4">{teamGroups.map(([image,name,designation,bio],index)=><article className="flex min-h-[390px] flex-col rounded-[26px] border border-white/15 bg-[#131513] shadow-2xl" key={name} data-aos="zoom-in" data-aos-delay={index * 90}><div className="z-10 mx-auto -mt-14 h-[154px] w-[154px] shrink-0 rounded-full border-[3px] border-yellow-400 bg-gradient-to-br from-red-600 to-yellow-400 p-1.5 shadow-xl"><img className="h-full w-full rounded-full bg-zinc-100 object-cover object-top" src={image} alt={`${name}, ${designation} at The Mentor School Main Campus`} /></div><div className="flex flex-1 flex-col px-6 py-7"><h3 className="text-xl font-black uppercase">{name}</h3><p className="mt-1 text-[12px] font-extrabold uppercase tracking-wider text-yellow-400">{designation}</p><small className="mt-6 text-[14px] leading-relaxed text-zinc-400">{bio}</small></div></article>)}</div>
-        <div className="mx-auto mt-24 max-w-[1140px] border-t border-white/10 pt-16"><h3 className="text-2xl font-black uppercase tracking-wide text-white">The Mentor School · Hadi Campus</h3><p className="mx-auto mt-3 max-w-2xl text-[15px] text-zinc-400">Meet the educators serving families at our Hadi Campus.</p><div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 overflow-hidden rounded-3xl border border-violet-300/15 bg-[#0b0e22] text-left shadow-2xl md:grid-cols-[1.05fr_.95fr]"><img className="h-full min-h-72 w-full object-cover" src="/school/hadi-campus.png" alt="The Mentor School Hadi Campus"/><div className="grid content-center p-8 md:p-10"><span className="text-xs font-extrabold uppercase tracking-[.15em] text-violet-300">Hadi Campus Team</span><h4 className="mt-3 text-3xl font-black">Profiles coming soon</h4><p className="mt-4 text-[15px] leading-relaxed text-zinc-400">Leadership and faculty profiles will appear here as the Hadi Campus team information becomes available.</p></div></div></div>
+        <h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Meet Our <em className="not-italic text-red-500">Team</em></h2>
+        {teamGroups.map((group) => <div className="mx-auto mt-16 max-w-[1140px]" key={group.title}>
+          <h3 className="mb-24 text-2xl font-black uppercase tracking-wide text-white">{group.title}</h3>
+          <div className={`mx-auto grid grid-cols-1 gap-x-6 gap-y-24 sm:grid-cols-2 ${group.members.length === 2 ? "max-w-[560px]" : group.members.length === 3 ? "max-w-[850px] lg:grid-cols-3" : "lg:grid-cols-4"}`}>
+            {group.members.map(([image,name,designation,campus],index)=><article className="flex min-h-[390px] flex-col rounded-[26px] border border-white/15 bg-[#131513] shadow-2xl" key={name} data-aos="zoom-in" data-aos-delay={index * 90}>
+              <div className="z-10 mx-auto -mt-14 h-[154px] w-[154px] shrink-0 rounded-full border-[3px] border-yellow-400 bg-gradient-to-br from-red-600 to-yellow-400 p-1.5 shadow-xl">
+                {image ? <img className="h-full w-full rounded-full bg-zinc-100 object-cover object-top" src={image} alt={`${name}, ${designation}${campus ? ` at ${campus}` : ""}`} loading="lazy" /> : <div className="grid h-full w-full place-content-center rounded-full bg-[#202420] text-3xl font-bold text-yellow-400" aria-label={`Photo to follow for ${name}`}>{name.split(" ").map(part=>part[0]).join("")}</div>}
+              </div>
+              <div className="flex flex-1 flex-col px-6 py-7"><h4 className="text-xl font-black uppercase">{name}</h4><p className="mt-1 text-[12px] font-extrabold uppercase tracking-wider text-yellow-400">{designation}</p>{campus && <small className="mt-6 text-[14px] leading-relaxed text-zinc-400">{campus}</small>}</div>
+            </article>)}
+          </div>
+        </div>)}
       </section>
 
       <section className="w-full bg-[#101110] px-5 py-20 text-center lg:px-8 lg:py-24">
@@ -162,6 +187,14 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
         <div className="order-first min-h-80 overflow-hidden rounded-2xl border border-white/15 lg:order-last"><img className="h-full w-full object-cover" src="/school/hadi-campus.png" alt="The Mentor School Hadi Campus building in Machiwal" /></div>
       </section>
 
+      <section className="w-full bg-[#080908] px-5 pb-20 lg:px-[max(calc((100vw-1100px)/2),30px)]" aria-labelledby="campus-map-heading">
+        <h2 id="campus-map-heading" className="mb-6 text-3xl font-black">Campus Maps</h2>
+        <div className="overflow-hidden rounded-2xl border border-white/15 bg-[#131513]">
+          <div className="flex flex-wrap items-center justify-between gap-4 p-6"><h3 className="text-xl font-bold">Main Campus</h3><a className="text-sm font-bold text-yellow-400" href="https://www.google.com/maps/search/?api=1&amp;query=30.1125978%2C72.5228161" target="_blank" rel="noopener noreferrer">Open in Google Maps ↗</a></div>
+          <iframe title="The Mentor School Main Campus map" src="https://maps.google.com/maps?q=30.1125978,72.5228161&amp;z=16&amp;output=embed" className="h-[360px] w-full border-0" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        </div>
+      </section>
+
       <section className="w-full bg-[#080908] px-5 py-20 text-center lg:px-8 lg:py-24"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">EDUCATION FOR LIFE</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Built for a <em className="not-italic text-red-500">Global Future</em></h2><p className="text-zinc-400">Strong roots. Open minds. Skills for a changing world.</p><div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">{[["Values","Respect, responsibility, integrity and Islamic character guide everyday choices. Students practise kindness, discipline and service throughout school life."],["Knowledge","Strong foundations in English, mathematics, science, languages and faith help students connect ideas, understand concepts and keep progressing confidently."],["Skills","Communication, collaboration, creativity, problem-solving and responsible technology use prepare learners to adapt, contribute and lead in a changing world."]].map(([title,text])=><article className="grid min-h-48 content-start rounded-2xl border border-white/15 bg-[#111211] p-7"><b className="text-xl text-yellow-400">{title}</b><span className="mt-4 text-[15px] leading-relaxed text-zinc-400">{text}</span></article>)}</div></section>
 
       <section className="relative w-full overflow-hidden bg-gradient-to-br from-red-950 via-[#111211] to-yellow-950 px-5 py-24 text-center" id="enroll"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">START THEIR JOURNEY</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Enroll Your Child <em className="not-italic text-red-500">Today</em></h2><p className="text-zinc-300">Give your child a lighter school day and a brighter path forward.</p><div className="mx-auto mt-7 flex max-w-md flex-col justify-center gap-3 sm:flex-row"><a className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-extrabold hover:bg-red-500" href={signInPath}>Begin online admission</a><a className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/30 bg-white/5 px-5 text-sm font-extrabold hover:border-yellow-400 hover:text-yellow-400" href="tel:+923010763122">Call 0301 0763122</a></div></section>
@@ -174,7 +207,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
         </div>
       </section>
 
-      <footer className="grid w-full grid-cols-1 items-center gap-5 border-t border-white/10 bg-[#050605] px-5 py-10 text-sm text-zinc-400 md:grid-cols-2 lg:px-[max(calc((100vw-1100px)/2),30px)]"><div className="flex items-center gap-3"><img className="h-14 w-12 object-contain" src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div className="grid"><b className="text-lg text-white">The Mentor School</b><small>Education for life</small></div></div><p className="md:text-right"><a className="hover:text-yellow-400" href="mailto:thementorschool.info@gmail.com">thementorschool.info@gmail.com</a><br/><a className="hover:text-yellow-400" href="tel:+923010763122">0301 0763122</a> · Adda Machiwal, Vehari</p><nav className="flex flex-wrap gap-5"><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer">YouTube</a></nav><small className="md:text-right">© {new Date().getFullYear()} The Mentor School. All rights reserved.</small></footer>
+      <footer className="grid w-full grid-cols-1 items-center gap-5 border-t border-white/10 bg-[#050605] px-5 py-10 text-sm text-zinc-400 md:grid-cols-2 lg:px-[max(calc((100vw-1100px)/2),30px)]"><div className="flex items-center gap-3"><img className="h-14 w-12 object-contain" src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div className="grid"><b className="text-lg text-white">The Mentor School</b><small>Education for life</small></div></div><p className="md:text-right"><a className="hover:text-yellow-400" href="mailto:thementorschool.info@gmail.com">thementorschool.info@gmail.com</a><br/><a className="hover:text-yellow-400" href="tel:+923010763122">0301 0763122</a> · Adda Machiwal, Vehari</p><nav className="flex flex-wrap gap-5"><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer">YouTube</a></nav><small className="md:text-right">© {new Date().getFullYear()} The Mentor School. All rights reserved.</small><VisitorCounter /></footer>
     </main>
   );
 }
