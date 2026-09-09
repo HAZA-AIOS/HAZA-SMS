@@ -83,9 +83,9 @@ async function readJson<T>(response: Response): Promise<T> {
     );
   }
 }
-export default function FeesPanel() {
+export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: string }) {
   const [data, setData] = useState<Data>(empty),
-    [tab, setTab] = useState("invoices"),
+    [tab, setTab] = useState(initialTab),
     [busy, setBusy] = useState(true),
     [message, setMessage] = useState(""),
     [reportFrom, setReportFrom] = useState(""),
