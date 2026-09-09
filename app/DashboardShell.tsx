@@ -32,6 +32,7 @@ import CommunicationsPanel from "./CommunicationsPanel";
 import PortalPanel from "./PortalPanel";
 import OperationsPanel from "./OperationsPanel";
 import AnalyticsPanel from "./AnalyticsPanel";
+import ProductionReadinessPanel from "./ProductionReadinessPanel";
 
 const navigation = [
   ["🏠", "Home"],
@@ -283,7 +284,8 @@ export default function DashboardShell({
                   (label === "Downloads" && !!publicContentData) ||
                   (label === "News & Events" && !!publicContentData) ||
                   label === "Access Control" ||
-                  label === "Security & Audit"
+                  label === "Security & Audit" ||
+                  (label === "Reports" && !!securityData)
                 ) {
                   setActiveView(label);
                   setMobileOpen(false);
@@ -356,6 +358,8 @@ export default function DashboardShell({
           <AccessControlPanel data={accessData} />
         ) : activeView === "Security & Audit" && securityData ? (
           <SecurityPanel data={securityData} />
+        ) : activeView === "Reports" && securityData ? (
+          <ProductionReadinessPanel security={securityData} />
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-5">
