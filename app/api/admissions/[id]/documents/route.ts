@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { authorize } from "../../../../../lib/authorization";
+import { authorize, requireCampusAccess } from "../../../../../lib/authorization";
 import { enforceRateLimit, requireSameOrigin, safeMetadata } from "../../../../../lib/security";
 
 export const dynamic="force-dynamic";
@@ -11,6 +11,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const {id}=await params,data=await request.formData(),file=data.get("file"),documentType=String(data.get("documentType")??"other").slice(0,40),title=String(data.get("title")??"").trim().slice(0,160);
   if(!(file instanceof File)||!allowed.has(file.type)||file.size<1||file.size>10*1024*1024||!types.has(documentType))return Response.json({error:"Choose a PNG, JPEG or PDF document up to 10 MB."},{status:400});
   const application=await env.DB.prepare("SELECT id,campus_id FROM admission_applications WHERE id=?1 AND organization_id=?2").bind(id,auth.organizationId).first<{id:string;campus_id:string}>();if(!application)return Response.json({error:"Application not found."},{status:404});
+  const campusDenied=await requireCampusAccess(auth,String(application.campus_id),"admission.access");if(campusDenied)return campusDenied;
   const assetId=crypto.randomUUID(),documentId=crypto.randomUUID(),safeName=file.name.replace(/[^a-zA-Z0-9._-]+/g,"-").slice(-100)||"file",r2Key=`organizations/${auth.organizationId}/admissions/${id}/${documentType}/${assetId}-${safeName}`;
   await env.BUCKET.put(r2Key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});
   try{await env.DB.batch([

@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import AOS from "aos";
 import VisitorCounter from "./VisitorCounter";
+import PublicAdmissionForm from "./PublicAdmissionForm";
+import ParentFeedback from "./ParentFeedback";
+import SchoolGallery from "./SchoolGallery";
 import "aos/dist/aos.css";
 
 const learning = [
   ["▣", "Bag-Free Learning", "All learning materials are provided at school. Students carry only a light folder—no heavy bags.", "/school/classroom-learning.webp"],
-  ["◷", "Minimal Homework", "Learning is completed during school hours. Homework is given only twice a week and is research-based.", "/landing/minimal-homework.jpg"],
-  ["⌁", "AI-Enhanced Education", "Students use visual learning and purposeful AI tools to understand concepts that simple teaching cannot.", "/landing/ai-learning.webp"],
+  ["◷", "Minimal Homework", "Learning is completed during school hours. Homework is given only twice a week and is research-based.", "/school/classroom-learning.webp"],
+  ["⌁", "AI-Enhanced Education", "Students use visual learning and purposeful AI tools to understand concepts that simple teaching cannot.", "/school/real-math-room.jpeg"],
 ];
 
 const values = [
   ["▣", "Bag-Free Learning", "Students carry only a light folder. All materials are provided at school—no heavy bags or physical strain.", "/school/classroom-learning.webp"],
-  ["⌁", "AI-Enhanced Education", "We use AI technology and visual learning to prepare students for a future built on intelligence.", "/landing/ai-learning.webp"],
-  ["◎", "Global Curriculum", "An international-standard model means our students can move anywhere and never feel behind.", "/landing/global-learning.webp"],
-  ["♡", "Stress-Free Growth", "Minimal homework, research-based learning and a nurturing environment where wellbeing comes first.", "/landing/stress-free-growth.webp"],
+  ["⌁", "AI-Enhanced Education", "We use AI technology and visual learning to prepare students for a future built on intelligence.", "/school/real-math-room.jpeg"],
+  ["◎", "Global Curriculum", "An international-standard model means our students can move anywhere and never feel behind.", "/school/real-classroom.jpeg"],
+  ["♡", "Stress-Free Growth", "Minimal homework, research-based learning and a nurturing environment where wellbeing comes first.", "/school/real-garden.jpeg"],
 ];
 
 const advantages = [
@@ -28,10 +31,10 @@ const advantages = [
 ];
 
 const courses = [
-  ["English", "UK English", "British subject content builds authentic language, comprehension, writing and confident communication.", "/landing/english-learning.webp"],
-  ["Mathematics", "California Mathematics", "A deep, guided programme connecting mathematics with science, social studies and technology.", "/landing/mathematics-learning.webp"],
-  ["Science", "UK KS1 · KS2 · KS3", "Accessible, attractive science content that encourages curiosity, participation and practical understanding.", "/landing/science-learning.webp"],
-  ["Computing", "Code Studio", "Block-based coding, digital skills and responsible AI research designed for confident new learners.", "/landing/ai-learning.webp"],
+  ["English", "UK English", "British subject content builds authentic language, comprehension, writing and confident communication.", "/school/real-reception.jpeg"],
+  ["Mathematics", "California Mathematics", "A deep, guided programme connecting mathematics with science, social studies and technology.", "/school/real-math-room.jpeg"],
+  ["Science", "UK KS1 · KS2 · KS3", "Accessible, attractive science content that encourages curiosity, participation and practical understanding.", "/school/classroom-learning.webp"],
+  ["Computing", "Code Studio", "Block-based coding, digital skills and responsible AI research designed for confident new learners.", "/school/real-math-room.jpeg"],
 ];
 
 const gradeLevels = [
@@ -68,6 +71,8 @@ type PublicDownload = { id:string; title:string; description:string|null; origin
 type PublicNewsEvent = { id:string; kind:string; title:string; summary:string; event_starts_at:number|null; location:string|null; campus_name:string|null; published_at:number|null };
 
 export default function PublicLandingPage({ signInPath, downloads, newsEvents }: { signInPath: string; downloads: PublicDownload[]; newsEvents: PublicNewsEvent[] }) {
+  const [menuOpen,setMenuOpen]=useState(false);
+  useEffect(()=>{const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setMenuOpen(false)};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close)},[]);
   useEffect(() => {
     AOS.init({ duration: 700, easing: "ease-out-cubic", once: true, offset: 70 });
     return () => AOS.refreshHard();
@@ -86,11 +91,13 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
           </nav>
           <a className="hidden text-[14px] font-medium text-white/85 transition hover:text-violet-300 md:block" href={signInPath}>Dashboard</a>
           <a className="inline-flex min-h-10 items-center justify-center rounded-2xl bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-600 px-5 text-[13px] font-bold text-white shadow-[0_0_24px_rgba(124,58,237,.4)] transition hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(168,85,247,.65)]" href="#enroll">Enroll Now</a>
+          <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-violet-300/30 bg-violet-500/15 text-2xl text-white lg:hidden" aria-label={menuOpen ? "Close navigation" : "Open navigation"} aria-expanded={menuOpen} aria-controls="public-mobile-menu" onClick={()=>setMenuOpen(!menuOpen)}>{menuOpen ? "×" : "☰"}</button>
         </div>
+        {menuOpen && <nav id="public-mobile-menu" className="absolute inset-x-0 top-full grid max-h-[calc(100dvh-68px)] gap-1 overflow-y-auto border-b border-violet-400/25 bg-[#080d24] p-4 shadow-2xl lg:hidden" aria-label="Mobile navigation">{[["#home","Home"],["#why-us","Our Approach"],["#curriculum","Curriculum"],["#life","Photo Gallery"],["#team","Our Team"],["#downloads","Downloads"],["#news-events","News & Events"],["#campus","Contact"],["#enroll","Apply for admission"],[signInPath,"Dashboard"]].map(([href,label])=><a key={href} className="rounded-lg px-4 py-3 text-sm text-white hover:bg-violet-500/20" href={href} onClick={()=>setMenuOpen(false)}>{label}</a>)}</nav>}
       </header>
 
       <section className="relative isolate w-full overflow-hidden bg-[#05091b]" id="home">
-        <img className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover opacity-65" src="/landing/hero-technology.webp" alt="" aria-hidden="true" />
+        <img className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover opacity-65" src="/school/real-building.jpeg" alt="" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_67%_45%,rgba(126,34,206,.24),transparent_35%),linear-gradient(90deg,rgba(5,9,27,.98)_0%,rgba(5,9,27,.88)_40%,rgba(5,9,27,.5)_72%,rgba(5,9,27,.74)_100%)]" />
         <div className="pointer-events-none absolute -bottom-24 left-[-8%] right-[-8%] h-64 -rotate-3 rounded-[50%] border-t border-violet-500/40 bg-[repeating-radial-gradient(ellipse_at_center,transparent_0_12px,rgba(124,58,237,.11)_13px_14px)] opacity-70" />
         <div className="mx-auto grid min-h-[610px] w-[min(1180px,calc(100%-32px))] grid-cols-1 items-center gap-10 pb-[390px] pt-12 sm:pb-[210px] lg:grid-cols-[.86fr_1.14fr] lg:gap-8 lg:pb-36 lg:pt-8">
@@ -101,7 +108,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
             <div className="mt-7 flex flex-col gap-3 sm:flex-row"><a className="inline-flex min-h-12 items-center justify-center rounded-lg bg-gradient-to-r from-violet-700 via-purple-600 to-fuchsia-600 px-6 text-sm font-bold shadow-[0_0_25px_rgba(124,58,237,.38)] transition hover:-translate-y-0.5" href="#enroll">Enroll your child <span className="ml-3 text-xl">→</span></a><a className="inline-flex min-h-12 items-center justify-center rounded-lg border border-violet-300/35 bg-slate-950/30 px-6 text-sm font-bold transition hover:border-violet-400 hover:bg-violet-500/10" href="#why-us">Explore our approach <span className="ml-3 grid h-5 w-5 place-items-center rounded-full bg-violet-500 text-[9px]">▶</span></a></div>
           </div>
           <div className="relative min-h-[350px] self-center sm:min-h-[430px]" data-aos="fade-left">
-            <div className="absolute left-[7%] top-[19%] h-[53%] w-[35%] -rotate-[9deg] overflow-hidden rounded-xl border border-violet-300/30 bg-[#080b21] p-2 shadow-[0_20px_55px_rgba(0,0,0,.65),0_0_35px_rgba(124,58,237,.3)]"><img className="h-full w-full rounded-lg object-cover brightness-75 saturate-75" src="/school/student-achievement.webp" alt="A student achievement at The Mentor School" /></div>
+            <div className="absolute left-[7%] top-[19%] h-[53%] w-[35%] -rotate-[9deg] overflow-hidden rounded-xl border border-violet-300/30 bg-[#080b21] p-2 shadow-[0_20px_55px_rgba(0,0,0,.65),0_0_35px_rgba(124,58,237,.3)]"><img className="h-full w-full rounded-lg object-cover brightness-75 saturate-75" src="/school/real-student-leaders.jpeg" alt="A student achievement at The Mentor School" /></div>
             <div className="absolute left-[28%] top-[4%] z-10 h-[71%] w-[50%] -rotate-[9deg] overflow-hidden rounded-xl border border-violet-300/35 bg-[#080b21] p-2 shadow-[0_24px_65px_rgba(0,0,0,.7),0_0_50px_rgba(139,92,246,.35)]"><img className="h-full w-full rounded-lg object-cover brightness-[.78] saturate-75" src="/school/classroom-learning.webp" alt="Students learning at The Mentor School" /></div>
             <div className="absolute right-[2%] top-[23%] z-20 h-[55%] w-[38%] rotate-[5deg] overflow-hidden rounded-xl border border-violet-300/35 bg-[#080b21] p-2 shadow-[0_24px_65px_rgba(0,0,0,.75),0_0_45px_rgba(168,85,247,.38)]"><img className="h-full w-full rounded-lg object-cover brightness-[.72] saturate-75" src="/school/classroom-environment.webp" alt="The Mentor School classroom environment" /></div>
             <div className="absolute bottom-[5%] left-[15%] right-[3%] z-30 h-[9%] -skew-x-[10deg] rounded-[50%] bg-gradient-to-r from-violet-900/10 via-fuchsia-400/80 to-violet-900/10 blur-[2px] shadow-[0_0_30px_rgba(217,70,239,.8)]" />
@@ -122,12 +129,12 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#080908] px-5 py-20 text-center lg:px-[max(calc((100vw-1100px)/2),30px)] lg:py-24" id="advantage">
         <span className="inline-flex rounded-full border border-red-500/50 px-3 py-1.5 text-xs font-extrabold text-red-500">WHY TMS</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">The TMS <em className="not-italic text-red-500">Advantage</em></h2>
-        <div className="mx-auto mt-11 grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{advantages.map(([n,title,text],i)=><article className="group overflow-hidden rounded-2xl border border-white/15 bg-[#111211] p-6 text-left" key={title} data-aos="fade-up" data-aos-delay={(i % 3) * 80}><b className="text-xs tracking-widest text-red-500">{n}</b><h3 className="my-3 text-xl font-bold">{title}</h3><p className="text-sm leading-relaxed text-zinc-400">{text}</p><img className="-mx-6 -mb-6 mt-6 block h-36 w-[calc(100%_+_3rem)] max-w-none object-cover brightness-75 transition group-hover:scale-105" src={["/school/classroom-learning.webp","/landing/global-learning.webp","/landing/ai-learning.webp","/landing/minimal-homework.jpg","/school/morning-assembly.webp","/school/sports-team.webp"][i]} alt="" /></article>)}</div>
+        <div className="mx-auto mt-11 grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{advantages.map(([n,title,text],i)=><article className="group overflow-hidden rounded-2xl border border-white/15 bg-[#111211] p-6 text-left" key={title} data-aos="fade-up" data-aos-delay={(i % 3) * 80}><b className="text-xs tracking-widest text-red-500">{n}</b><h3 className="my-3 text-xl font-bold">{title}</h3><p className="text-sm leading-relaxed text-zinc-400">{text}</p><img className="-mx-6 -mb-6 mt-6 block h-36 w-[calc(100%_+_3rem)] max-w-none object-cover brightness-75 transition group-hover:scale-105" src={["/school/classroom-learning.webp","/school/real-classroom.jpeg","/school/real-math-room.jpeg","/school/classroom-learning.webp","/school/morning-assembly.webp","/school/real-sports.jpeg"][i]} alt="" /></article>)}</div>
       </section>
 
       <section className="w-full bg-[#101110] px-5 py-20 text-center lg:px-[max(calc((100vw-1100px)/2),30px)] lg:py-24">
         <span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">BEYOND THE CLASSROOM</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Where Students <em className="not-italic text-red-500">Thrive</em></h2><p className="mx-auto mb-11 max-w-2xl text-[15px] text-zinc-400">Confidence grows when children learn, create, play and belong.</p>
-        <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-2 md:grid-rows-2">{[["/school/sports-team.webp","Sports & teamwork","Healthy bodies. Stronger friendships."],["/school/student-achievement.webp","Student achievement","Confidence built through participation."],["/school/food-festival.webp","School community","Moments children remember."]].map(([image,title,text],index)=><figure className={`group relative min-h-60 overflow-hidden rounded-2xl border border-white/15 ${index===0?"md:row-span-2 md:min-h-[500px]":""}`} key={title} data-aos="fade-up"><img className="absolute inset-0 h-full w-full object-cover brightness-75 transition duration-500 group-hover:scale-105 group-hover:brightness-90" src={image} alt={title}/><figcaption className="absolute inset-x-0 bottom-0 grid bg-gradient-to-t from-black via-black/75 to-transparent p-6 pt-20 text-left"><b className="text-xl">{title}</b><span className="text-sm text-zinc-300">{text}</span></figcaption></figure>)}</div>
+        <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-4 md:grid-cols-2 md:grid-rows-2">{[["/school/real-sports.jpeg","Sports & teamwork","Healthy bodies. Stronger friendships."],["/school/real-student-leaders.jpeg","Student achievement","Confidence built through participation."],["/school/food-festival.webp","School community","Moments children remember."]].map(([image,title,text],index)=><figure className={`group relative min-h-60 overflow-hidden rounded-2xl border border-white/15 ${index===0?"md:row-span-2 md:min-h-[500px]":""}`} key={title} data-aos="fade-up"><img className="absolute inset-0 h-full w-full object-cover brightness-75 transition duration-500 group-hover:scale-105 group-hover:brightness-90" src={image} alt={title}/><figcaption className="absolute inset-x-0 bottom-0 grid bg-gradient-to-t from-black via-black/75 to-transparent p-6 pt-20 text-left"><b className="text-xl">{title}</b><span className="text-sm text-zinc-300">{text}</span></figcaption></figure>)}</div>
       </section>
 
       <section className="w-full bg-[#080908] px-5 py-20 text-center lg:px-[max(calc((100vw-1100px)/2),30px)] lg:py-24" id="curriculum">
@@ -137,8 +144,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#101110] px-5 py-20 text-center lg:px-[max(calc((100vw-1100px)/2),30px)] lg:py-24" id="life">
         <span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">EVERY DAY COUNTS</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Life at <em className="not-italic text-red-500">TMS</em></h2><p className="mx-auto mb-11 max-w-2xl text-[15px] text-zinc-400">Rich school days filled with learning, friendship, movement and creativity.</p>
-        <div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-3 md:grid-cols-4 md:grid-rows-2">{[["/school/school-event.webp","A colorful outdoor event at The Mentor School"],["/school/morning-assembly.webp","Students participating in the morning assembly"],["/school/examination-day.webp","Students completing an assessment"],["/school/outdoor-activities.webp","Students taking part in outdoor activities"]].map(([image,alt],index)=><img className={`h-52 w-full rounded-xl border border-white/15 object-cover brightness-80 transition hover:brightness-100 ${index===0?"col-span-2 row-span-2 h-full min-h-[430px]":""}`} src={image} alt={alt} key={image} data-aos="zoom-in"/> )}</div>
-        <div className="mx-auto mt-4 grid max-w-[1100px] grid-cols-1 gap-3 md:grid-cols-3">{[["/school/campus-walkway.webp","Green campus"],["/school/classroom-environment.webp","Prepared classrooms"],["/school/student-assessment.webp","Focused learning"]].map(([image,title])=><figure className="group relative h-52 overflow-hidden rounded-xl border border-white/15" key={title}><img className="h-full w-full object-cover brightness-75 transition group-hover:scale-105" src={image} alt={title}/><figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-4 pt-12 text-left font-bold">{title}</figcaption></figure>)}</div>
+        <SchoolGallery />
       </section>
 
       <section className="w-full bg-[#080908] px-5 py-24 text-center lg:px-[max(calc((100vw-1140px)/2),30px)] lg:py-28" id="team">
@@ -159,7 +165,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#101110] px-5 py-20 text-center lg:px-8 lg:py-24">
         <span className="inline-flex rounded-full border border-red-500/50 px-3 py-1.5 text-xs font-extrabold text-red-500">TRUSTED BY FAMILIES</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">What Parents & <em className="not-italic text-red-500">Students</em> Say</h2>
-        <blockquote className="mx-auto mt-10 max-w-3xl rounded-2xl border border-white/15 bg-[#0b0c0b] p-8 text-left shadow-xl md:p-12"><span className="text-6xl leading-none text-yellow-400">“</span><p className="text-lg leading-relaxed text-zinc-200">The difference is visible in confidence, curiosity and the way children talk about their school day. Learning feels meaningful and they are excited to return.</p><footer className="mt-7 grid"><b>A TMS parent</b><small className="text-zinc-500">The Mentor School community</small></footer></blockquote>
+        <ParentFeedback />
       </section>
 
       <section className="w-full bg-[#080908] px-5 py-20 text-center lg:px-[max(calc((100vw-1160px)/2),30px)] lg:py-24">
@@ -197,7 +203,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#080908] px-5 py-20 text-center lg:px-8 lg:py-24"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">EDUCATION FOR LIFE</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Built for a <em className="not-italic text-red-500">Global Future</em></h2><p className="text-zinc-400">Strong roots. Open minds. Skills for a changing world.</p><div className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">{[["Values","Respect, responsibility, integrity and Islamic character guide everyday choices. Students practise kindness, discipline and service throughout school life."],["Knowledge","Strong foundations in English, mathematics, science, languages and faith help students connect ideas, understand concepts and keep progressing confidently."],["Skills","Communication, collaboration, creativity, problem-solving and responsible technology use prepare learners to adapt, contribute and lead in a changing world."]].map(([title,text])=><article className="grid min-h-48 content-start rounded-2xl border border-white/15 bg-[#111211] p-7"><b className="text-xl text-yellow-400">{title}</b><span className="mt-4 text-[15px] leading-relaxed text-zinc-400">{text}</span></article>)}</div></section>
 
-      <section className="relative w-full overflow-hidden bg-gradient-to-br from-red-950 via-[#111211] to-yellow-950 px-5 py-24 text-center" id="enroll"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">START THEIR JOURNEY</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Enroll Your Child <em className="not-italic text-red-500">Today</em></h2><p className="text-zinc-300">Give your child a lighter school day and a brighter path forward.</p><div className="mx-auto mt-7 flex max-w-md flex-col justify-center gap-3 sm:flex-row"><a className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-extrabold hover:bg-red-500" href={signInPath}>Begin online admission</a><a className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/30 bg-white/5 px-5 text-sm font-extrabold hover:border-yellow-400 hover:text-yellow-400" href="tel:+923010763122">Call 0301 0763122</a></div></section>
+      <section className="relative w-full overflow-hidden bg-gradient-to-br from-red-950 via-[#111211] to-yellow-950 px-5 py-24 text-center" id="enroll"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">START THEIR JOURNEY</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">Enroll Your Child <em className="not-italic text-red-500">Today</em></h2><p className="text-zinc-300">Give your child a lighter school day and a brighter path forward.</p><div className="mx-auto mt-7 flex max-w-md flex-col justify-center gap-3 sm:flex-row"><a className="inline-flex min-h-11 items-center justify-center rounded-lg bg-red-600 px-5 text-sm font-extrabold hover:bg-red-500" href="#admission-form">Begin online admission</a><a className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/30 bg-white/5 px-5 text-sm font-extrabold hover:border-yellow-400 hover:text-yellow-400" href="tel:+923010763122">Call 0301 0763122</a></div><div id="admission-form" className="scroll-mt-24"><PublicAdmissionForm /></div></section>
 
       <section className="w-full border-t border-violet-300/15 bg-[#080d24] px-5 py-16 lg:px-[max(calc((100vw-1000px)/2),30px)]" aria-labelledby="developer-heading">
         <div className="mx-auto flex max-w-[1000px] flex-col items-center gap-7 rounded-3xl border border-violet-300/15 bg-[#070b20] p-7 text-center shadow-[0_24px_70px_rgba(0,0,0,.25)] sm:flex-row sm:text-left md:p-9" data-aos="fade-up">
@@ -208,6 +214,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
       </section>
 
       <footer className="grid w-full grid-cols-1 items-center gap-5 border-t border-white/10 bg-[#050605] px-5 py-10 text-sm text-zinc-400 md:grid-cols-2 lg:px-[max(calc((100vw-1100px)/2),30px)]"><div className="flex items-center gap-3"><img className="h-14 w-12 object-contain" src="/tms-original-logo-transparent.png" alt="The Mentor School logo"/><div className="grid"><b className="text-lg text-white">The Mentor School</b><small>Education for life</small></div></div><p className="md:text-right"><a className="hover:text-yellow-400" href="mailto:thementorschool.info@gmail.com">thementorschool.info@gmail.com</a><br/><a className="hover:text-yellow-400" href="tel:+923010763122">0301 0763122</a> · Adda Machiwal, Vehari</p><nav className="flex flex-wrap gap-5"><a href="#why-us">Why TMS</a><a href="#curriculum">Curriculum</a><a href="#life">School life</a><a href="#team">Our team</a><a href="https://www.facebook.com/tms.mentor/" target="_blank" rel="noreferrer">Facebook</a><a href="https://www.youtube.com/@thementorschoolmachianwala8141" target="_blank" rel="noreferrer">YouTube</a></nav><small className="md:text-right">© {new Date().getFullYear()} The Mentor School. All rights reserved.</small><VisitorCounter /></footer>
+      <button type="button" className="fixed bottom-5 right-5 z-40 grid h-12 w-12 place-items-center rounded-full border border-violet-300/40 bg-violet-700 text-2xl text-white shadow-xl hover:bg-violet-600" aria-label="Back to top" title="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}>↑</button>
     </main>
   );
 }

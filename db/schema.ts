@@ -2952,3 +2952,5 @@ export const backupRuns = sqliteTable(
 );
 
 export { publicVisitCounts } from "./public-visits";
+
+export * from "./public-engagement";
