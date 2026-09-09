@@ -63,8 +63,8 @@ function AcademicEmpty({
   );
 }
 
-export default function AcademicsPanel({ data }: { data: AcademicsData }) {
-  const [tab, setTab] = useState("years"),
+export default function AcademicsPanel({ data, initialTab = "years" }: { data: AcademicsData; initialTab?: string }) {
+  const [tab, setTab] = useState(initialTab),
     [form, setForm] = useState<string | null>(null),
     [message, setMessage] = useState("");
   const current = data.academicYears.find((v) => v.is_current),
