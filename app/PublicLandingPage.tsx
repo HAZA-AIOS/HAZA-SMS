@@ -52,11 +52,11 @@ const teamGroups = [
   { title: "Administration Team", members: [
     ["/team/amna-rasool-principal.webp", "Amna Rasool", "Principal", "Main Campus", "Leads academic and day-to-day school life at Main Campus, supporting teachers, students and families in building a positive learning community."],
     ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Main Campus", "Supports academic coordination at Main Campus, working with teachers and students to encourage consistent classroom routines and steady learning progress."],
-    ["/team/mishal-maryam.jpeg", "Mishal Maryam", "Principal", "Hadi Campus", "Leads Hadi Campus, supporting teaching, student development and communication with families to create a caring, purposeful school environment."],
-    ["/team/tahreem-tariq.jpeg", "Tahreem Tariq", "Admin", "Hadi Campus", "Supports the daily administration of Hadi Campus, helping coordinate school records, parent enquiries and communication between families and staff."],
+    ["/team/mishal-maryam-updated.jpeg", "Mishal Maryam", "Principal", "Hadi Campus", "Leads Hadi Campus, supporting teaching, student development and communication with families to create a caring, purposeful school environment."],
+    ["/team/tahreem-tariq-updated.jpeg", "Tahreem Tariq", "Admin", "Hadi Campus", "Supports the daily administration of Hadi Campus, helping coordinate school records, parent enquiries and communication between families and staff."],
   ]},
   { title: "Teaching Team", members: [
-    ["/team/pakeeza-arshaad.jpeg", "Pakeeza Arshaad", "Primary Teacher", "Hadi Campus", "Supports primary learners at Hadi Campus as they build reading, writing and number skills through clear guidance and engaging classroom activities."],
+    ["/team/pakeeza-arshaad-updated.jpeg", "Pakeeza Arshaad", "Primary Teacher", "Hadi Campus", "Supports primary learners at Hadi Campus as they build reading, writing and number skills through clear guidance and engaging classroom activities."],
     ["/team/sajida-parveen.jpeg", "Sajida Parveen", "Math Teacher", "Main Campus", "Helps students at Main Campus develop mathematical understanding, practise problem-solving and build confidence in working with numbers."],
     ["", "Rimsha Taj", "Reception Teacher", "Main Campus", "Guides Reception learners at Main Campus through early language, number and social skills, helping children settle into school with confidence."],
   ]},
