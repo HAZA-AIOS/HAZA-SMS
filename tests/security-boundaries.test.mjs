@@ -605,7 +605,7 @@ test("fee structures and student assignments are financial-permission and campus
     /The selected structure does not match this student's enrollment/,
   );
   assert.match(source, /student\.fee\.assign/);
-  assert.match(panel, /Fee structures/);
+  assert.match(panel, /Structures/);
   assert.match(schema, /feeStructures\s*=\s*sqliteTable/);
   assert.match(schema, /studentFeeAssignments\s*=\s*sqliteTable/);
   assert.match(migration, /fee_structures_scope_idx/);

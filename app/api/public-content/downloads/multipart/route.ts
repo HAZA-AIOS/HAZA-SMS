@@ -1,3 +1,4 @@
+import { boundedBody, fail } from "../../../../../lib/public-forms";
 import { env } from "cloudflare:workers";
 import { authorize, canAccessCampus } from "../../../../../lib/authorization";
 import { enforceRateLimit, requireSameOrigin } from "../../../../../lib/security";
@@ -10,16 +11,9 @@ const keyPrefix = (organizationId: string) => `organizations/${organizationId}/p
 const pendingKey = (key: string, uploadId: string) => `${key}.multipart-${encodeURIComponent(uploadId)}.json`;
 
 type UploadMetadata = {
-  uploadId: string;
-  assetId: string;
-  organizationId: string;
-  campusId: string | null;
-  title: string;
-  description: string;
-  fileName: string;
-  contentType: string;
-  size: number;
-  totalParts: number;
+  uploadId: string; assetId: string; organizationId: string; campusId: string | null;
+  title: string; description: string; fileName: string; contentType: string;
+  size: number; totalParts: number;
 };
 
 function validKey(key: string, organizationId: string) {
@@ -50,15 +44,15 @@ export async function POST(request: Request) {
     if (!await enforceRateLimit(auth, "public.download.multipart", 20, 300)) return Response.json({ error: "Upload limit reached. Try again later." }, { status: 429 });
     const title = String(body.title ?? "").trim(), description = String(body.description ?? "").trim();
     const campusId = String(body.campusId ?? "").trim() || null, fileName = String(body.fileName ?? "").trim();
-    const contentType = String(body.contentType ?? "application/octet-stream").slice(0, 255), size = Number(body.size);
+    const contentType = String(body.contentType || "application/octet-stream").slice(0, 255), size = Number(body.size);
     if (!title || !fileName || !Number.isSafeInteger(size) || size < 1 || size > MAX_FILE_SIZE) return Response.json({ error: "Add a title and choose a file up to 5 GB." }, { status: 400 });
     if (campusId && !canAccessCampus(auth, campusId)) return Response.json({ error: "Campus not available." }, { status: 403 });
     const assetId = crypto.randomUUID(), safeName = fileName.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "download";
     const key = `${keyPrefix(auth.organizationId)}${assetId}-${safeName}`;
     const upload = await env.BUCKET.createMultipartUpload(key, { httpMetadata: { contentType } });
     const metadata: UploadMetadata = {
-      uploadId: upload.uploadId, assetId, organizationId: auth.organizationId,
-      campusId, title: title.slice(0, 120), description: description.slice(0, 500),
+      uploadId: upload.uploadId, assetId, organizationId: auth.organizationId, campusId,
+      title: title.slice(0, 120), description: description.slice(0, 500),
       fileName: fileName.slice(0, 255), contentType, size,
       totalParts: Math.ceil(size / MULTIPART_CHUNK_SIZE),
     };
@@ -101,11 +95,14 @@ export async function PUT(request: Request) {
   const url = new URL(request.url), uploadId = url.searchParams.get("uploadId") ?? "", key = url.searchParams.get("key") ?? "", partNumber = Number(url.searchParams.get("partNumber"));
   if (!request.body) return Response.json({ error: "Invalid upload part." }, { status: 400 });
   const metadata = await getUploadMetadata(key, uploadId, auth.organizationId);
-  const contentLength = Number(request.headers.get("content-length"));
-  if (!metadata || !Number.isInteger(partNumber) || partNumber < 1 || partNumber > metadata.totalParts || partNumber > MAX_PARTS || !Number.isSafeInteger(contentLength) || contentLength < 1 || contentLength > MULTIPART_CHUNK_SIZE) return Response.json({ error: "Invalid upload part." }, { status: 400 });
+
+  if (!metadata || !Number.isInteger(partNumber) || partNumber < 1 || partNumber > metadata.totalParts || partNumber > MAX_PARTS) return Response.json({ error: "Invalid upload part." }, { status: 400 });
   const expectedLength = partNumber === metadata.totalParts ? metadata.size - MULTIPART_CHUNK_SIZE * (metadata.totalParts - 1) : MULTIPART_CHUNK_SIZE;
-  if (contentLength !== expectedLength) return Response.json({ error: "Upload part size does not match the selected file." }, { status: 400 });
-  const part = await env.BUCKET.resumeMultipartUpload(key, uploadId).uploadPart(partNumber, request.body);
+  if (metadata.campusId && !canAccessCampus(auth, metadata.campusId)) return Response.json({ error: "Campus not available." }, { status: 403 });
+  let bytes: Uint8Array;
+  try { bytes = await boundedBody(request, expectedLength); } catch (error) { return fail(error); }
+  if (bytes.byteLength !== expectedLength) return Response.json({ error: "Upload part size does not match the selected file." }, { status: 400 });
+  const part = await env.BUCKET.resumeMultipartUpload(key, uploadId).uploadPart(partNumber, bytes);
   return Response.json({ partNumber: part.partNumber, etag: part.etag });
 }
 

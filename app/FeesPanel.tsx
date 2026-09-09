@@ -228,31 +228,16 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
       </section>
       {message && <p className="timetable-message">{message}</p>}
       <section className="fee-workspace">
-        <nav>
-          {[
-            ["invoices", "Monthly invoices"],
-            ["payments", "Payments & receipts"],
-            ["generate", "Generate invoices"],
-            ["collect", "Collect payment"],
-            ["late-fees", "Late fees"],
-            ["expenses", "Expenses"],
-            ["reports", "Financial reports"],
-            ["accounts", "Cash & bank"],
-            ["approvals", "Approvals"],
-            ["structures", "Fee structures"],
-            ["categories", "Categories"],
-            ["assignments", "Student assignments"],
-            ["setup", "Create structure"],
-            ["assign", "Assign student"],
-          ].map(([id, label]) => (
-            <button
-              key={id}
-              className={tab === id ? "active" : ""}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
+        <nav className="finance-navigation" aria-label="Finance tasks">
+          {(initialTab === "accounts" ? [
+            ["Accounts", [["accounts", "Cash & bank accounts"], ["reports", "Financial reports"], ["approvals", "Payment approvals"]]]
+          ] : initialTab === "expenses" ? [
+            ["Expenses", [["expenses", "Expense register & new expense"], ["approvals", "Pending approvals"], ["reports", "Expense reports"]]]
+          ] : [
+            ["Collection", [["invoices", "Monthly invoices"], ["collect", "Collect payment"], ["payments", "Receipts"], ["generate", "Generate invoices"]]],
+            ["Fee setup", [["structures", "Structures"], ["setup", "Create structure"], ["categories", "Categories"], ["late-fees", "Late fees"]]],
+            ["Students", [["assignments", "Assigned fees"], ["assign", "Assign fee package"]]]
+          ]).map(([group, items]) => <div key={String(group)}><strong>{String(group)}</strong>{(items as string[][]).map(([id,label]) => <button key={id} className={tab === id ? "active" : ""} aria-current={tab === id ? "page" : undefined} onClick={() => setTab(id)}>{label}</button>)}</div>)}
         </nav>
         {tab === "invoices" &&
           (data.invoices.length ? (
