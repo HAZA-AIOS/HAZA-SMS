@@ -43,24 +43,24 @@ const gradeLevels = [
 
 const teamGroups = [
   { title: "Management Team", members: [
-    ["/team/shahid-hussain-director.webp", "Shahid Hussain", "Director", ""],
-    ["/team/musswar-hussain-it-director.jpg", "Mussawar Hussain", "IT Director", ""],
+    ["/team/shahid-hussain-director.webp", "Shahid Hussain", "Director", "", "Guides the school’s direction and development, supporting a welcoming environment where learning, character and student wellbeing come first."],
+    ["/team/musswar-hussain-it-director.jpg", "Mussawar Hussain", "IT Director", "", "Oversees school technology and digital systems, supporting practical digital learning and the responsible use of technology across the school."],
   ]},
   { title: "Administration Team", members: [
-    ["/team/amna-rasool-principal.webp", "Amna Rasool", "Principal", "Main Campus"],
-    ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Main Campus"],
-    ["/team/mishal-maryam.jpeg", "Mishal Maryam", "Principal", "Hadi Campus"],
-    ["/team/tahreem-tariq.jpeg", "Tahreem Tariq", "Admin", "Hadi Campus"],
+    ["/team/amna-rasool-principal.webp", "Amna Rasool", "Principal", "Main Campus", "Leads academic and day-to-day school life at Main Campus, supporting teachers, students and families in building a positive learning community."],
+    ["/team/iqra-altaf-vice-principal.jpeg", "Iqra Altaf", "Vice Principal", "Main Campus", "Supports academic coordination at Main Campus, working with teachers and students to encourage consistent classroom routines and steady learning progress."],
+    ["/team/mishal-maryam.jpeg", "Mishal Maryam", "Principal", "Hadi Campus", "Leads Hadi Campus, supporting teaching, student development and communication with families to create a caring, purposeful school environment."],
+    ["/team/tahreem-tariq.jpeg", "Tahreem Tariq", "Admin", "Hadi Campus", "Supports the daily administration of Hadi Campus, helping coordinate school records, parent enquiries and communication between families and staff."],
   ]},
   { title: "Teaching Team", members: [
-    ["/team/pakeeza-arshaad.jpeg", "Pakeeza Arshaad", "Primary Teacher", "Hadi Campus"],
-    ["/team/sajida-parveen.jpeg", "Sajida Parveen", "Math Teacher", "Main Campus"],
-    ["", "Rimsha Taj", "Reception Teacher", "Main Campus"],
+    ["/team/pakeeza-arshaad.jpeg", "Pakeeza Arshaad", "Primary Teacher", "Hadi Campus", "Supports primary learners at Hadi Campus as they build reading, writing and number skills through clear guidance and engaging classroom activities."],
+    ["/team/sajida-parveen.jpeg", "Sajida Parveen", "Math Teacher", "Main Campus", "Helps students at Main Campus develop mathematical understanding, practise problem-solving and build confidence in working with numbers."],
+    ["", "Rimsha Taj", "Reception Teacher", "Main Campus", "Guides Reception learners at Main Campus through early language, number and social skills, helping children settle into school with confidence."],
   ]},
   { title: "Technical Team", members: [
-    ["", "Muhammad Sajid", "Supervisor", ""],
-    ["", "Muhammad Javid", "Electrician", ""],
-    ["", "Muhammad Nadeem", "Plumbing Maintenance Technician", ""],
+    ["", "Muhammad Sajid", "Supervisor", "", "Coordinates day-to-day site support and maintenance needs, helping keep the school environment organised and ready for students and staff."],
+    ["", "Muhammad Javid", "Electrician", "", "Supports the upkeep of school electrical systems and equipment, attending to maintenance needs that help classrooms and facilities function smoothly."],
+    ["", "Muhammad Nadeem", "Plumbing Maintenance Technician", "", "Maintains plumbing and water facilities, helping address repairs and keep essential school amenities in working order."],
   ]},
 ];
 
@@ -147,11 +147,11 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
         {teamGroups.map((group) => <div className="mx-auto mt-16 max-w-[1140px]" key={group.title}>
           <h3 className="mb-24 text-2xl font-black uppercase tracking-wide text-white">{group.title}</h3>
           <div className={`mx-auto grid grid-cols-1 gap-x-6 gap-y-24 sm:grid-cols-2 ${group.members.length === 2 ? "max-w-[560px]" : group.members.length === 3 ? "max-w-[850px] lg:grid-cols-3" : "lg:grid-cols-4"}`}>
-            {group.members.map(([image,name,designation,campus],index)=><article className="flex min-h-[390px] flex-col rounded-[26px] border border-white/15 bg-[#131513] shadow-2xl" key={name} data-aos="zoom-in" data-aos-delay={index * 90}>
+            {group.members.map(([image,name,designation,campus,bio],index)=><article className="flex min-h-[390px] flex-col rounded-[26px] border border-white/15 bg-[#131513] shadow-2xl" key={name} data-aos="zoom-in" data-aos-delay={index * 90}>
               <div className="z-10 mx-auto -mt-14 h-[154px] w-[154px] shrink-0 rounded-full border-[3px] border-yellow-400 bg-gradient-to-br from-red-600 to-yellow-400 p-1.5 shadow-xl">
                 {image ? <img className="h-full w-full rounded-full bg-zinc-100 object-cover object-top" src={image} alt={`${name}, ${designation}${campus ? ` at ${campus}` : ""}`} loading="lazy" /> : <div className="grid h-full w-full place-content-center rounded-full bg-[#202420] text-3xl font-bold text-yellow-400" aria-label={`Photo to follow for ${name}`}>{name.split(" ").map(part=>part[0]).join("")}</div>}
               </div>
-              <div className="flex flex-1 flex-col px-6 py-7"><h4 className="text-xl font-black uppercase">{name}</h4><p className="mt-1 text-[12px] font-extrabold uppercase tracking-wider text-yellow-400">{designation}</p>{campus && <small className="mt-6 text-[14px] leading-relaxed text-zinc-400">{campus}</small>}</div>
+              <div className="flex flex-1 flex-col px-6 py-7"><h4 className="text-xl font-black uppercase">{name}</h4><p className="mt-1 text-[12px] font-extrabold uppercase tracking-wider text-yellow-400">{designation}</p>{campus && <small className="mt-6 text-[14px] leading-relaxed text-zinc-400">{campus}</small>}<p className="mt-5 text-[14px] leading-relaxed text-zinc-400">{bio}</p></div>
             </article>)}
           </div>
         </div>)}
