@@ -271,6 +271,9 @@ export default function DashboardShell({
                   label === "Staff Attendance" ||
                   label === "Payroll" ||
                   label === "Academics" ||
+                  (label === "Classes" && !!academicsData) ||
+                  label === "Biometrics" ||
+                  ((label === "Accounts" || label === "Expenses") && canViewFees) ||
                   (label === "Promotions" && canViewPromotions) ||
                   (label === "Timetable" && canViewTimetable) ||
                   (label === "Examinations" && canViewExaminations) ||
@@ -329,7 +332,11 @@ export default function DashboardShell({
         ) : activeView === "Payroll" && payrollData ? (
           <PayrollPanel data={payrollData} />
         ) : activeView === "Academics" && academicsData ? (
-          <AcademicsPanel data={academicsData} />
+          <AcademicsPanel key="academics" data={academicsData} />
+        ) : activeView === "Classes" && academicsData ? (
+          <AcademicsPanel key="classes" data={academicsData} initialTab="classes" />
+        ) : activeView === "Biometrics" ? (
+          <section className="analytics-card"><h1>Biometrics</h1><p>Device integration has not been implemented.</p><p>Use Student Attendance or Staff Attendance to record attendance. Connecting biometric devices requires the device model, supported API and enrollment process.</p></section>
         ) : activeView === "Promotions" && canViewPromotions ? (
           <PromotionPanel />
         ) : activeView === "Timetable" && canViewTimetable ? (
@@ -347,7 +354,9 @@ export default function DashboardShell({
         ) : activeView === "Analytics" && canViewAnalytics ? (
           <AnalyticsPanel />
         ) : activeView === "Fees" && canViewFees ? (
-          <FeesPanel />
+          <FeesPanel key="fees" />
+        ) : (activeView === "Accounts" || activeView === "Expenses") && canViewFees ? (
+          <FeesPanel key={activeView} initialTab={activeView === "Accounts" ? "accounts" : "expenses"} />
         ) : activeView === "Downloads" && publicContentData ? (
           <PublicContentPanel data={publicContentData} initialTab="downloads" />
         ) : activeView === "News & Events" && publicContentData ? (
