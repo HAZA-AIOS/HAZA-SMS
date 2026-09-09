@@ -1,0 +1,9 @@
+"use client";
+import { useEffect, useState } from "react";
+type Item={id:string;name:string;message:string;status:string};
+export default function FeedbackAdmin(){const [items,setItems]=useState<Item[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ async function load(){try{const r=await fetch('/api/public-content/feedback',{cache:'no-store'}),d=await r.json();if(!r.ok)throw Error(d.error);setItems(d.feedback)}catch(e){setError(e instanceof Error?e.message:'Unable to load feedback.')}}
+ useEffect(()=>{void load()},[]);
+ async function update(item:Item){setBusy(true);setError('');try{const r=await fetch('/api/public-content/feedback',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({id:item.id,status:item.status==='published'?'hidden':'published'})});if(!r.ok)throw Error((await r.json()).error);await load()}catch(e){setError(e instanceof Error?e.message:'Update failed.')}finally{setBusy(false)}}
+ return <section className="analytics-card mt-6"><header><h2>Parent feedback</h2><button type="button" onClick={load}>Refresh</button></header><p className="text-sm text-slate-400">Parent messages appear on the public website immediately. Hide inappropriate or private content here.</p>{error&&<p role="alert">{error}</p>}<div className="grid gap-3 mt-4">{items.length?items.map(item=><article key={item.id} className="rounded-xl border border-white/15 p-4"><strong>{item.name}</strong><span className="ml-3 text-xs text-slate-400">{item.status}</span><p className="my-3 whitespace-pre-wrap break-words text-sm">{item.message}</p><button type="button" disabled={busy} className="rounded-lg bg-violet-700 px-3 py-2 text-sm text-white" onClick={()=>update(item)}>{item.status==='published'?'Hide from website':'Publish again'}</button></article>):<p>No parent feedback yet.</p>}</div></section>
+}

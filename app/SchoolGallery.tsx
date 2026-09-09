@@ -1,0 +1,12 @@
+"use client";
+import { useRef, useState } from "react";
+export const schoolGallery=[
+ ['/school/school-event.webp','School celebrations'],['/school/real-student-leaders.jpeg','Student leadership'],['/school/real-sports.jpeg','Sports and teamwork'],['/school/morning-assembly.webp','Morning assembly'],['/school/real-garden.jpeg','Green campus grounds'],['/school/real-reception.jpeg','Reception classroom'],['/school/real-classroom.jpeg','Classroom learning spaces'],['/school/examination-day.webp','Assessment day'],['/school/food-festival.webp','School community events'],['/school/real-building.jpeg','School building'],['/school/real-flag.jpg','The Mentor School'],['/school/real-math-room.jpeg','Mathematics classroom'],
+];
+export default function SchoolGallery(){
+ const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement|null>(null);const [selected,setSelected]=useState(0);
+ function open(index:number,button:HTMLButtonElement){setSelected(index);trigger.current=button;dialog.current?.showModal()}
+ const move=(amount:number)=>setSelected(value=>(value+amount+schoolGallery.length)%schoolGallery.length);
+ return <><div className="mx-auto grid max-w-[1100px] grid-cols-2 gap-3 md:grid-cols-4">{schoolGallery.map(([src,title],index)=><button type="button" key={src} onClick={e=>open(index,e.currentTarget)} className="group relative overflow-hidden rounded-xl border border-white/15 text-left" aria-label={`Open photo: ${title}`}><img className="h-44 w-full object-cover transition group-hover:scale-105 sm:h-52" src={src} alt={title} loading="lazy"/><span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black to-transparent p-3 pt-8 text-sm font-bold">{title}</span></button>)}</div>
+ <dialog ref={dialog} className="school-lightbox" aria-label="School photo gallery" onClose={()=>trigger.current?.focus()} onClick={e=>{if(e.target===dialog.current)dialog.current.close()}} onKeyDown={e=>{if(e.key==='ArrowRight')move(1);if(e.key==='ArrowLeft')move(-1)}}><div className="school-lightbox-inner"><button className="lightbox-close" aria-label="Close photo" onClick={()=>dialog.current?.close()}>×</button><img src={schoolGallery[selected][0]} alt={schoolGallery[selected][1]}/><div className="flex items-center justify-between gap-4 p-4"><button aria-label="Previous photo" onClick={()=>move(-1)}>←</button><p>{schoolGallery[selected][1]} <small>({selected+1}/{schoolGallery.length})</small></p><button aria-label="Next photo" onClick={()=>move(1)}>→</button></div></div></dialog></>
+}

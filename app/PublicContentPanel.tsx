@@ -1,5 +1,6 @@
 "use client";
 
+import FeedbackAdmin from "./FeedbackAdmin";
 import { FormEvent, useState } from "react";
 import { cn, moduleSurface } from "./ui/TailwindPrimitives";
 
@@ -101,5 +102,5 @@ export default function PublicContentPanel({ data: initial, initialTab }: { data
       <form className="config-card public-content-form" onSubmit={addNews}><div className="card-title"><h2>Publish news or an event</h2><p>Add a concise update for families and visitors.</p></div><div className="public-content-form-fields"><label>Type<select name="kind"><option value="news">News</option><option value="event">Event</option></select></label><label>Title<input name="title" required maxLength={140} /></label><label className="wide">Summary<textarea name="summary" required maxLength={1000} rows={5} /></label><label>Campus<select name="campusId"><option value="">All campuses</option>{data.campuses.map(c => <option value={c.id} key={c.id}>{c.name}</option>)}</select></label><label>Event date and time<input name="eventStartsAt" type="datetime-local" /></label><label className="wide">Location<input name="location" maxLength={160} /></label></div><div className="public-content-form-actions"><button className="primary" disabled={busy || !data.canManage}>{busy ? "Publishing…" : "Publish update"}</button></div></form>
       <section className="config-card public-content-feed"><div className="card-title"><h2>Published updates</h2><p>{data.newsEvents.length} item{data.newsEvents.length === 1 ? "" : "s"} currently shown publicly.</p></div><div className="public-content-list">{data.newsEvents.length ? data.newsEvents.map(item => <article key={item.id}><span>{item.kind === "event" ? "📅" : "📰"}</span><div><strong>{item.title}</strong><small>{item.campus_name ?? "All campuses"}{item.event_starts_at ? ` · ${new Date(item.event_starts_at).toLocaleString()}` : ""}</small><p>{item.summary}</p>{item.location && <small>📍 {item.location}</small>}</div><button type="button" className="danger" disabled={busy} onClick={() => remove("news-events", item.id)}>Remove</button></article>) : <p className="empty-state">No news or events published yet.</p>}</div></section>
     </div>}
-  </div>;
+  {data.canManage && <FeedbackAdmin />}</div>;
 }

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { authorize } from "../../../../../lib/authorization";
+import { authorize, requireCampusAccess } from "../../../../../lib/authorization";
 import { enforceRateLimit, requireSameOrigin, safeMetadata } from "../../../../../lib/security";
 
 export const dynamic="force-dynamic";
@@ -11,6 +11,7 @@ export async function POST(request:Request,{params}:{params:Promise<{id:string}>
   const permission=action==="assign_fee"?"admissions.assign_fee":action==="enroll"?"admissions.enroll":"admissions.approve",auth=await authorize(permission);if(!auth)return Response.json({error:"You do not have permission to complete this admission action."},{status:403});
   if(!await enforceRateLimit(auth,`admission.${action}`,30,300))return Response.json({error:"Admission action limit reached. Try again later."},{status:429});
   const application=await env.DB.prepare("SELECT * FROM admission_applications WHERE id=?1 AND organization_id=?2").bind(id,auth.organizationId).first<Record<string,unknown>>();if(!application)return Response.json({error:"Application not found."},{status:404});
+  const campusDenied=await requireCampusAccess(auth,String(application.campus_id),"admission.access");if(campusDenied)return campusDenied;
   if(action==="assign_fee"){
     const feePackageId=clean(body?.feePackageId),discountAmount=Math.max(0,Math.round(Number(body?.discountAmount)||0)),discountReason=clean(body?.discountReason,300),notes=clean(body?.notes,500);
     const fee=await env.DB.prepare(`SELECT id,admission_fee+registration_fee+security_deposit+annual_charges total FROM admission_fee_packages WHERE id=?1 AND organization_id=?2 AND status='active' AND (campus_id IS NULL OR campus_id=?3) AND (class_id IS NULL OR class_id=?4)`).bind(feePackageId,auth.organizationId,application.campus_id,application.applying_class_id).first<{id:string;total:number}>();if(!fee)return Response.json({error:"Select a fee package available for this campus and class."},{status:400});

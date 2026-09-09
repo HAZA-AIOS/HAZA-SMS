@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { authorize } from "../../../../lib/authorization";
+import { authorize, requireCampusAccess } from "../../../../lib/authorization";
 import { requireSameOrigin, safeMetadata } from "../../../../lib/security";
 
 export const dynamic="force-dynamic";
@@ -11,6 +11,7 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   const {id}=await params;
   const application=await env.DB.prepare(`SELECT a.*,c.name campus_name,cl.name class_name,y.name academic_year_name,s.admission_number converted_admission_number FROM admission_applications a JOIN campuses c ON c.id=a.campus_id LEFT JOIN classes cl ON cl.id=a.applying_class_id LEFT JOIN academic_years y ON y.id=a.academic_year_id LEFT JOIN students s ON s.id=a.student_id AND s.organization_id=a.organization_id WHERE a.id=?1 AND a.organization_id=?2`).bind(id,auth.organizationId).first();
   if(!application)return Response.json({error:"Application not found."},{status:404});
+  const campusDenied=await requireCampusAccess(auth,String(application.campus_id),"admission.access");if(campusDenied)return campusDenied;
   const [documents,assessments,feeAssignment,feePackages,sections]=await Promise.all([
     env.DB.prepare(`SELECT d.id,d.document_type,d.title,d.verification_status,d.verification_notes,d.verified_at,d.created_at,a.id asset_id,a.original_name,a.content_type,a.size_bytes FROM admission_documents d JOIN storage_assets a ON a.id=d.asset_id WHERE d.application_id=?1 AND d.organization_id=?2 ORDER BY d.created_at DESC`).bind(id,auth.organizationId).all(),
     env.DB.prepare(`SELECT x.id,x.assessment_type,x.scheduled_at,x.venue,x.max_score,x.score,x.result,x.remarks,x.conducted_by,u.display_name conducted_by_name FROM admission_assessments x LEFT JOIN users u ON u.id=x.conducted_by WHERE x.application_id=?1 AND x.organization_id=?2 ORDER BY x.scheduled_at`).bind(id,auth.organizationId).all(),
@@ -26,6 +27,7 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
   const auth=await authorize("admissions.edit");if(!auth)return Response.json({error:"You do not have permission to edit applications."},{status:403});
   const {id}=await params,body=await request.json().catch(()=>null) as Record<string,unknown>|null,action=clean(body?.action,30)||"save";
   const current=await env.DB.prepare("SELECT id,campus_id,status FROM admission_applications WHERE id=?1 AND organization_id=?2").bind(id,auth.organizationId).first<{id:string;campus_id:string;status:string}>();if(!current)return Response.json({error:"Application not found."},{status:404});
+  const denied=await requireCampusAccess(auth,current.campus_id,"admission.edit");if(denied)return denied;
   const childFirstName=clean(body?.childFirstName,80),childLastName=clean(body?.childLastName,80),dateOfBirth=clean(body?.dateOfBirth,10),gender=clean(body?.gender,20),applyingClassId=clean(body?.applyingClassId),academicYearId=clean(body?.academicYearId),guardianName=clean(body?.guardianName,120),guardianRelationship=clean(body?.guardianRelationship,40),guardianNationalId=clean(body?.guardianNationalId,40),guardianOccupation=clean(body?.guardianOccupation,100),primaryPhone=clean(body?.primaryPhone,30),alternatePhone=clean(body?.alternatePhone,30),email=clean(body?.email,160).toLowerCase(),address=clean(body?.address,400),city=clean(body?.city,80),previousSchool=clean(body?.previousSchool,160),previousClass=clean(body?.previousClass,80),medicalNotes=clean(body?.medicalNotes,600),specialNeeds=clean(body?.specialNeeds,600),notes=clean(body?.notes,1200),declarationAccepted=body?.declarationAccepted===true||body?.declarationAccepted==="on";
   if(!childFirstName||!guardianName||!primaryPhone||!validDate(dateOfBirth)||!["","male","female","other"].includes(gender)||email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return Response.json({error:"Complete the required student and guardian information."},{status:400});
   if(applyingClassId){const row=await env.DB.prepare("SELECT id FROM classes WHERE id=?1 AND organization_id=?2 AND (campus_id IS NULL OR campus_id=?3) AND status='active'").bind(applyingClassId,auth.organizationId,current.campus_id).first();if(!row)return Response.json({error:"Select a valid class."},{status:400});}
