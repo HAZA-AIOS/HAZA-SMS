@@ -11,7 +11,7 @@ const keyPrefix = (organizationId: string) => `organizations/${organizationId}/p
 const pendingKey = (key: string, uploadId: string) => `${key}.multipart-${encodeURIComponent(uploadId)}.json`;
 
 type UploadMetadata = {
-  uploadId: string; assetId: string; organizationId: string; campusId: string | null;
+  uploadId: string; r2UploadId?: string; assetId: string; organizationId: string; campusId: string | null;
   title: string; description: string; fileName: string; contentType: string;
   size: number; totalParts: number;
 };
@@ -50,14 +50,16 @@ export async function POST(request: Request) {
     const assetId = crypto.randomUUID(), safeName = fileName.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "download";
     const key = `${keyPrefix(auth.organizationId)}${assetId}-${safeName}`;
     const upload = await env.BUCKET.createMultipartUpload(key, { httpMetadata: { contentType } });
+    // Provider upload IDs are opaque; expose our own bounded session ID.
+    const sessionId = crypto.randomUUID();
     const metadata: UploadMetadata = {
-      uploadId: upload.uploadId, assetId, organizationId: auth.organizationId, campusId,
+      uploadId: sessionId, r2UploadId: upload.uploadId, assetId, organizationId: auth.organizationId, campusId,
       title: title.slice(0, 120), description: description.slice(0, 500),
       fileName: fileName.slice(0, 255), contentType, size,
       totalParts: Math.ceil(size / MULTIPART_CHUNK_SIZE),
     };
-    await env.BUCKET.put(pendingKey(key, upload.uploadId), JSON.stringify(metadata), { httpMetadata: { contentType: "application/json" } });
-    return Response.json({ uploadId: upload.uploadId, key });
+    await env.BUCKET.put(pendingKey(key, sessionId), JSON.stringify(metadata), { httpMetadata: { contentType: "application/json" } });
+    return Response.json({ uploadId: sessionId, key });
   }
 
   if (body.action === "complete") {
@@ -67,7 +69,7 @@ export async function POST(request: Request) {
     if (metadata.campusId && !canAccessCampus(auth, metadata.campusId)) return Response.json({ error: "Campus not available." }, { status: 403 });
     const parts = body.parts.map((part) => ({ partNumber: Number((part as Record<string, unknown>).partNumber), etag: String((part as Record<string, unknown>).etag ?? "") }));
     if (parts.length !== metadata.totalParts || parts.some((part, index) => part.partNumber !== index + 1 || !part.etag)) return Response.json({ error: "Upload parts are incomplete." }, { status: 400 });
-    await env.BUCKET.resumeMultipartUpload(key, uploadId).complete(parts);
+    await env.BUCKET.resumeMultipartUpload(key, metadata.r2UploadId ?? uploadId).complete(parts);
     const object = await env.BUCKET.head(key);
     if (!object || object.size !== metadata.size) {
       await env.BUCKET.delete([key, pendingKey(key, uploadId)]);
@@ -93,16 +95,20 @@ export async function PUT(request: Request) {
   const origin = requireSameOrigin(request); if (origin) return origin;
   const auth = await authorize("settings.edit"); if (!auth) return Response.json({ error: "Permission denied." }, { status: 403 });
   const url = new URL(request.url), uploadId = url.searchParams.get("uploadId") ?? "", key = url.searchParams.get("key") ?? "", partNumber = Number(url.searchParams.get("partNumber"));
-  if (!request.body) return Response.json({ error: "Invalid upload part." }, { status: 400 });
+  if (!request.body) return Response.json({ error: "No file data received. Please choose the file again.", code: "UPLOAD_EMPTY_BODY" }, { status: 400 });
   const metadata = await getUploadMetadata(key, uploadId, auth.organizationId);
 
-  if (!metadata || !Number.isInteger(partNumber) || partNumber < 1 || partNumber > metadata.totalParts || partNumber > MAX_PARTS) return Response.json({ error: "Invalid upload part." }, { status: 400 });
+  if (!metadata) {
+    console.warn("Download upload session not found", {code:"UPLOAD_SESSION_MISSING", keyLength:key.length, sessionLength:uploadId.length});
+    return Response.json({error:"Upload session could not be found. Please start the upload again.",code:"UPLOAD_SESSION_MISSING"},{status:400});
+  }
+  if (!Number.isInteger(partNumber) || partNumber < 1 || partNumber > metadata.totalParts || partNumber > MAX_PARTS) return Response.json({ error: "The file part number is invalid.", code: "UPLOAD_PART_NUMBER" }, { status: 400 });
   const expectedLength = partNumber === metadata.totalParts ? metadata.size - MULTIPART_CHUNK_SIZE * (metadata.totalParts - 1) : MULTIPART_CHUNK_SIZE;
   if (metadata.campusId && !canAccessCampus(auth, metadata.campusId)) return Response.json({ error: "Campus not available." }, { status: 403 });
   let bytes: Uint8Array;
   try { bytes = await boundedBody(request, expectedLength); } catch (error) { return fail(error); }
   if (bytes.byteLength !== expectedLength) return Response.json({ error: "Upload part size does not match the selected file." }, { status: 400 });
-  const part = await env.BUCKET.resumeMultipartUpload(key, uploadId).uploadPart(partNumber, bytes);
+  const part = await env.BUCKET.resumeMultipartUpload(key, metadata.r2UploadId ?? uploadId).uploadPart(partNumber, bytes);
   return Response.json({ partNumber: part.partNumber, etag: part.etag });
 }
 
@@ -112,7 +118,7 @@ export async function DELETE(request: Request) {
   const url = new URL(request.url), uploadId = url.searchParams.get("uploadId") ?? "", key = url.searchParams.get("key") ?? "";
   const metadata = await getUploadMetadata(key, uploadId, auth.organizationId);
   if (!metadata) return Response.json({ error: "Invalid upload." }, { status: 400 });
-  await env.BUCKET.resumeMultipartUpload(key, uploadId).abort();
+  await env.BUCKET.resumeMultipartUpload(key, metadata.r2UploadId ?? uploadId).abort();
   await env.BUCKET.delete(pendingKey(key, uploadId));
   return Response.json({ ok: true });
 }
