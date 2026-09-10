@@ -36,9 +36,9 @@ test('complete multipart lifecycle preserves long opaque provider IDs and publis
  const helper=moduleURL(read('lib/public-forms.ts').replace('import { env } from "cloudflare:workers";','const env=globalThis.__lifecycleEnv;'));
  const api=await import(moduleURL(source.replace(/from "[^"]+lib\/public-forms"/,`from "${helper}"`)));
  const post=body=>new Request('https://test/api',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
- const size=10*1024*1024+24;let response=await api.POST(post({action:'initiate',title:'Prospectus',fileName:'prospectus.pdf',contentType:'application/pdf',size}));assert.equal(response.status,200);
+ const size=10*1024*1024+24;let response=await api.POST(post({action:'initiate',title:'Prospectus',category:'Books',fileName:'prospectus.pdf',contentType:'application/pdf',size}));assert.equal(response.status,200);
  const session=await response.json();assert.equal(session.uploadId.length,36);assert.notEqual(session.uploadId,providerId);
  const uploaded=[];for(const [index,length] of [10*1024*1024,24].entries()){const body=new Uint8Array(length).fill(index+1);response=await api.PUT(new Request('https://test/api?'+new URLSearchParams({...session,partNumber:String(index+1)}),{method:'PUT',body}));assert.equal(response.status,200,await response.clone().text());uploaded.push(await response.json())}
  response=await api.POST(post({action:'complete',...session,parts:uploaded}));assert.equal(response.status,200,await response.clone().text());
- const row=db.prepare('SELECT d.title,d.status,a.size_bytes,a.r2_key FROM public_downloads d JOIN storage_assets a ON a.id=d.asset_id').get();assert.equal(row.status,'published');assert.equal(row.size_bytes,size);assert.equal(objects.get(row.r2_key)[size-1],2);assert.equal(objects.size,1);db.close();
+ const row=db.prepare('SELECT d.title,d.category,d.status,a.size_bytes,a.r2_key FROM public_downloads d JOIN storage_assets a ON a.id=d.asset_id').get();assert.equal(row.status,'published');assert.equal(row.category,'Books');assert.equal(row.size_bytes,size);assert.equal(objects.get(row.r2_key)[size-1],2);assert.equal(objects.size,1);db.close();
 });

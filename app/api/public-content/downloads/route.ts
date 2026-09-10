@@ -31,3 +31,15 @@ export async function DELETE(request: Request) {
   await env.BUCKET.delete(item.r2_key);
   return Response.json({ ok: true });
 }
+
+export async function PATCH(request: Request) {
+ const origin=requireSameOrigin(request);if(origin)return origin;
+ const auth=await authorize("settings.edit");if(!auth)return Response.json({error:"Permission denied."},{status:403});
+ const body=await request.json().catch(()=>null);const category=typeof body?.category==="string"?body.category.trim().slice(0,60):"";
+ if(!category||typeof body?.id!=="string")return Response.json({error:"Choose a category."},{status:400});
+ const row=await env.DB.prepare("SELECT campus_id FROM public_downloads WHERE id=?1 AND organization_id=?2").bind(body.id,auth.organizationId).first<{campus_id:string|null}>();
+ if(!row)return Response.json({error:"Download not found."},{status:404});
+ if(row.campus_id&&!canAccessCampus(auth,row.campus_id))return Response.json({error:"Campus not available."},{status:403});
+ await env.DB.prepare("UPDATE public_downloads SET category=?1 WHERE id=?2 AND organization_id=?3").bind(category,body.id,auth.organizationId).run();
+ return Response.json({ok:true});
+}
