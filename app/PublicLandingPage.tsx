@@ -2,12 +2,12 @@
 import DownloadThumbnail from "./DownloadThumbnail";
 
 import { useEffect, useState } from "react";
-import AOS from "aos";
+
 import VisitorCounter from "./VisitorCounter";
 import PublicAdmissionForm from "./PublicAdmissionForm";
 import ParentFeedback from "./ParentFeedback";
 import SchoolGallery from "./SchoolGallery";
-import "aos/dist/aos.css";
+
 
 const learning = [
   ["▣", "Bag-Free Learning", "All learning materials are provided at school. Students carry only a light folder—no heavy bags.", "/school/classroom-learning.webp"],
@@ -78,8 +78,29 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
   const [menuOpen,setMenuOpen]=useState(false);
   useEffect(()=>{const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setMenuOpen(false)};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close)},[]);
   useEffect(() => {
-    AOS.init({ duration: 700, easing: "ease-out-cubic", once: true, offset: 70 });
-    return () => AOS.refreshHard();
+    const root=document.querySelector('.tms-public');
+    if(!root||!('IntersectionObserver' in window))return;
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+    const seen=new WeakSet<Element>();
+    const animations=new Set<Animation>();
+    const observer=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        if(!entry.isIntersecting)continue;
+        observer.unobserve(entry.target);
+        if(reduced.matches)continue;
+        const element=entry.target as HTMLElement;
+        const kind=element.dataset.aos;
+        const transform=kind==='zoom-in'?'scale(.96)':kind==='fade-left'?'translateX(24px)':'translateY(26px)';
+        const animation=element.animate([{opacity:0,transform},{opacity:1,transform:'none'}],{duration:650,delay:Math.min(Number(element.dataset.aosDelay)||0,180),easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+        animations.add(animation);animation.onfinish=()=>animations.delete(animation);
+      }
+    },{threshold:0.08});
+    const observe=()=>root.querySelectorAll('[data-aos], section h2, section article, section figure').forEach(element=>{if(!seen.has(element)){seen.add(element);observer.observe(element)}});
+    observe();
+    const mutations=new MutationObserver(observe);mutations.observe(root,{childList:true,subtree:true});
+    const stopMotion=()=>{if(reduced.matches)animations.forEach(animation=>animation.cancel())};
+    reduced.addEventListener('change',stopMotion);
+    return()=>{observer.disconnect();mutations.disconnect();animations.forEach(animation=>animation.cancel());reduced.removeEventListener('change',stopMotion)};
   }, []);
 
   return (
