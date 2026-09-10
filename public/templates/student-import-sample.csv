@@ -1,0 +1,2 @@
+first_name,last_name,gender,date_of_birth,campus_code,academic_year,class_code,section_code,roll_number,phone,address_line1,city,admitted_on
+Sample,Student,female,2020-03-15,REPLACE_CAMPUS_CODE,,,,,03001234567,Example address,Vehari,2026-09-10

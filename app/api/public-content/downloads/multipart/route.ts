@@ -12,7 +12,7 @@ const pendingKey = (key: string, uploadId: string) => `${key}.multipart-${encode
 
 type UploadMetadata = {
   uploadId: string; r2UploadId?: string; assetId: string; organizationId: string; campusId: string | null;
-  title: string; description: string; fileName: string; contentType: string;
+  title: string; description: string; category?: string; fileName: string; contentType: string;
   size: number; totalParts: number;
 };
 
@@ -54,6 +54,7 @@ export async function POST(request: Request) {
     const sessionId = crypto.randomUUID();
     const metadata: UploadMetadata = {
       uploadId: sessionId, r2UploadId: upload.uploadId, assetId, organizationId: auth.organizationId, campusId,
+      category: String(body.category || "School").trim().slice(0,60) || "School",
       title: title.slice(0, 120), description: description.slice(0, 500),
       fileName: fileName.slice(0, 255), contentType, size,
       totalParts: Math.ceil(size / MULTIPART_CHUNK_SIZE),
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
     try {
       await env.DB.batch([
         env.DB.prepare("INSERT INTO storage_assets (id,organization_id,campus_id,asset_type,r2_key,original_name,content_type,size_bytes,uploaded_by) VALUES (?1,?2,?3,'public_download',?4,?5,?6,?7,?8)").bind(metadata.assetId, auth.organizationId, metadata.campusId, key, metadata.fileName, metadata.contentType, metadata.size, auth.userId),
-        env.DB.prepare("INSERT INTO public_downloads (id,organization_id,campus_id,asset_id,title,description,status,published_at,created_by) VALUES (?1,?2,?3,?4,?5,?6,'published',?7,?8)").bind(id, auth.organizationId, metadata.campusId, metadata.assetId, metadata.title, metadata.description || null, now, auth.userId),
+        env.DB.prepare("INSERT INTO public_downloads (id,organization_id,campus_id,asset_id,title,description,status,published_at,created_by,category) VALUES (?1,?2,?3,?4,?5,?6,'published',?7,?8,?9)").bind(id, auth.organizationId, metadata.campusId, metadata.assetId, metadata.title, metadata.description || null, now, auth.userId, metadata.category || "School"),
       ]);
       await env.BUCKET.delete(pendingKey(key, uploadId));
     } catch (error) {

@@ -1,4 +1,5 @@
 "use client";
+import DownloadThumbnail from "./DownloadThumbnail";
 
 import { useEffect, useState } from "react";
 import AOS from "aos";
@@ -67,10 +68,13 @@ const teamGroups = [
   ]},
 ];
 
-type PublicDownload = { id:string; title:string; description:string|null; original_name:string; size_bytes:number; campus_name:string|null; published_at:number|null };
+type PublicDownload = { id:string; title:string; description:string|null; original_name:string; category:string; content_type:string; size_bytes:number; campus_name:string|null; published_at:number|null };
 type PublicNewsEvent = { id:string; kind:string; title:string; summary:string; event_starts_at:number|null; location:string|null; campus_name:string|null; published_at:number|null };
 
 export default function PublicLandingPage({ signInPath, downloads, newsEvents }: { signInPath: string; downloads: PublicDownload[]; newsEvents: PublicNewsEvent[] }) {
+  const [downloadCategory,setDownloadCategory]=useState("All");
+  const downloadCategories=["All",...new Set(["Books","School","Event","Study","Other",...downloads.map(v=>v.category||"School")])];
+  const visibleDownloads=downloads.filter(v=>downloadCategory==="All"||(v.category||"School")===downloadCategory);
   const [menuOpen,setMenuOpen]=useState(false);
   useEffect(()=>{const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setMenuOpen(false)};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close)},[]);
   useEffect(() => {
@@ -180,7 +184,7 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
 
       <section className="w-full bg-[#080908] px-5 py-20 lg:px-[max(calc((100vw-1100px)/2),30px)] lg:py-24" id="downloads">
         <div className="mx-auto max-w-[1100px] text-center"><span className="inline-flex rounded-full border border-yellow-400/50 px-3 py-1.5 text-xs font-extrabold text-yellow-400">PUBLIC RESOURCES</span><h2 className="my-3 text-[clamp(38px,4.2vw,52px)] font-black tracking-[-.045em]">School <em className="not-italic text-red-500">Downloads</em></h2><p className="mx-auto max-w-2xl text-[15px] text-zinc-400">Forms, notices and useful documents shared by The Mentor School.</p></div>
-        <div className="mx-auto mt-10 grid max-w-[900px] gap-3">{downloads.length ? downloads.map(item=><article className="flex flex-col gap-4 rounded-2xl border border-white/15 bg-[#111211] p-5 sm:flex-row sm:items-center" key={item.id}><span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-red-600/15 text-xl text-red-400">⬇</span><div className="min-w-0 flex-1"><h3 className="font-bold text-white">{item.title}</h3><p className="mt-1 text-[13px] text-zinc-400">{item.description || item.original_name}</p><small className="mt-2 block text-[12px] text-zinc-500">{item.campus_name ?? "All campuses"} · {Math.max(1,Math.ceil(item.size_bytes/1024))} KB</small></div><a className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 text-sm font-bold text-white" href={`/api/public-downloads/${item.id}`}>Download</a></article>) : <div className="rounded-2xl border border-dashed border-white/15 bg-[#111211] p-10 text-center text-zinc-400">Public downloads will appear here when they are published.</div>}</div>
+        <nav className="download-category-tabs" aria-label="Download categories">{downloadCategories.map(category=><button key={category} aria-pressed={downloadCategory===category} onClick={()=>setDownloadCategory(category)}>{category}</button>)}</nav><div className="mx-auto mt-10 grid max-w-[900px] gap-3">{visibleDownloads.length ? visibleDownloads.map(item=><article className="flex flex-col gap-4 rounded-2xl border border-white/15 bg-[#111211] p-5 sm:flex-row sm:items-center" key={item.id}><DownloadThumbnail id={item.id} name={item.original_name} type={item.content_type}/><div className="min-w-0 flex-1"><h3 className="font-bold text-white">{item.title}</h3><p className="mt-1 text-[13px] text-zinc-400">{item.description || item.original_name}</p><small className="mt-2 block text-[12px] text-zinc-500">{item.category || "School"} · {item.campus_name ?? "All campuses"} · {Math.max(1,Math.ceil(item.size_bytes/1024))} KB</small></div><a className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-5 text-sm font-bold text-white" href={`/api/public-downloads/${item.id}`}>Download</a></article>) : <div className="rounded-2xl border border-dashed border-white/15 bg-[#111211] p-10 text-center text-zinc-400">No downloads in this category yet.</div>}</div>
       </section>
 
       <section className="grid w-full grid-cols-1 gap-5 bg-[#101110] px-5 py-20 lg:grid-cols-[1.2fr_.8fr] lg:px-[max(calc((100vw-1160px)/2),30px)] lg:py-24" id="campus">

@@ -2491,6 +2491,7 @@ export const publicDownloads = sqliteTable(
       .references(() => storageAssets.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     description: text("description"),
+    category: text("category").notNull().default("School"),
     status: text("status").notNull().default("published"),
     publishedAt: integer("published_at", { mode: "timestamp_ms" }),
     createdBy: text("created_by")
