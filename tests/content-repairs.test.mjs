@@ -42,3 +42,13 @@ test('complete multipart lifecycle preserves long opaque provider IDs and publis
  response=await api.POST(post({action:'complete',...session,parts:uploaded}));assert.equal(response.status,200,await response.clone().text());
  const row=db.prepare('SELECT d.title,d.category,d.status,a.size_bytes,a.r2_key FROM public_downloads d JOIN storage_assets a ON a.id=d.asset_id').get();assert.equal(row.status,'published');assert.equal(row.category,'Books');assert.equal(row.size_bytes,size);assert.equal(objects.get(row.r2_key)[size-1],2);assert.equal(objects.size,1);db.close();
 });
+test('public downloads serve exact PDF ranges and reject invalid ranges',async()=>{
+ const bytes=new Uint8Array([0,1,2,3,4,5,6,7,8,9]);let published=true;
+ globalThis.__rangeEnv={DB:{prepare(){return {bind(){return this},async first(){return published?{r2_key:'pdf',original_name:'book.pdf',content_type:'application/pdf'}:null}}}},BUCKET:{async head(){return {size:bytes.length}},async get(key,options){const r=options?.range;return {body:r?bytes.slice(r.offset,r.offset+r.length):bytes}}}};
+ const api=await import(moduleURL(read('app/api/public-downloads/[id]/route.ts').replace('import { env } from "cloudflare:workers";','const env=globalThis.__rangeEnv;')));
+ const get=range=>api.GET(new Request('https://test/api/public-downloads/book?preview=1',{headers:range?{range}:{}}),{params:Promise.resolve({id:'book'})});
+ for(const [range,expected] of [['bytes=2-5',[2,3,4,5]],['bytes=-3',[7,8,9]],['bytes=8-',[8,9]]]){const r=await get(range);assert.equal(r.status,206);assert.equal(r.headers.get('content-length'),String(expected.length));assert.deepEqual([...new Uint8Array(await r.arrayBuffer())],expected)}
+ for(const range of ['bytes=20-','bytes=5-2','bytes=-0','bytes=','bytes=0-1,3-4'])assert.equal((await get(range)).status,416);
+ const full=await get();assert.equal(full.status,200);assert.equal(full.headers.get('accept-ranges'),'bytes');assert.equal((await full.arrayBuffer()).byteLength,10);
+ published=false;assert.equal((await get('bytes=0-1')).status,404);
+});
