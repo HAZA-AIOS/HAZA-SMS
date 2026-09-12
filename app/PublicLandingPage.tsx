@@ -79,28 +79,40 @@ export default function PublicLandingPage({ signInPath, downloads, newsEvents }:
   useEffect(()=>{const close=(event:KeyboardEvent)=>{if(event.key==="Escape")setMenuOpen(false)};window.addEventListener("keydown",close);return()=>window.removeEventListener("keydown",close)},[]);
   useEffect(() => {
     const root=document.querySelector('.tms-public');
-    if(!root||!('IntersectionObserver' in window))return;
+    if(!root||!('IntersectionObserver' in window)||!('animate' in Element.prototype))return;
     const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
     const seen=new WeakSet<Element>();
     const animations=new Set<Animation>();
+    const pending=new Map<Element,Animation>();
     const observer=new IntersectionObserver(entries=>{
       for(const entry of entries){
         if(!entry.isIntersecting)continue;
         observer.unobserve(entry.target);
         if(reduced.matches)continue;
-        const element=entry.target as HTMLElement;
-        const kind=element.dataset.aos;
-        const transform=kind==='zoom-in'?'scale(.96)':kind==='fade-left'?'translateX(24px)':'translateY(26px)';
-        const animation=element.animate([{opacity:0,transform},{opacity:1,transform:'none'}],{duration:650,delay:Math.min(Number(element.dataset.aosDelay)||0,180),easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
-        animations.add(animation);animation.onfinish=()=>animations.delete(animation);
+        const animation=pending.get(entry.target);
+        animation?.play();pending.delete(entry.target);
       }
-    },{threshold:0.08});
-    const observe=()=>root.querySelectorAll('[data-aos], section h2, section article, section figure').forEach(element=>{if(!seen.has(element)){seen.add(element);observer.observe(element)}});
+    },{threshold:0.08,rootMargin:'0px 0px -24px 0px'});
+    const observe=()=>root.querySelectorAll<HTMLElement>('[data-aos], section h2, section article, section figure').forEach(element=>{
+      if(seen.has(element))return;
+      seen.add(element);
+      if(reduced.matches)return;
+      // Leave the initial viewport visible; prepare offscreen cards before entry.
+      if(element.getBoundingClientRect().top<window.innerHeight)return;
+      const kind=element.dataset.aos;
+      const transform=kind==='zoom-in'?'scale(.96)':kind==='fade-left'?'translateX(24px)':'translateY(32px)';
+      const animation=element.animate([{opacity:0,transform},{opacity:1,transform:'none'}],{duration:700,delay:Math.min(Number(element.dataset.aosDelay)||0,240),easing:'cubic-bezier(.22,1,.36,1)',fill:'backwards'});
+      animation.pause();animations.add(animation);pending.set(element,animation);
+      animation.onfinish=()=>{animations.delete(animation);element.dataset.scrollRevealed='true';};
+      observer.observe(element);
+    });
     observe();
     const mutations=new MutationObserver(observe);mutations.observe(root,{childList:true,subtree:true});
-    const stopMotion=()=>{if(reduced.matches)animations.forEach(animation=>animation.cancel())};
+    const stopMotion=()=>{if(reduced.matches){animations.forEach(animation=>animation.cancel());animations.clear();pending.clear();observer.disconnect();}};
+    const revealFocused=(event:FocusEvent)=>{for(const [element,animation] of pending){if(element.contains(event.target as Node)){animation.cancel();animations.delete(animation);pending.delete(element);observer.unobserve(element);}}};
+    root.addEventListener('focusin',revealFocused as EventListener);
     reduced.addEventListener('change',stopMotion);
-    return()=>{observer.disconnect();mutations.disconnect();animations.forEach(animation=>animation.cancel());reduced.removeEventListener('change',stopMotion)};
+    return()=>{root.removeEventListener('focusin',revealFocused as EventListener);observer.disconnect();mutations.disconnect();animations.forEach(animation=>animation.cancel());reduced.removeEventListener('change',stopMotion)};
   }, []);
 
   return (
