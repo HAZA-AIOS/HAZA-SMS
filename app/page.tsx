@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
-import { getChatGPTUser, chatGPTSignInPath } from "./chatgpt-auth";
+import { redirect } from "next/navigation";
+import { getChatGPTUser } from "./chatgpt-auth";
 import DashboardShell from "./DashboardShell";
 import RegistrationForm from "./RegistrationForm";
 import PublicLandingPage from "./PublicLandingPage";
@@ -635,15 +636,13 @@ export default async function Home({
   searchParams: Promise<{ portal?: string }>;
 }) {
   const { portal } = await searchParams;
-  const dashboardPath = "/?portal=dashboard";
   if (portal !== "dashboard") {
     const publicData = await loadPublicLandingData();
-    return <PublicLandingPage signInPath={dashboardPath} {...publicData} />;
+    return <PublicLandingPage signInPath="/login" {...publicData} />;
   }
 
   const user = await getChatGPTUser();
-  if (!user)
-    return <PublicLandingPage signInPath={chatGPTSignInPath(dashboardPath)} {...await loadPublicLandingData()} />;
+  if (!user) redirect("/login");
   await acceptPendingInvitation(user.email, user.displayName);
   const access = await authorize();
   if (!access) {

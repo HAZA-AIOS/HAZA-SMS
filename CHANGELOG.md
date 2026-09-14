@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.2 — 2026-09-14
+
+- Add a responsive branded email sign-in gateway based on the supplied visual reference.
+- Preserve the original The Mentor School logo and clarify passwordless email authentication.
+- Route new schools into the existing owner registration workflow after verified sign-in.
+- Hide dashboard modules and home actions that are not available to the signed-in role.
+- Add regression coverage for the authentication experience and role-filtered navigation.
+
 ## 0.14.1 — 2026-09-12
 
 - Make strict TypeScript checking and linting release gates, and repair outstanding errors without disabling strict mode.
