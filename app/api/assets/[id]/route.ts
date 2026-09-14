@@ -11,5 +11,5 @@ export async function GET(_request:Request,{params}:{params:Promise<{id:string}>
   const object=await env.BUCKET.get(asset.r2_key);if(!object)return Response.json({error:"Stored file is unavailable."},{status:404});
   await env.DB.prepare("INSERT INTO audit_logs (id,organization_id,actor_user_id,action,entity_type,entity_id,outcome) VALUES (?1,?2,?3,'asset.download','storage_asset',?4,'success')").bind(crypto.randomUUID(),auth.organizationId,auth.userId,id).run();
   const safeName=asset.original_name.replace(/["\\\r\n]/g,"_");
-  return new Response(object.body,{headers:{"content-type":asset.content_type,"content-disposition":`attachment; filename="${safeName}"`,"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
+  return new Response(object.body as unknown as ReadableStream<Uint8Array>,{headers:{"content-type":asset.content_type,"content-disposition":`attachment; filename="${safeName}"`,"cache-control":"private, no-store","x-content-type-options":"nosniff"}});
 }

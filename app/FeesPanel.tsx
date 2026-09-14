@@ -110,7 +110,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
   const send = async (e: FormEvent<HTMLFormElement>, action: string) => {
     e.preventDefault();
     setMessage("");
-    const values = Object.fromEntries(new FormData(e.currentTarget));
+    const values: Record<string, FormDataEntryValue | boolean> = Object.fromEntries(new FormData(e.currentTarget));
     if ("refundable" in values) values.refundable = true;
     if ("mandatory" in values) values.mandatory = true;
     if ("schoolWide" in values) values.schoolWide = true;
@@ -387,7 +387,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                     .filter((v) => Number(v.balance_amount) > 0)
                     .map((v) => (
                       <option value={v.id} key={v.id}>
-                        {v.invoice_number} · {v.student_name} · Balance{" "}
+                        {String(v.invoice_number ?? "")} · {String(v.student_name ?? "")} · Balance{" "}
                         {money(v.balance_amount)}
                       </option>
                     ))}
@@ -418,7 +418,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                     <option value="">Select cash or bank account</option>
                     {data.financialAccounts.map((v) => (
                       <option key={v.id} value={v.id}>
-                        {v.name} · {v.account_type}
+                        {v.name} · {String(v.account_type ?? "")}
                       </option>
                     ))}
                   </select>
@@ -716,7 +716,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                   <span>{v.account_type === "cash" ? "💵" : "🏦"}</span>
                   <div>
                     <small>
-                      {v.code as string} · {v.bank_name || "Cash account"}
+                      {v.code as string} · {String(v.bank_name || "Cash account")}
                     </small>
                     <h3>{v.name as string}</h3>
                   </div>
@@ -878,8 +878,8 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                     </b>
                   </header>
                   <p>
-                    {v.class_name || "All classes"} ·{" "}
-                    {v.campus_name || "School-wide"}
+                    {String(v.class_name || "All classes")} ·{" "}
+                    {String(v.campus_name || "School-wide")}
                   </p>
                   <small>
                     {v.academic_year_name as string} · Due by day{" "}
@@ -1072,7 +1072,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                     <option value="">Select cash or bank account</option>
                     {data.financialAccounts.map((v) => (
                       <option key={v.id} value={v.id}>
-                        {v.name} · {v.account_type}
+                        {v.name} · {String(v.account_type ?? "")}
                       </option>
                     ))}
                   </select>
@@ -1117,7 +1117,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                 <div>
                   <h2>Assign student fee</h2>
                   <p>
-                    The structure must match the student's academic year and
+                    The structure must match the student&apos;s academic year and
                     class.
                   </p>
                 </div>
@@ -1128,7 +1128,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                   <option value="">Select enrolled student</option>
                   {data.students.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.student_name} · {v.admission_number} · {v.class_name}
+                      {String(v.student_name ?? "")} · {String(v.admission_number ?? "")} · {String(v.class_name ?? "")}
                     </option>
                   ))}
                 </select>
@@ -1139,7 +1139,7 @@ export default function FeesPanel({ initialTab = "invoices" }: { initialTab?: st
                   <option value="">Select structure</option>
                   {data.structures.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.name} · {v.class_name || "All classes"}
+                      {v.name} · {String(v.class_name || "All classes")}
                     </option>
                   ))}
                 </select>

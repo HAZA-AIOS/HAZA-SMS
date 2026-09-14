@@ -80,7 +80,7 @@ export default function PayrollPanel({ data: initial }: { data: PayrollData }) {
   }
   const totals = useMemo(
       () =>
-        data.items.reduce(
+        data.items.reduce<{ gross: number; deductions: number; net: number }>(
           (a, v) => ({
             gross: a.gross + Number(v.base_salary) + Number(v.earnings),
             deductions:

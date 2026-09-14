@@ -232,6 +232,23 @@ export const academicYears = sqliteTable(
   ],
 );
 
+// Mirrors the existing 0014 migration; no database migration is required.
+export const academicTerms = sqliteTable("academic_terms", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  academicYearId: text("academic_year_id").notNull().references(() => academicYears.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  code: text("code").notNull(),
+  startsOn: text("starts_on").notNull(),
+  endsOn: text("ends_on").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  status: text("status").notNull().default("active"),
+  ...ts,
+}, t => [
+  uniqueIndex("academic_terms_year_code_uq").on(t.organizationId,t.academicYearId,t.code),
+  index("academic_terms_year_dates_idx").on(t.organizationId,t.academicYearId,t.startsOn,t.endsOn),
+]);
+
 export const classes = sqliteTable(
   "classes",
   {

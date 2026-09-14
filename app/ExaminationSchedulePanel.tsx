@@ -887,7 +887,7 @@ export default function ExaminationSchedulePanel() {
                     </h3>
                     <p>
                       {clock(v.starts_at)}–{clock(v.ends_at)} ·{" "}
-                      {v.room_name || "Room not assigned"} ·{" "}
+                      {String(v.room_name || "Room not assigned")} ·{" "}
                       {v.maximum_marks as number} marks
                     </p>
                   </div>
@@ -938,9 +938,9 @@ export default function ExaminationSchedulePanel() {
                   </small>
                   <h3>{v.title as string}</h3>
                   <p>
-                    {v.location || "School campus"} · {v.audience as string}
+                    {String(v.location || "School campus")} · {v.audience as string}
                   </p>
-                  {v.description && <p>{v.description as string}</p>}
+                  {Boolean(v.description) && <p>{v.description as string}</p>}
                   {data.canManageEvents && (
                     <button onClick={() => cancel("cancel_event", v.id)}>
                       Cancel event
