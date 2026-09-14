@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { cookies } from "next/headers";
 import { getChatGPTUser } from "../app/chatgpt-auth";
+import { organizationAllowsDashboard } from "./subscriptions";
 
 export type OrganizationChoice = {
   organizationId: string;
@@ -54,6 +55,7 @@ export async function getOrganizationChoices(): Promise<OrganizationChoice[]> {
 
 export async function authorize(
   required?: string,
+  options: { allowInactiveSubscription?: boolean } = {},
 ): Promise<AuthzContext | null> {
   const identity = await getChatGPTUser();
   if (!identity || !env.DB) return null;
@@ -75,6 +77,7 @@ export async function authorize(
           (item) => item.organizationId === selectedOrganization,
         );
   if (!member) return null;
+  if (!options.allowInactiveSubscription && !(await organizationAllowsDashboard(member.organizationId))) return null;
   const rows = await env.DB.prepare(
     `
     SELECT DISTINCT p.code,r.scope,mr.campus_id FROM membership_roles mr

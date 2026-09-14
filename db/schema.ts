@@ -36,6 +36,65 @@ export const organizations = sqliteTable(
   ],
 );
 
+export const organizationSubscriptions = sqliteTable(
+  "organization_subscriptions",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    plan: text("plan").notNull(),
+    status: text("status").notNull(),
+    amountPkr: integer("amount_pkr").notNull().default(0),
+    trialStartsAt: integer("trial_starts_at", { mode: "timestamp_ms" }),
+    trialEndsAt: integer("trial_ends_at", { mode: "timestamp_ms" }),
+    startsAt: integer("starts_at", { mode: "timestamp_ms" }),
+    endsAt: integer("ends_at", { mode: "timestamp_ms" }),
+    approvedBy: text("approved_by").references(() => users.id, { onDelete: "set null" }),
+    approvedAt: integer("approved_at", { mode: "timestamp_ms" }),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("organization_subscriptions_org_uq").on(t.organizationId),
+    index("organization_subscriptions_status_idx").on(t.status, t.endsAt),
+  ],
+);
+
+export const subscriptionPayments = sqliteTable(
+  "subscription_payments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    subscriptionId: text("subscription_id")
+      .notNull()
+      .references(() => organizationSubscriptions.id, { onDelete: "cascade" }),
+    plan: text("plan").notNull(),
+    amountPkr: integer("amount_pkr").notNull(),
+    paymentMethod: text("payment_method").notNull(),
+    paymentReference: text("payment_reference").notNull(),
+    payerName: text("payer_name").notNull(),
+    receiptR2Key: text("receipt_r2_key").notNull(),
+    receiptName: text("receipt_name").notNull(),
+    receiptContentType: text("receipt_content_type").notNull(),
+    receiptSizeBytes: integer("receipt_size_bytes").notNull(),
+    status: text("status").notNull().default("pending"),
+    reviewNote: text("review_note"),
+    submittedBy: text("submitted_by").notNull().references(() => users.id),
+    reviewedBy: text("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    submittedAt: integer("submitted_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    reviewedAt: integer("reviewed_at", { mode: "timestamp_ms" }),
+    ...ts,
+  },
+  (t) => [
+    index("subscription_payments_org_status_idx").on(t.organizationId, t.status, t.submittedAt),
+    index("subscription_payments_status_idx").on(t.status, t.submittedAt),
+  ],
+);
+
 export const users = sqliteTable(
   "users",
   {

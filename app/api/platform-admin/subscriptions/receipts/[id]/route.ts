@@ -1,0 +1,6 @@
+import { env } from "cloudflare:workers";
+import { getChatGPTUser } from "../../../../../chatgpt-auth";
+import { isPlatformAdminEmail } from "../../../../../../lib/subscriptions";
+
+export const dynamic="force-dynamic";
+export async function GET(_request:Request,{params}:{params:Promise<{id:string}>}){const user=await getChatGPTUser();if(!user||!isPlatformAdminEmail(user.email))return Response.json({error:"Platform administrator access is required."},{status:403});const {id}=await params;const receipt=await env.DB.prepare("SELECT receipt_r2_key,receipt_name,receipt_content_type FROM subscription_payments WHERE id=?1 LIMIT 1").bind(id).first<{receipt_r2_key:string;receipt_name:string;receipt_content_type:string}>();if(!receipt)return Response.json({error:"Receipt not found."},{status:404});const object=await env.BUCKET.get(receipt.receipt_r2_key);if(!object)return Response.json({error:"Receipt file is unavailable."},{status:404});const filename=receipt.receipt_name.replace(/[\r\n"\\]/g,"_");return new Response(await object.arrayBuffer(),{headers:{"content-type":receipt.receipt_content_type,"content-disposition":`inline; filename="${filename}"`,"cache-control":"private, no-store"}});}

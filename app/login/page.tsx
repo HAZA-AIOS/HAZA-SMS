@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { chatGPTSignInPath, getChatGPTUser } from "../chatgpt-auth";
+import { isPlatformAdminEmail } from "../../lib/subscriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -70,8 +71,9 @@ export default async function LoginPage() {
 
             <p className="text-center text-sm text-violet-100/70">
               New school?{" "}
-              <a href={user ? dashboardPath : signInPath} target={user ? undefined : "_top"} className="font-black text-white underline decoration-fuchsia-300 underline-offset-4">Register your school</a>
+              <Link href="/register" className="font-black text-white underline decoration-fuchsia-300 underline-offset-4">Register your school</Link>
             </p>
+            {user && isPlatformAdminEmail(user.email) ? <Link href="/platform-admin/subscriptions" className="block text-center text-sm font-semibold text-fuchsia-200 hover:text-white">Manage school subscriptions</Link> : null}
             <Link href="/" className="block text-center text-sm font-semibold text-violet-100/60 hover:text-white">← Return to public website</Link>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { getChatGPTUser } from "../../chatgpt-auth";
+import { DEMO_DAYS, isRegistrationPlan, PLAN_PRICES } from "../../../lib/subscriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,8 @@ export async function POST(request:Request){
   if(!env.DB) return Response.json({error:"Database service is unavailable."},{status:503});
 
   const body=await request.json().catch(()=>null) as Record<string,unknown>|null;
+  const plan=body?.plan;
+  if(!isRegistrationPlan(plan)) return Response.json({error:"Choose a valid demo, monthly or yearly plan."},{status:400});
   const schoolName=clean(body?.schoolName,120), campusName=clean(body?.campusName,100), address=clean(body?.address,500);
   const abbreviation=clean(body?.abbreviation,12).toUpperCase(), phone=clean(body?.phone,40);
   const institutionType=clean(body?.institutionType,24)||"school", timezone=clean(body?.timezone,64)||"Asia/Karachi", currency=clean(body?.currency,3)||"PKR";
@@ -38,6 +41,7 @@ export async function POST(request:Request){
   const userId=existingUser?.id??crypto.randomUUID();
   const organizationId=crypto.randomUUID(), campusId=crypto.randomUUID(), membershipId=crypto.randomUUID();
   const roleId=crypto.randomUUID(), identityId=crypto.randomUUID(), auditId=crypto.randomUUID();
+  const subscriptionId=crypto.randomUUID(), now=Date.now(), trialEndsAt=now+DEMO_DAYS*24*60*60*1000;
   const slug=`${slugify(schoolName)}-${crypto.randomUUID().slice(0,6)}`;
 
   const statements=[];
@@ -57,6 +61,8 @@ export async function POST(request:Request){
     env.DB.prepare("INSERT INTO roles (id,organization_id,key,name,scope,is_system) VALUES (?1,?2,'super_administrator','Super Administrator','organization',1)").bind(roleId,organizationId),
     env.DB.prepare("INSERT INTO membership_roles (membership_id,role_id,campus_id,assigned_by) VALUES (?1,?2,NULL,?3)").bind(membershipId,roleId,userId)
   );
+  if(plan==="demo") statements.push(env.DB.prepare("INSERT INTO organization_subscriptions (id,organization_id,plan,status,amount_pkr,trial_starts_at,trial_ends_at) VALUES (?1,?2,'demo','trialing',0,?3,?4)").bind(subscriptionId,organizationId,now,trialEndsAt));
+  else statements.push(env.DB.prepare("INSERT INTO organization_subscriptions (id,organization_id,plan,status,amount_pkr) VALUES (?1,?2,?3,'pending_payment',?4)").bind(subscriptionId,organizationId,plan,PLAN_PRICES[plan]));
   for(const [code,module,action] of corePermissions){
     const permissionId=`permission:${code}`;
     statements.push(
@@ -64,8 +70,8 @@ export async function POST(request:Request){
       env.DB.prepare("INSERT INTO role_permissions (role_id,permission_id) VALUES (?1,?2)").bind(roleId,permissionId)
     );
   }
-  statements.push(env.DB.prepare("INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'organization.register','organization',?2,'success',?5)").bind(auditId,organizationId,campusId,userId,JSON.stringify({provider:"chatgpt",mainCampus:campusName})));
+  statements.push(env.DB.prepare("INSERT INTO audit_logs (id,organization_id,campus_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,?4,'organization.register','organization',?2,'success',?5)").bind(auditId,organizationId,campusId,userId,JSON.stringify({provider:"chatgpt",mainCampus:campusName,plan})));
 
-  try{await env.DB.batch(statements);return Response.json({ok:true,organizationId});}
+  try{await env.DB.batch(statements);return Response.json({ok:true,organizationId,nextPath:plan==="demo"?"/?portal=dashboard":"/subscription"});}
   catch(error){console.error("registration_failed",error);return Response.json({error:"The school workspace could not be created. Please try again."},{status:500});}
 }
