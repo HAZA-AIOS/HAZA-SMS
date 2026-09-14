@@ -133,6 +133,38 @@ export default function DashboardShell({
   const campusName = activeCampusId
     ? (campuses.find((c) => c.id === activeCampusId)?.name ?? "Campus")
     : "All campuses";
+  const availableViews = new Set([
+    "Home",
+    admissionsData && "Admissions",
+    studentDirectoryData && "Students",
+    staffDirectoryData && "Staff",
+    teachersData && "Teachers",
+    canViewStudentAttendance && "Student Attendance",
+    staffAttendanceData && "Staff Attendance",
+    payrollData && "Payroll",
+    configurationData && "Configuration",
+    accessData && "Access Control",
+    securityData && "Security & Audit",
+    academicsData && "Academics",
+    canViewPromotions && "Promotions",
+    academicsData && "Classes",
+    canViewTimetable && "Timetable",
+    canViewExaminations && "Examinations",
+    canViewLearning && "Learning",
+    canViewFees && "Fees",
+    canViewFees && "Accounts",
+    canViewFees && "Expenses",
+    canViewCommunications && "Communication",
+    canViewPortal && "My Portal",
+    canViewOperations && "Operations",
+    canViewAnalytics && "Analytics",
+    publicContentData && "Downloads",
+    publicContentData && "News & Events",
+    securityData && "Reports",
+  ].filter((view): view is string => Boolean(view)));
+  const visibleNavigation = navigation.filter(([, label]) =>
+    availableViews.has(label),
+  );
   async function chooseCampus(campusId: string) {
     setCampusOpen(false);
     const response = await fetch("/api/session/context", {
@@ -253,46 +285,15 @@ export default function DashboardShell({
           </button>
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2.5 py-3" aria-label="Main navigation">
-          {navigation.map(([icon, label]) => (
+          {visibleNavigation.map(([icon, label]) => (
             <button
               className={cn("flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium text-white/55 transition hover:bg-white/6 hover:text-white", activeView === label && "bg-gradient-to-r from-violet-600/90 to-fuchsia-600/80 text-white shadow-lg shadow-violet-950/40", collapsed&&"lg:mx-auto lg:h-11 lg:w-11 lg:justify-center lg:p-0")}
               type="button"
               key={label}
               title={label}
               onClick={() => {
-                if (
-                  label === "Home" ||
-                  label === "Admissions" ||
-                  label === "Students" ||
-                  label === "Staff" ||
-                  label === "Teachers" ||
-                  (label === "Student Attendance" &&
-                    canViewStudentAttendance) ||
-                  label === "Staff Attendance" ||
-                  label === "Payroll" ||
-                  label === "Academics" ||
-                  (label === "Classes" && !!academicsData) ||
-                  label === "Biometrics" ||
-                  ((label === "Accounts" || label === "Expenses") && canViewFees) ||
-                  (label === "Promotions" && canViewPromotions) ||
-                  (label === "Timetable" && canViewTimetable) ||
-                  (label === "Examinations" && canViewExaminations) ||
-                  (label === "Learning" && canViewLearning) ||
-                  (label === "Communication" && canViewCommunications) ||
-                  (label === "My Portal" && canViewPortal) ||
-                  (label === "Operations" && canViewOperations) ||
-                  (label === "Analytics" && canViewAnalytics) ||
-                  (label === "Fees" && canViewFees) ||
-                  label === "Configuration" ||
-                  (label === "Downloads" && !!publicContentData) ||
-                  (label === "News & Events" && !!publicContentData) ||
-                  label === "Access Control" ||
-                  label === "Security & Audit" ||
-                  (label === "Reports" && !!securityData)
-                ) {
-                  setActiveView(label);
-                  setMobileOpen(false);
-                }
+                setActiveView(label);
+                setMobileOpen(false);
               }}
             >
               <span className="grid h-7 w-7 shrink-0 place-items-center text-xl leading-none" aria-hidden="true">
@@ -315,6 +316,7 @@ export default function DashboardShell({
             configurationData={configurationData}
             securityData={securityData}
             studentData={studentDirectoryData}
+            availableViews={[...availableViews]}
             onNavigate={setActiveView}
           />
         ) : activeView === "Admissions" && admissionsData ? (
