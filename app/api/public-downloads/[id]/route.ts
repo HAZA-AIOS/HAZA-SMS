@@ -19,5 +19,5 @@ export async function GET(_request: Request, { params }: { params: Promise<{id:s
   const preview = new URL(_request.url).searchParams.get("preview") === "1";
   if(preview && !["image/jpeg","image/png","image/webp","image/gif","application/pdf"].includes(asset.content_type)) return new Response(null,{status:415});
   const safeName = asset.original_name.replace(/["\\\r\n]/g,"_");
-  return new Response(object.body, { status:rangeHeader?206:200, headers: { "accept-ranges":"bytes", "content-length":String(end-offset+1), ...(rangeHeader?{"content-range":`bytes ${offset}-${end}/${head.size}`} : {}), "content-type": asset.content_type, "content-disposition": `${preview ? "inline" : "attachment"}; filename="${safeName}"`, "cache-control": "public, max-age=300", "x-content-type-options": "nosniff" } });
+  return new Response(object.body as unknown as ReadableStream<Uint8Array>, { status:rangeHeader?206:200, headers: { "accept-ranges":"bytes", "content-length":String(end-offset+1), ...(rangeHeader?{"content-range":`bytes ${offset}-${end}/${head.size}`} : {}), "content-type": asset.content_type, "content-disposition": `${preview ? "inline" : "attachment"}; filename="${safeName}"`, "cache-control": "public, max-age=300", "x-content-type-options": "nosniff" } });
 }

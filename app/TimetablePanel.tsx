@@ -78,7 +78,7 @@ export default function TimetablePanel() {
   const submit = async (e: FormEvent<HTMLFormElement>, action: string) => {
     e.preventDefault();
     setMessage("");
-    const values = Object.fromEntries(new FormData(e.currentTarget));
+    const values: Record<string, FormDataEntryValue | boolean> = Object.fromEntries(new FormData(e.currentTarget));
     if ("isBreak" in values) values.isBreak = true;
     const r = await fetch("/api/timetable", {
         method: "POST",
@@ -675,8 +675,8 @@ export default function TimetablePanel() {
                       .map((entry) => (
                         <option value={entry.id} key={entry.id}>
                           {days.find(([id]) => id === entry.weekday)?.[1]} ·{" "}
-                          {entry.period_name} · {entry.class_name} ·{" "}
-                          {entry.teacher_name}
+                          {String(entry.period_name ?? "")} · {String(entry.class_name ?? "")} ·{" "}
+                          {String(entry.teacher_name ?? "")}
                         </option>
                       ))}
                   </select>

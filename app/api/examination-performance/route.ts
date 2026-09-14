@@ -1,3 +1,4 @@
+import type { D1PreparedStatement } from "@cloudflare/workers-types";
 import { env } from "cloudflare:workers";
 import { authorize, requireCampusAccess } from "../../../lib/authorization";
 

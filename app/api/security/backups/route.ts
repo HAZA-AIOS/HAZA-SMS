@@ -5,6 +5,14 @@ import { enforceRateLimit, requireSameOrigin } from "../../../../lib/security";
 export const dynamic = "force-dynamic";
 const tenantTables = [
   "organizations",
+  "bank_accounts",
+  "number_sequences",
+  "promotion_rules",
+  "promotion_batches",
+  "promotion_decisions",
+  "public_downloads",
+  "public_news_events",
+  "parent_feedback",
   "organization_settings",
   "campuses",
   "campus_settings",
@@ -111,7 +119,10 @@ export async function POST(request: Request) {
   try {
     const snapshot: Record<string, unknown> = {
       manifest: {
-        version: 1,
+        version: 2,
+        scope: "organization-database-records",
+        fileBytesIncluded: false,
+        sharedIdentityRecordsIncluded: false,
         organizationId: auth.organizationId,
         createdAt: new Date(createdAt).toISOString(),
         tables: [...tenantTables],
@@ -155,12 +166,30 @@ export async function POST(request: Request) {
       await env.DB.prepare("SELECT ar.* FROM assignment_resources ar JOIN assignments a ON a.id=ar.assignment_id WHERE a.organization_id=?1").bind(auth.organizationId).all()
     ).results;
     (snapshot.manifest as { tables: string[] }).tables.push("assignment_resources");
+    const linkedTables = {
+      campus_memberships: "SELECT cm.* FROM campus_memberships cm JOIN organization_memberships m ON m.id=cm.membership_id JOIN campuses c ON c.id=cm.campus_id WHERE m.organization_id=?1 AND c.organization_id=?1",
+      membership_roles: "SELECT mr.* FROM membership_roles mr JOIN organization_memberships m ON m.id=mr.membership_id JOIN roles r ON r.id=mr.role_id LEFT JOIN campuses c ON c.id=mr.campus_id WHERE m.organization_id=?1 AND (r.organization_id=?1 OR r.organization_id IS NULL) AND (mr.campus_id IS NULL OR c.organization_id=?1)",
+      role_permissions: "SELECT rp.* FROM role_permissions rp JOIN roles r ON r.id=rp.role_id WHERE r.organization_id=?1",
+    };
+    for (const [table, query] of Object.entries(linkedTables)) {
+      tables[table] = (await env.DB.prepare(query).bind(auth.organizationId).all()).results;
+      (snapshot.manifest as { tables: string[] }).tables.push(table);
+    }
+    (snapshot.manifest as Record<string, unknown>).rowCounts = Object.fromEntries(
+      Object.entries(tables).map(([table, rows]) => [table, (rows as unknown[]).length]),
+    );
     const body = JSON.stringify(snapshot),
       bytes = new TextEncoder().encode(body).byteLength;
+    const checksum = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body))), byte => byte.toString(16).padStart(2,"0")).join("");
     await env.BUCKET.put(key, body, {
       httpMetadata: { contentType: "application/json" },
-      customMetadata: { organizationId: auth.organizationId, backupId: id },
+      customMetadata: { organizationId: auth.organizationId, backupId: id, sha256: checksum },
     });
+    const stored = await env.BUCKET.head(key);
+    if (!stored || stored.size !== bytes || stored.customMetadata?.sha256 !== checksum) {
+      throw new Error("Stored snapshot verification failed");
+    }
+    (snapshot.manifest as Record<string, unknown>).sha256 = checksum;
     await env.DB.batch([
       env.DB.prepare(
         "UPDATE backup_runs SET status='completed',r2_key=?1,manifest_json=?2,size_bytes=?3,completed_at=unixepoch()*1000 WHERE id=?4 AND organization_id=?5",

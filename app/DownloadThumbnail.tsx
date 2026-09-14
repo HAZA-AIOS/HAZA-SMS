@@ -30,7 +30,7 @@ export default function DownloadThumbnail({id,name,type}:{id:string;name:string;
     const lib=await import('pdfjs-dist/legacy/build/pdf.mjs');
     if(disposed)return;
     worker=new Worker(new URL("./pdf-preview.worker.ts",import.meta.url),{type:"module"});
-    const pdfWorker=new lib.PDFWorker({port:worker});
+    const pdfWorker=lib.PDFWorker.create({port:worker});
     task=lib.getDocument({worker:pdfWorker,url:source,disableAutoFetch:true,disableStream:true,rangeChunkSize:1048576});
     const doc=await task.promise;
     const page=await doc.getPage(1);

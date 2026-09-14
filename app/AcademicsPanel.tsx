@@ -82,7 +82,7 @@ export default function AcademicsPanel({ data, initialTab = "years" }: { data: A
   };
   const hierarchy = useMemo(
     () =>
-      data.grades.map((g) => ({
+      data.grades.map((g): Row & { classes: Row[] } => ({
         ...g,
         classes: activeClasses.filter((c) => c.grade_level_id === g.id),
       })),
