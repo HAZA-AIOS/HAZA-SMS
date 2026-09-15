@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.4 — 2026-09-15
+
+- Introduce one reusable purple authentication shell based on the approved sign-in design.
+- Restyle plan selection, school registration, multi-school selection and subscription payment screens to match sign-in.
+- Replace the legacy blue-and-white registration presentation with translucent purple controls, cards and responsive layouts.
+
 ## 0.14.3 — 2026-09-14
 
 - Route “Register your school” to a dedicated plan-selection and registration page.
