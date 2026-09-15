@@ -93,6 +93,8 @@ const tenantTables = [
   "user_notifications",
   "notification_preferences",
   "operation_records",
+  "operational_check_runs",
+  "monitoring_incidents",
   "setting_revisions",
   "audit_logs",
 ] as const;

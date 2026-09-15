@@ -46,6 +46,7 @@ const navigation = [
   ["⚙️", "Configuration"],
   ["🔐", "Access Control"],
   ["🛡️", "Security & Audit"],
+  ["📡", "Monitoring"],
   ["🏫", "Academics"],
   ["⬆️", "Promotions"],
   ["📚", "Classes"],
@@ -62,7 +63,6 @@ const navigation = [
   ["📊", "Analytics"],
   ["⬇️", "Downloads"],
   ["📰", "News & Events"],
-  ["🖨️", "Reports"],
 ] as const;
 
 export default function DashboardShell({
@@ -80,6 +80,7 @@ export default function DashboardShell({
   canViewPortal,
   canViewOperations,
   canViewAnalytics,
+  canViewMonitoring,
   canViewFees,
   accessData,
   configurationData,
@@ -107,6 +108,7 @@ export default function DashboardShell({
   canViewPortal: boolean;
   canViewOperations: boolean;
   canViewAnalytics: boolean;
+  canViewMonitoring: boolean;
   canViewFees: boolean;
   accessData: AccessData | null;
   configurationData: ConfigurationData | null;
@@ -145,6 +147,7 @@ export default function DashboardShell({
     configurationData && "Configuration",
     accessData && "Access Control",
     securityData && "Security & Audit",
+    canViewMonitoring && "Monitoring",
     academicsData && "Academics",
     canViewPromotions && "Promotions",
     academicsData && "Classes",
@@ -160,7 +163,6 @@ export default function DashboardShell({
     canViewAnalytics && "Analytics",
     publicContentData && "Downloads",
     publicContentData && "News & Events",
-    securityData && "Reports",
   ].filter((view): view is string => Boolean(view)));
   const visibleNavigation = navigation.filter(([, label]) =>
     availableViews.has(label),
@@ -369,8 +371,8 @@ export default function DashboardShell({
           <AccessControlPanel data={accessData} />
         ) : activeView === "Security & Audit" && securityData ? (
           <SecurityPanel data={securityData} />
-        ) : activeView === "Reports" && securityData ? (
-          <ProductionReadinessPanel security={securityData} />
+        ) : activeView === "Monitoring" && canViewMonitoring ? (
+          <ProductionReadinessPanel />
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-5">

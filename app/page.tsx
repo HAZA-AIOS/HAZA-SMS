@@ -681,6 +681,9 @@ export default async function Home({
     refreshedAccess.organizationWide &&
     (refreshedAccess.permissions.has("audit.view") ||
       refreshedAccess.permissions.has("security.view"));
+  const canViewMonitoring =
+    refreshedAccess.organizationWide &&
+    refreshedAccess.permissions.has("monitoring.view");
   const canViewStudents = refreshedAccess.permissions.has("students.view");
   const canViewAdmissions = refreshedAccess.permissions.has("admissions.view");
   const canViewStaff = refreshedAccess.permissions.has("staff.view");
@@ -784,6 +787,7 @@ export default async function Home({
       canViewPortal={refreshedAccess.permissions.has("portal.view")}
       canViewOperations={refreshedAccess.permissions.has("operations.view")}
       canViewAnalytics={refreshedAccess.permissions.has("analytics.view")}
+      canViewMonitoring={canViewMonitoring}
       canViewFees={refreshedAccess.permissions.has("fees.view")}
       userName={user.displayName}
       accessData={accessData}

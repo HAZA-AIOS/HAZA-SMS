@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0 — 2026-09-15
+
+- Add the protected Phase 15 Operations Command Centre with minute-by-minute refresh.
+- Record operator-triggered application, D1 and R2 checks with response times.
+- Add tenant-isolated incident creation, acknowledgement and resolution workflows.
+- Automatically open a critical incident when a production service check is degraded.
+- Add monitoring permissions, audit events, backup coverage and an operational response runbook.
+
 ## 0.14.4 — 2026-09-15
 
 - Introduce one reusable purple authentication shell based on the approved sign-in design.
