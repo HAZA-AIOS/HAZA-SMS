@@ -45,7 +45,7 @@ Snapshots are sequential table reads. Create them while data entry is paused for
 
 ### Operational handover still required
 
-- Sign in as the school administrator and open Reports → Release Control Centre.
+- Sign in as the school administrator and open Monitoring → Operations Command Centre.
 - Run the live service check and create a current snapshot under Audit, Security & Recovery.
 - Verify its checksum and perform a supervised restore drill in an isolated environment, including protected file access. Never test a restore over production data.
 - Check sign-in, campus selection and the critical workflows listed above with the intended school roles.

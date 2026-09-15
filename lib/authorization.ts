@@ -382,6 +382,8 @@ export async function ensureSecurityAccess(organizationId: string) {
     ["permission:backups.view", "backups.view", "backups", "view", 1],
     ["permission:backups.create", "backups.create", "backups", "create", 1],
     ["permission:assets.download", "assets.download", "assets", "download", 1],
+    ["permission:monitoring.view", "monitoring.view", "monitoring", "view", 1],
+    ["permission:monitoring.manage", "monitoring.manage", "monitoring", "manage", 1],
   ] as const;
   const statements = definitions.map((v) =>
     env.DB.prepare(
@@ -401,8 +403,10 @@ export async function ensureSecurityAccess(organizationId: string) {
       "backups.view",
       "backups.create",
       "assets.download",
+      "monitoring.view",
+      "monitoring.manage",
     ],
-    read_only_auditor: ["security.view", "backups.view"],
+    read_only_auditor: ["security.view", "backups.view", "monitoring.view"],
     accountant: ["assets.download"],
     teacher: ["assets.download"],
     receptionist: ["assets.download"],

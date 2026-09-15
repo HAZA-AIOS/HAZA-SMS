@@ -3028,6 +3028,80 @@ export const backupRuns = sqliteTable(
   ],
 );
 
+export const operationalCheckRuns = sqliteTable(
+  "operational_check_runs",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    applicationStatus: text("application_status").notNull(),
+    databaseStatus: text("database_status").notNull(),
+    storageStatus: text("storage_status").notNull(),
+    databaseLatencyMs: integer("database_latency_ms"),
+    storageLatencyMs: integer("storage_latency_ms"),
+    triggeredBy: text("triggered_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    detailsJson: text("details_json").notNull().default("{}"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    index("operational_check_runs_org_created_idx").on(
+      t.organizationId,
+      t.createdAt,
+    ),
+    index("operational_check_runs_org_status_idx").on(
+      t.organizationId,
+      t.status,
+      t.createdAt,
+    ),
+  ],
+);
+
+export const monitoringIncidents = sqliteTable(
+  "monitoring_incidents",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    source: text("source").notNull(),
+    severity: text("severity").notNull(),
+    status: text("status").notNull().default("open"),
+    title: text("title").notNull(),
+    description: text("description"),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    acknowledgedBy: text("acknowledged_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    acknowledgedAt: integer("acknowledged_at", { mode: "timestamp_ms" }),
+    resolvedBy: text("resolved_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    resolvedAt: integer("resolved_at", { mode: "timestamp_ms" }),
+    resolutionNote: text("resolution_note"),
+    ...ts,
+  },
+  (t) => [
+    index("monitoring_incidents_org_status_idx").on(
+      t.organizationId,
+      t.status,
+      t.updatedAt,
+    ),
+    index("monitoring_incidents_org_source_idx").on(
+      t.organizationId,
+      t.source,
+      t.createdAt,
+    ),
+  ],
+);
+
 export { publicVisitCounts } from "./public-visits";
 
 export * from "./public-engagement";

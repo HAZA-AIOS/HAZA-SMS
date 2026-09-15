@@ -117,6 +117,8 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Public landing page with Main Campus and Hadi Campus presentation
 - Dashboard-managed Downloads and News & Events with publish controls
 - Resumable multipart R2 uploads for public download files up to 5 GB
+- Protected production monitoring with recorded D1/R2 response times and automatic refresh
+- Tenant-isolated incident acknowledgement, resolution notes and audited operator actions
 
 ## Security architecture
 
@@ -307,8 +309,11 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 12 — Operations and Asset Management                                         | Complete    |
 | Phase 13 — Advanced Analytics and Reporting                                       | Repair deployed; authenticated verification pending |
 | Phase 14 — Production Readiness and Rollout                                       | Implementation ready; operational verification pending |
+| Phase 15 — Production Monitoring and Operations                                   | Complete |
 
-Phase 14 adds a live production health endpoint, administrator rollout gates, recovery-safe error handling, security headers and a documented deployment and rollback procedure. Operational details are maintained in [`docs/PRODUCTION_ROLLOUT.md`](docs/PRODUCTION_ROLLOUT.md).
+Phase 15 adds a protected Operations Command Centre, persisted service-check history, response-time visibility and a complete incident lifecycle. The production response process is maintained in [`docs/PRODUCTION_OPERATIONS.md`](docs/PRODUCTION_OPERATIONS.md).
+
+**Next phase:** Phase 16 — Operational Automation and Service Alerts.
 
 ## The long-term vision
 
