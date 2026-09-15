@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.3 — 2026-09-14
+
+- Route “Register your school” to a dedicated plan-selection and registration page.
+- Add a private seven-day demo workspace for new schools.
+- Add monthly Rs. 5,000 and yearly Rs. 50,000 subscription plans.
+- Block protected dashboards and APIs when a school has no active trial or approved subscription.
+- Add manual bank, JazzCash and Easypaisa receipt upload with platform-administrator approval.
+- Preserve existing schools with a grandfathered active legacy subscription.
+
 ## 0.14.2 — 2026-09-14
 
 - Add a responsive branded email sign-in gateway based on the supplied visual reference.

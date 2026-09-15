@@ -2,7 +2,6 @@ import { env } from "cloudflare:workers";
 import { redirect } from "next/navigation";
 import { getChatGPTUser } from "./chatgpt-auth";
 import DashboardShell from "./DashboardShell";
-import RegistrationForm from "./RegistrationForm";
 import PublicLandingPage from "./PublicLandingPage";
 import SchoolSelectionPanel from "./SchoolSelectionPanel";
 import type { AccessData } from "./AccessControlPanel";
@@ -35,6 +34,7 @@ import {
   ensureAnalyticsAccess,
   ensureFeeAccess,
 } from "../lib/authorization";
+import { organizationAllowsDashboard } from "../lib/subscriptions";
 
 export const dynamic = "force-dynamic";
 
@@ -644,17 +644,16 @@ export default async function Home({
   const user = await getChatGPTUser();
   if (!user) redirect("/login");
   await acceptPendingInvitation(user.email, user.displayName);
-  const access = await authorize();
+  const access = await authorize(undefined, { allowInactiveSubscription: true });
   if (!access) {
     const schools = await getOrganizationChoices();
     if (schools.length > 1)
       return (
         <SchoolSelectionPanel schools={schools} userName={user.displayName} />
       );
-    return (
-      <RegistrationForm email={user.email} displayName={user.displayName} />
-    );
+    redirect("/register");
   }
+  if (!(await organizationAllowsDashboard(access.organizationId))) redirect("/subscription");
   await ensureDefaultRoles(access.organizationId);
   await ensureConfigurationAccess(access.organizationId);
   await ensureSecurityAccess(access.organizationId);

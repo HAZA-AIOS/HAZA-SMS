@@ -14,6 +14,8 @@ const tenantTables = [
   "public_news_events",
   "parent_feedback",
   "organization_settings",
+  "organization_subscriptions",
+  "subscription_payments",
   "campuses",
   "campus_settings",
   "academic_years",
