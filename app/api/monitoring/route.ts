@@ -1,30 +1,49 @@
 import { env } from "cloudflare:workers";
 import { authorize } from "../../../lib/authorization";
 import { enforceRateLimit, requireSameOrigin, safeMetadata } from "../../../lib/security";
-import { runOperationalCheck } from "../../../lib/monitoring";
+import { readCapacity, runOperationalCheck } from "../../../lib/monitoring";
+import { summarizePerformance, type PerformanceSample } from "../../../lib/monitoring-analytics";
 
 export const dynamic = "force-dynamic";
 const clean = (value: unknown, max = 500) => String(value ?? "").trim().slice(0, max);
-const sources = new Set(["platform", "automation", "database", "storage", "deployment", "security", "backup", "manual"]);
+const sources = new Set(["platform", "automation", "database", "storage", "capacity", "performance", "deployment", "security", "backup", "manual"]);
 const severities = new Set(["critical", "high", "medium", "low"]);
 
-export async function GET() {
+export async function GET(request:Request) {
   const auth = await authorize("monitoring.view");
   if (!auth || !auth.organizationWide)
     return Response.json({ error: "You do not have permission to view production monitoring." }, { status: 403 });
-  const since = Date.now() - 86400000;
-  const [checks, incidents, failedOperations, lastBackup, policy] = await Promise.all([
-    env.DB.prepare("SELECT r.*,u.display_name triggered_by_name FROM operational_check_runs r JOIN users u ON u.id=r.triggered_by WHERE r.organization_id=?1 ORDER BY r.created_at DESC LIMIT 30").bind(auth.organizationId).all(),
+  const url=new URL(request.url),statusFilter=["ready","degraded"].includes(url.searchParams.get("status")??"")?url.searchParams.get("status")??"":"",triggerFilter=["manual","scheduled"].includes(url.searchParams.get("trigger")??"")?url.searchParams.get("trigger")??"":"",periodDays=[1,7,30].includes(Number(url.searchParams.get("days")))?Number(url.searchParams.get("days")):7,historySince=Date.now()-periodDays*86400000,daySince=Date.now()-86400000;
+  const [checks, incidents, failedOperations, policy, performanceRows, backups, capacityHistory, capacity] = await Promise.all([
+    env.DB.prepare("SELECT r.*,u.display_name triggered_by_name FROM operational_check_runs r JOIN users u ON u.id=r.triggered_by WHERE r.organization_id=?1 AND (?2='' OR r.status=?2) AND (?3='' OR r.trigger_type=?3) AND r.created_at>=?4 ORDER BY r.created_at DESC LIMIT 100").bind(auth.organizationId,statusFilter,triggerFilter,historySince).all(),
     env.DB.prepare("SELECT i.*,creator.display_name created_by_name,ack.display_name acknowledged_by_name,resolver.display_name resolved_by_name FROM monitoring_incidents i JOIN users creator ON creator.id=i.created_by LEFT JOIN users ack ON ack.id=i.acknowledged_by LEFT JOIN users resolver ON resolver.id=i.resolved_by WHERE i.organization_id=?1 ORDER BY CASE i.status WHEN 'open' THEN 0 WHEN 'acknowledged' THEN 1 ELSE 2 END,i.updated_at DESC LIMIT 100").bind(auth.organizationId).all(),
-    env.DB.prepare("SELECT count(*) value FROM audit_logs WHERE organization_id=?1 AND created_at>=?2 AND outcome!='success'").bind(auth.organizationId, since).first<{value:number}>(),
-    env.DB.prepare("SELECT max(completed_at) value FROM backup_runs WHERE organization_id=?1 AND status='completed'").bind(auth.organizationId).first<{value:number|null}>(),
+    env.DB.prepare("SELECT count(*) value FROM audit_logs WHERE organization_id=?1 AND created_at>=?2 AND outcome!='success'").bind(auth.organizationId, daySince).first<{value:number}>(),
     env.DB.prepare("SELECT enabled,interval_minutes,failure_threshold,notify_recovery,last_evaluated_at,last_result FROM operational_automation_policies WHERE organization_id=?1").bind(auth.organizationId).first(),
+    env.DB.prepare("SELECT route,module,method,status_code,duration_ms,is_slow,created_at FROM api_performance_samples WHERE organization_id=?1 AND created_at>=?2 ORDER BY created_at DESC LIMIT 2000").bind(auth.organizationId,daySince).all<PerformanceSample>(),
+    env.DB.prepare("SELECT id,status,r2_key,manifest_json,size_bytes,checksum_sha256,integrity_status,error_message,created_at,completed_at FROM backup_runs WHERE organization_id=?1 ORDER BY created_at DESC LIMIT 10").bind(auth.organizationId).all<Record<string,unknown>>(),
+    env.DB.prepare("SELECT database_logical_bytes,storage_bytes,storage_object_count,database_budget_bytes,storage_budget_bytes,warning_percent,created_at FROM capacity_snapshots WHERE organization_id=?1 ORDER BY created_at DESC LIMIT 30").bind(auth.organizationId).all(),
+    readCapacity(auth.organizationId),
   ]);
+  const latestCompleted=backups.results.find(row=>row.status==="completed"&&row.r2_key),lastBackupAt=Number(latestCompleted?.completed_at)||null;
+  let backupIntegrity:{status:"verified"|"mismatch"|"unavailable"|"not_available";checkedAt:number|null;message:string}={status:"not_available",checkedAt:null,message:"Create a recovery snapshot to verify backup integrity."};
+  if(latestCompleted){
+    try{
+      const manifest=JSON.parse(String(latestCompleted.manifest_json||"{}")) as {sha256?:string},checksum=String(latestCompleted.checksum_sha256||manifest.sha256||""),stored=await env.BUCKET.head(String(latestCompleted.r2_key));
+      const matches=Boolean(stored&&checksum&&stored.size===Number(latestCompleted.size_bytes)&&stored.customMetadata?.sha256===checksum);
+      backupIntegrity={status:matches?"verified":"mismatch",checkedAt:Date.now(),message:matches?"Stored size and SHA-256 metadata match the backup record.":"Stored backup metadata does not match the recorded size or checksum."};
+    }catch{backupIntegrity={status:"unavailable",checkedAt:Date.now(),message:"The stored backup could not be verified during this refresh."}}
+  }
+  const performance=summarizePerformance(performanceRows.results.map(row=>({...row,is_slow:row.duration_ms>=capacity.slow_request_threshold_ms?1:0})));
   return Response.json({
     checks: checks.results,
     incidents: incidents.results,
-    summary: { failedOperations24h: failedOperations?.value ?? 0, lastBackupAt: lastBackup?.value ?? null },
+    summary: { failedOperations24h: failedOperations?.value ?? 0, lastBackupAt },
     policy: policy ?? { enabled:0, interval_minutes:15, failure_threshold:2, notify_recovery:1, last_evaluated_at:null, last_result:null },
+    capacity,
+    capacityHistory:capacityHistory.results,
+    performance,
+    backups:backups.results,
+    backupIntegrity,
     canManage: auth.permissions.has("monitoring.manage"),
   }, { headers: { "cache-control": "private, no-store" } });
 }
@@ -51,6 +70,17 @@ export async function POST(request: Request) {
     await env.DB.batch([
       env.DB.prepare("INSERT INTO operational_automation_policies (id,organization_id,enabled,interval_minutes,failure_threshold,notify_recovery,updated_by) VALUES (?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(organization_id) DO UPDATE SET enabled=excluded.enabled,interval_minutes=excluded.interval_minutes,failure_threshold=excluded.failure_threshold,notify_recovery=excluded.notify_recovery,updated_by=excluded.updated_by,updated_at=unixepoch()*1000").bind(crypto.randomUUID(),auth.organizationId,enabled,interval,threshold,notifyRecovery,auth.userId),
       env.DB.prepare("INSERT INTO audit_logs (id,organization_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,'monitoring.policy.update','operational_automation_policy',?2,'success',?4)").bind(crypto.randomUUID(),auth.organizationId,auth.userId,safeMetadata({enabled:Boolean(enabled),intervalMinutes:interval,failureThreshold:threshold,notifyRecovery:Boolean(notifyRecovery)})),
+    ]);
+    return Response.json({ok:true});
+  }
+
+  if(action==="update_monitoring_settings"){
+    const databaseBudgetMb=Math.round(Number(body?.databaseBudgetMb)),storageBudgetGb=Number(body?.storageBudgetGb),warningPercent=Math.round(Number(body?.warningPercent)),slowRequestMs=Math.round(Number(body?.slowRequestMs));
+    if(!Number.isFinite(databaseBudgetMb)||databaseBudgetMb<10||databaseBudgetMb>10240||!Number.isFinite(storageBudgetGb)||storageBudgetGb<0.1||storageBudgetGb>1024||warningPercent<50||warningPercent>95||slowRequestMs<200||slowRequestMs>10000)return Response.json({error:"Choose monitoring budgets and thresholds within the supported ranges."},{status:400});
+    const databaseBudgetBytes=databaseBudgetMb*1024*1024,storageBudgetBytes=Math.round(storageBudgetGb*1024*1024*1024);
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO operational_monitoring_settings (id,organization_id,database_budget_bytes,storage_budget_bytes,capacity_warning_percent,slow_request_threshold_ms,updated_by) VALUES (?1,?2,?3,?4,?5,?6,?7) ON CONFLICT(organization_id) DO UPDATE SET database_budget_bytes=excluded.database_budget_bytes,storage_budget_bytes=excluded.storage_budget_bytes,capacity_warning_percent=excluded.capacity_warning_percent,slow_request_threshold_ms=excluded.slow_request_threshold_ms,updated_by=excluded.updated_by,updated_at=unixepoch()*1000").bind(crypto.randomUUID(),auth.organizationId,databaseBudgetBytes,storageBudgetBytes,warningPercent,slowRequestMs,auth.userId),
+      env.DB.prepare("INSERT INTO audit_logs (id,organization_id,actor_user_id,action,entity_type,entity_id,outcome,metadata_json) VALUES (?1,?2,?3,'monitoring.settings.update','operational_monitoring_settings',?2,'success',?4)").bind(crypto.randomUUID(),auth.organizationId,auth.userId,safeMetadata({databaseBudgetMb,storageBudgetGb,warningPercent,slowRequestMs})),
     ]);
     return Response.json({ok:true});
   }

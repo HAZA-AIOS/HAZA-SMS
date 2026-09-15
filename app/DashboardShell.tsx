@@ -131,6 +131,28 @@ export default function DashboardShell({
   const [notificationsOpen,setNotificationsOpen]=useState(false);
   const [notifications,setNotifications]=useState<DashboardNotification[]>([]);
   const [unreadNotifications,setUnreadNotifications]=useState(0);
+  useEffect(()=>{
+    if(!canViewMonitoring)return;
+    const originalFetch=window.fetch.bind(window);
+    const instrumentedFetch:typeof window.fetch=async(input,init)=>{
+      let url:URL|null=null;
+      try{url=new URL(typeof input==="string"?input:input instanceof Request?input.url:String(input),window.location.origin)}catch{return originalFetch(input,init)}
+      const shouldRecord=url.origin===window.location.origin&&url.pathname.startsWith("/api/")&&url.pathname!=="/api/monitoring/performance";
+      if(!shouldRecord)return originalFetch(input,init);
+      const started=performance.now(),method=(init?.method||(input instanceof Request?input.method:"GET")).toUpperCase();
+      try{
+        const response=await originalFetch(input,init),durationMs=Math.round(performance.now()-started);
+        void originalFetch("/api/monitoring/performance",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({route:url.pathname,method,statusCode:response.status,durationMs}),keepalive:true}).catch(()=>undefined);
+        return response;
+      }catch(error){
+        const durationMs=Math.round(performance.now()-started);
+        void originalFetch("/api/monitoring/performance",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({route:url.pathname,method,statusCode:0,durationMs}),keepalive:true}).catch(()=>undefined);
+        throw error;
+      }
+    };
+    window.fetch=instrumentedFetch;
+    return()=>{if(window.fetch===instrumentedFetch)window.fetch=originalFetch};
+  },[canViewMonitoring]);
   const refreshNotifications=useCallback(async()=>{const response=await fetch("/api/notifications",{cache:"no-store"});if(!response.ok)return;const result=await response.json() as {notifications:DashboardNotification[];unread:number};setNotifications(result.notifications);setUnreadNotifications(result.unread)},[]);
   useEffect(()=>{
     if(!canViewMonitoring)return;
