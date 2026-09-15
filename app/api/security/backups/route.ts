@@ -94,6 +94,7 @@ const tenantTables = [
   "notification_preferences",
   "operation_records",
   "operational_check_runs",
+  "operational_automation_policies",
   "monitoring_incidents",
   "setting_revisions",
   "audit_logs",

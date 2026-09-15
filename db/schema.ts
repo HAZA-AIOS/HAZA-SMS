@@ -3041,6 +3041,7 @@ export const operationalCheckRuns = sqliteTable(
     storageStatus: text("storage_status").notNull(),
     databaseLatencyMs: integer("database_latency_ms"),
     storageLatencyMs: integer("storage_latency_ms"),
+    triggerType: text("trigger_type").notNull().default("manual"),
     triggeredBy: text("triggered_by")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
@@ -3058,6 +3059,35 @@ export const operationalCheckRuns = sqliteTable(
       t.organizationId,
       t.status,
       t.createdAt,
+    ),
+  ],
+);
+
+export const operationalAutomationPolicies = sqliteTable(
+  "operational_automation_policies",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
+    intervalMinutes: integer("interval_minutes").notNull().default(15),
+    failureThreshold: integer("failure_threshold").notNull().default(2),
+    notifyRecovery: integer("notify_recovery", { mode: "boolean" })
+      .notNull()
+      .default(true),
+    updatedBy: text("updated_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    lastEvaluatedAt: integer("last_evaluated_at", { mode: "timestamp_ms" }),
+    lastResult: text("last_result"),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("operational_automation_policies_org_uq").on(t.organizationId),
+    index("operational_automation_policies_due_idx").on(
+      t.enabled,
+      t.lastEvaluatedAt,
     ),
   ],
 );

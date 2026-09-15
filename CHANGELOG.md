@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 — 2026-09-15
+
+- Add configurable automated service checks at 5, 15, 30 or 60 minute intervals during active administrator sessions.
+- Add one-to-three consecutive-failure thresholds to control alert sensitivity.
+- Deliver tenant-scoped service and recovery alerts to authorized operators through the dashboard notification bell.
+- Automatically open and recover platform incidents while preventing duplicate active alerts.
+- Add automation policy persistence, audit history, backup coverage and operational documentation.
+
 ## 0.15.0 — 2026-09-15
 
 - Add the protected Phase 15 Operations Command Centre with minute-by-minute refresh.

@@ -37,3 +37,30 @@ test("monitoring API is permission protected, bounded and audited", () => {
   assert.match(backup,/operational_check_runs/);
   assert.match(backup,/monitoring_incidents/);
 });
+
+test("automation policy is tenant scoped and each due interval is claimed once",()=>{
+  const db=new DatabaseSync(":memory:");
+  for(const file of readdirSync(new URL("../drizzle/",import.meta.url)).filter(file=>file.endsWith(".sql")).sort())db.exec(read(`drizzle/${file}`));
+  db.exec("INSERT INTO organizations(id,name,slug) VALUES('org-a','A','a'),('org-b','B','b'); INSERT INTO users(id,email,display_name,status) VALUES('operator','ops@example.invalid','Operator','active');");
+  db.prepare("INSERT INTO operational_automation_policies(id,organization_id,enabled,interval_minutes,failure_threshold,notify_recovery,updated_by) VALUES(?,?,?,?,?,?,?)").run("policy-a","org-a",1,15,2,1,"operator");
+  const first=db.prepare("UPDATE operational_automation_policies SET last_evaluated_at=? WHERE organization_id=? AND enabled=1 AND (last_evaluated_at IS NULL OR last_evaluated_at<=?)").run(1000000,"org-a",100000);
+  const second=db.prepare("UPDATE operational_automation_policies SET last_evaluated_at=? WHERE organization_id=? AND enabled=1 AND (last_evaluated_at IS NULL OR last_evaluated_at<=?)").run(1000001,"org-a",100001);
+  assert.equal(first.changes,1);assert.equal(second.changes,0);
+  assert.equal(db.prepare("SELECT count(*) value FROM operational_automation_policies WHERE organization_id=?").get("org-b").value,0);
+  db.close();
+});
+
+test("automation creates deduplicated alerts and dashboard notifications",()=>{
+  const automation=read("lib/monitoring.ts"),heartbeat=read("app/api/monitoring/automation/route.ts"),notifications=read("app/api/notifications/route.ts"),shell=read("app/DashboardShell.tsx"),backup=read("app/api/security/backups/route.ts");
+  assert.match(automation,/triggerType:"scheduled"/);
+  assert.match(automation,/failure_threshold/);
+  assert.match(automation,/source=\?2 AND status!='resolved' LIMIT 1/);
+  assert.match(automation,/monitoring\.service\.degraded/);
+  assert.match(automation,/monitoring\.service\.recovered/);
+  assert.match(heartbeat,/authorize\("monitoring\.view"\)/);
+  assert.match(heartbeat,/requireSameOrigin\(request\)/);
+  assert.match(notifications,/organization_id=\?1 AND user_id=\?2/);
+  assert.match(shell,/\/api\/monitoring\/automation/);
+  assert.match(shell,/Mark all read/);
+  assert.match(backup,/operational_automation_policies/);
+});

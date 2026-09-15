@@ -1,5 +1,5 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useState, type CSSProperties } from "react";
 import AccessControlPanel, { type AccessData } from "./AccessControlPanel";
 import ConfigurationPanel, {
   type ConfigurationData,
@@ -33,6 +33,8 @@ import PortalPanel from "./PortalPanel";
 import OperationsPanel from "./OperationsPanel";
 import AnalyticsPanel from "./AnalyticsPanel";
 import ProductionReadinessPanel from "./ProductionReadinessPanel";
+
+type DashboardNotification={id:string;title:string;body:string;read_at:number|null;created_at:number};
 
 const navigation = [
   ["🏠", "Home"],
@@ -126,6 +128,22 @@ export default function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [campusOpen, setCampusOpen] = useState(false);
   const [activeView, setActiveView] = useState("Home");
+  const [notificationsOpen,setNotificationsOpen]=useState(false);
+  const [notifications,setNotifications]=useState<DashboardNotification[]>([]);
+  const [unreadNotifications,setUnreadNotifications]=useState(0);
+  const refreshNotifications=useCallback(async()=>{const response=await fetch("/api/notifications",{cache:"no-store"});if(!response.ok)return;const result=await response.json() as {notifications:DashboardNotification[];unread:number};setNotifications(result.notifications);setUnreadNotifications(result.unread)},[]);
+  useEffect(()=>{
+    if(!canViewMonitoring)return;
+    const heartbeat=()=>{if(document.visibilityState==="visible")void fetch("/api/monitoring/automation",{method:"POST"}).then(()=>refreshNotifications()).catch(()=>undefined)};
+    heartbeat();const timer=setInterval(heartbeat,60000);return()=>clearInterval(timer);
+  },[canViewMonitoring,refreshNotifications]);
+  async function openNotifications(){
+    const opening=!notificationsOpen;setNotificationsOpen(opening);if(!opening)return;
+    await refreshNotifications();
+  }
+  async function markNotificationsRead(){
+    const response=await fetch("/api/notifications",{method:"PATCH"});if(response.ok){setUnreadNotifications(0);setNotifications(items=>items.map(item=>({...item,read_at:item.read_at??Date.now()})))}
+  }
   const initials = userName
     .split(/\s+/)
     .map((v) => v[0])
@@ -248,14 +266,10 @@ export default function DashboardShell({
               className="w-56 bg-transparent text-sm text-white outline-none placeholder:text-white/35"
             />
           </label>
-          <button
-            className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-violet-500/15"
-            type="button"
-            aria-label="Notifications"
-          >
-            🔔
-            <i className="absolute right-2 top-2 h-2 w-2 rounded-full bg-fuchsia-500 ring-2 ring-[#080a1c]" />
-          </button>
+          <div className="relative">
+            <button className="relative grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-violet-500/15" type="button" aria-label="Notifications" aria-expanded={notificationsOpen} onClick={openNotifications}>🔔{unreadNotifications>0?<i className="absolute right-1 top-1 grid min-h-4 min-w-4 place-items-center rounded-full bg-fuchsia-500 px-1 text-[9px] font-bold not-italic text-white ring-2 ring-[#080a1c]">{Math.min(unreadNotifications,99)}</i>:null}</button>
+            {notificationsOpen?<section className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-28px))] overflow-hidden rounded-2xl border border-white/10 bg-[#0d1024] shadow-2xl"><header className="flex items-center justify-between border-b border-white/10 px-4 py-3"><div><b className="block text-sm">Notifications</b><small className="text-[11px] text-white/45">{unreadNotifications} unread</small></div>{unreadNotifications>0?<button type="button" className="text-[11px] font-semibold text-violet-300" onClick={markNotificationsRead}>Mark all read</button>:null}</header><div className="max-h-96 overflow-y-auto">{notifications.length?notifications.map(item=><article key={item.id} className={`border-b border-white/7 px-4 py-3 ${item.read_at?"opacity-60":"bg-violet-500/7"}`}><b className="block text-xs text-white">{item.title}</b><p className="mt-1 text-[11px] leading-relaxed text-white/55">{item.body}</p><small className="mt-1.5 block text-[10px] text-violet-300/60">{new Date(item.created_at).toLocaleString()}</small></article>):<p className="px-4 py-8 text-center text-xs text-white/45">No notifications yet.</p>}</div></section>:null}
+          </div>
           <a
             className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 text-sm font-bold text-white shadow-[0_8px_24px_rgba(168,85,247,.3)]"
             href="/signout-with-chatgpt?return_to=/"

@@ -6,6 +6,8 @@ The protected **Monitoring** workspace is available to school principals, school
 
 Every service check records application, D1 database and R2 file-storage status, response times, the operator and timestamp. The page refreshes every 60 seconds while visible. A degraded check automatically creates one critical platform incident when no unresolved platform incident already exists.
 
+Phase 16 automation and alert thresholds are documented in `PRODUCTION_AUTOMATION.md`.
+
 ## Daily checks
 
 1. Open **Monitoring** and review platform status, active incidents and the latest recovery snapshot.
