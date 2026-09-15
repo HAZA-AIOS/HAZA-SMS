@@ -3016,6 +3016,9 @@ export const backupRuns = sqliteTable(
     r2Key: text("r2_key"),
     manifestJson: text("manifest_json").notNull().default("{}"),
     sizeBytes: integer("size_bytes"),
+    checksumSha256: text("checksum_sha256"),
+    integrityStatus: text("integrity_status").notNull().default("pending"),
+    verifiedAt: integer("verified_at", { mode: "timestamp_ms" }),
     errorMessage: text("error_message"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
@@ -3088,6 +3091,101 @@ export const operationalAutomationPolicies = sqliteTable(
     index("operational_automation_policies_due_idx").on(
       t.enabled,
       t.lastEvaluatedAt,
+    ),
+  ],
+);
+
+export const operationalMonitoringSettings = sqliteTable(
+  "operational_monitoring_settings",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    databaseBudgetBytes: integer("database_budget_bytes")
+      .notNull()
+      .default(536870912),
+    storageBudgetBytes: integer("storage_budget_bytes")
+      .notNull()
+      .default(5368709120),
+    capacityWarningPercent: integer("capacity_warning_percent")
+      .notNull()
+      .default(80),
+    slowRequestThresholdMs: integer("slow_request_threshold_ms")
+      .notNull()
+      .default(1000),
+    updatedBy: text("updated_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    ...ts,
+  },
+  (t) => [
+    uniqueIndex("operational_monitoring_settings_org_uq").on(t.organizationId),
+  ],
+);
+
+export const capacitySnapshots = sqliteTable(
+  "capacity_snapshots",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    databaseLogicalBytes: integer("database_logical_bytes"),
+    storageBytes: integer("storage_bytes").notNull().default(0),
+    storageObjectCount: integer("storage_object_count").notNull().default(0),
+    databaseBudgetBytes: integer("database_budget_bytes").notNull(),
+    storageBudgetBytes: integer("storage_budget_bytes").notNull(),
+    warningPercent: integer("warning_percent").notNull(),
+    triggeredBy: text("triggered_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    index("capacity_snapshots_org_created_idx").on(
+      t.organizationId,
+      t.createdAt,
+    ),
+  ],
+);
+
+export const apiPerformanceSamples = sqliteTable(
+  "api_performance_samples",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    route: text("route").notNull(),
+    module: text("module").notNull(),
+    method: text("method").notNull(),
+    statusCode: integer("status_code").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    isSlow: integer("is_slow", { mode: "boolean" }).notNull().default(false),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  },
+  (t) => [
+    index("api_performance_samples_org_created_idx").on(
+      t.organizationId,
+      t.createdAt,
+    ),
+    index("api_performance_samples_org_module_idx").on(
+      t.organizationId,
+      t.module,
+      t.createdAt,
+    ),
+    index("api_performance_samples_org_slow_idx").on(
+      t.organizationId,
+      t.isSlow,
+      t.createdAt,
     ),
   ],
 );

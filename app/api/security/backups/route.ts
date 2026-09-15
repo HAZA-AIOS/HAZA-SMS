@@ -95,6 +95,9 @@ const tenantTables = [
   "operation_records",
   "operational_check_runs",
   "operational_automation_policies",
+  "operational_monitoring_settings",
+  "capacity_snapshots",
+  "api_performance_samples",
   "monitoring_incidents",
   "setting_revisions",
   "audit_logs",
@@ -197,11 +200,12 @@ export async function POST(request: Request) {
     (snapshot.manifest as Record<string, unknown>).sha256 = checksum;
     await env.DB.batch([
       env.DB.prepare(
-        "UPDATE backup_runs SET status='completed',r2_key=?1,manifest_json=?2,size_bytes=?3,completed_at=unixepoch()*1000 WHERE id=?4 AND organization_id=?5",
+        "UPDATE backup_runs SET status='completed',r2_key=?1,manifest_json=?2,size_bytes=?3,checksum_sha256=?4,integrity_status='verified',verified_at=unixepoch()*1000,completed_at=unixepoch()*1000 WHERE id=?5 AND organization_id=?6",
       ).bind(
         key,
         JSON.stringify(snapshot.manifest),
         bytes,
+        checksum,
         id,
         auth.organizationId,
       ),
@@ -221,7 +225,7 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message.slice(0, 300) : "Backup failed";
     await env.DB.batch([
       env.DB.prepare(
-        "UPDATE backup_runs SET status='failed',error_message=?1,completed_at=unixepoch()*1000 WHERE id=?2 AND organization_id=?3",
+        "UPDATE backup_runs SET status='failed',integrity_status='failed',error_message=?1,completed_at=unixepoch()*1000 WHERE id=?2 AND organization_id=?3",
       ).bind(message, id, auth.organizationId),
       env.DB.prepare(
         "INSERT INTO audit_logs (id,organization_id,actor_user_id,action,entity_type,entity_id,outcome) VALUES (?1,?2,?3,'backup.create','backup_run',?4,'failed')",

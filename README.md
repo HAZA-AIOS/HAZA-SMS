@@ -121,6 +121,9 @@ Imagine that **Green Valley School** has a Main Campus and a Junior Campus:
 - Tenant-isolated incident acknowledgement, resolution notes and audited operator actions
 - Configurable automatic service checks with consecutive-failure thresholds
 - Dashboard service and recovery alerts for authorized production operators
+- School-scoped capacity budgets with D1 logical-data and tracked R2 consumption monitoring
+- Backup age, size and SHA-256 metadata verification with failure history
+- End-to-end dashboard API telemetry with average, p50, p95, failures and slow-module analysis
 
 ## Security architecture
 
@@ -311,10 +314,12 @@ The application uses TypeScript, React/Vinext, Cloudflare Workers, D1, R2, serve
 | Phase 12 — Operations and Asset Management                                         | Complete    |
 | Phase 13 — Advanced Analytics and Reporting                                       | Repair deployed; authenticated verification pending |
 | Phase 14 — Production Readiness and Rollout                                       | Implementation ready; operational verification pending |
-| Phase 15 — Production Monitoring and Operations                                   | Complete |
+| Phase 15 — Production Monitoring and Operations                                   | Complete — 15A–15F |
 | Phase 16 — Operational Automation and Service Alerts                              | Complete |
 
 Phase 16 adds dashboard-session automation, configurable failure thresholds, incident recovery and visible operator alerts. The automation model is maintained in [`docs/PRODUCTION_AUTOMATION.md`](docs/PRODUCTION_AUTOMATION.md).
+
+Release 0.16.1 closes the original Phase 15D and 15E gaps with capacity budgets, backup-integrity verification and tenant-scoped performance telemetry. D1 consumption is the logical byte size of the latest school recovery snapshot; R2 consumption is calculated from app-tracked school objects, receipts and backups. These values are operational planning measurements, not Cloudflare billing quotas.
 
 **Next phase:** Phase 17 — Reliability Analytics and Capacity Planning.
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.1 — 2026-09-15
+
+- Complete Phase 15D with school-scoped D1 logical-data estimates, tracked R2 consumption, configurable operating budgets and capacity-warning incidents.
+- Verify the latest backup against its stored R2 size and SHA-256 metadata, and record integrity state on new snapshots.
+- Complete Phase 15E with end-to-end dashboard API samples, response status, average, p50, p95, failed-request and slow-module reporting.
+- Add configurable capacity and slow-response thresholds plus filterable monitoring history.
+- Add tenant-isolation, analytics and backup-integrity regression coverage.
+
 ## 0.16.0 — 2026-09-15
 
 - Add configurable automated service checks at 5, 15, 30 or 60 minute intervals during active administrator sessions.
